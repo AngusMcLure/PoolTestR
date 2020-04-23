@@ -1,6 +1,6 @@
 #' The 'PoolTestR' package.
 #'
-#' @description A DESCRIPTION OF THE PACKAGE
+#' @description Tools for working with pooled samples. Currently in early stages. Inspired by PoolScreen. Currently only has basic functionally reproducing PoolScreen functionality for R, however more features are planned or in the works: e.g. adjustments for imperfect test specificity/sensitivity; functions for helping with optimal experimental design; functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time
 #'
 #' @docType package
 #' @name PoolTestR-package
