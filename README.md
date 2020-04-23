@@ -17,7 +17,7 @@ Start by loading the package:
 library(PoolTestR)
 ```
 
-Now it's time to load up your data into R using read.csv() or a similar function. For this example we'll be making a fake dataset. Our fake dataset is from 4 locations ("A","B","C","D") and 3 different dates (2000/1/1, 2001/1/1, 2002/1/1). We've taken a different number of pooled samples from each location and time period. The number of of specimiens/isolates/insects in each pool can be different. In our case there will be betwee 1 and 10 (there's no upper limit in practice). 
+Now it's time to load up your data into R using read.csv() or a similar function. For this example we'll be making a fake dataset. Our fake dataset is from 4 locations (A, B, C, D) and 3 different dates (2000/1/1, 2001/1/1, 2002/1/1). We've taken a different number of pooled samples from each location and time period. The number of of specimiens/isolates/insects in each pool can be different. In our case there will be betwee 1 and 10 (there's no upper limit in practice). 
 
 ```R
 
