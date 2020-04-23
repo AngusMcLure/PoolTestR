@@ -1,9 +1,9 @@
 # PoolTestR
-Tools for working with pooled samples. Currently in early stages. Inspired by PoolScreen.Currently only has basic functionally reproducing PoolScreen functionality for R, however more features are planned or in the works: e.g. adjustments for imperfect test specificity/sensitivity; functions for helping with optimal experimental design; functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time
+Tools for working with pooled samples inspired by PoolScreen. The package is currently in early stages. Currently the pacakge only has core functionally, however more features are planned or in the works: e.g. adjustments for imperfect test specificity/sensitivity; functions for helping with optimal experimental design; functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time. Suggestions are welcome.
 
 ## Installation
 
-PoolTestR is not currently available from CRAN, but you can install it from github with:
+PoolTestR is not currently available from CRAN, but you can install it from github with the following command in R (this will probably produce a lot of warning messages - these are related to the compilation of stan source code and I unfortunately cannot stop these messages) :
 
 ```R
 install.packages("devtools") #you can skip this if you already have devtools installed
@@ -12,7 +12,7 @@ devtools::install_github("AngusMcLure/PoolTestR")
 
 ## Usage
 
-Start by loading the package:
+Start by loading the package (if this doesn't work this means you were unable to install the pacakge. Please let me know if this happens for you):
 ```R
 library(PoolTestR)
 ```
