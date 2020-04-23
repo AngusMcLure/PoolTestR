@@ -5,7 +5,8 @@
 #' @param PoolSize The name of the column with number of bugs in each pool
 #' @param ... Optional name(s) of columns with variables to group the data by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence. If included prevalence is estimated spearately for each group defined by these columns
 #' @param alpha The confidence level to be used for the confidence and credible intervals. Defaults to 0.5\% (i.e. 95\% intervals)
-#' @return A dataframe with columns:
+#' @param verbose Logical indicating whether to print progress to screen. Defaults to false (no printing to screen)
+#' @return A data.frame with columns:
 #' \itemize{
 #'  \item{MLE (the Maximum Likleihood Estimate of prevelance)}
 #'  \item{LR-CI Lower and LR-CI Upper (Lower and Upper Confidence intervals using the Likelihood Ratio method)}
@@ -29,23 +30,25 @@
 
 
 
-PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05){
+PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05,verbose = F){
   TestResult <- enquo(TestResult) #The name of column with the result of each test on each pooled sample
   PoolSize <- enquo(PoolSize) #The name of the column with number of bugs in each pool
   group_var <- enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
   if(length(group_var) == 0){ #if there are no grouping variables
     options(mc.cores = parallel::detectCores())
-    sdata <- list(N = dim(data)[1],
-                  Result = as.array(as.matrix(dplyr::select(data, !! TestResult))[,1]),
+    sdata <- list(N = nrow(data),
+                  Result = as.array(as.matrix(dplyr::select(data, !! TestResult))[,1]), #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
                   PoolSize = as.array(as.matrix(dplyr::select(data, !! PoolSize))[,1])
-    )
+                  )
 
     sfit <- sampling(stanmodels$BayesianPoolScreen,
                      data = sdata,
                      pars = c('p'),
                      chains = 4,
-                     iter = 1000)
+                     iter = 2000,
+                     warmup = 1000,
+                     refresh = ifelse(verbose,200,0))
     LogLikPrev = function(p,Result,PoolSize,goal=0){
       sum(log(Result + (-1)^Result * (1-p)^PoolSize)) - goal
     }
@@ -56,9 +59,9 @@ PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05){
     LogLikDiff <- qchisq(1-alpha, df = 1)/2
 
     out <- summary(sfit,probs = c(alpha/2,1-alpha/2))$summary["p",] %>% t() %>% as.data.frame()
-    print(out)
-    #Calculate the Maximum likelihood estimate -- this is exactly zero if all the pools are negative
-    if(sum(sdata$Result)){
+
+    #Calculate the Maximum likelihood estimate -- this is exactly zero if all the pools are negative or positive
+    if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){ #if there is at least one positive and one negative result
       out$MLE <- optimizing(attr(sfit,"stanmodel"),sdata)$par["p"]
       out$`LR-CI Lower` <- uniroot(LogLikPrev,
                                    c(0,out$MLE),
@@ -74,7 +77,17 @@ PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05){
                                    Result= sdata$Result,
                                    PoolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
-    }else{
+    }else if(all(as.logical(sdata$Result))){ #If all tests are positive
+      out$MLE <- 1
+      out$`LR-CI Lower` <- uniroot(LogLikPrev,
+                                   c(0,1),
+                                   goal = -LogLikDiff, # the version we would use if we let users supply confidence
+                                   #goal = -1.92, # When all results are positive, the original Poolscreen uses this (more expected) value for the logliklihood difference (1.92) for a 95% confidence interval
+                                   Result= sdata$Result,
+                                   PoolSize= sdata$PoolSize,
+                                   tol = 1e-10)$root
+      out$`LR-CI Upper` <- 1
+    }else{ #if all tests are negative
       out$MLE <- 0
       out$`LR-CI Lower` <- 0
       out$`LR-CI Upper` <- uniroot(LogLikPrev,
@@ -101,7 +114,7 @@ PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05){
   }else{ #if there are grouping variables the function calls itself iteratively on each group
     out <- data %>%
       group_by(!!! group_var) %>%
-      do(PoolPrev(.,!! TestResult,!! PoolSize)) %>%
+      do(PoolPrev(.,!! TestResult,!! PoolSize,alpha=alpha,verbose = verbose)) %>%
       as.data.frame()
   }
   out

@@ -4,7 +4,7 @@
 \alias{PoolPrev}
 \title{Estimation of prevalence based on results of tests on pooled samples}
 \usage{
-PoolPrev(data, TestResult, PoolSize, ..., alpha = 0.05)
+PoolPrev(data, TestResult, PoolSize, ..., alpha = 0.05, verbose = F)
 }
 \arguments{
 \item{TestResult}{The name of column with the result of each test on each pooled sample}
@@ -14,9 +14,11 @@ PoolPrev(data, TestResult, PoolSize, ..., alpha = 0.05)
 \item{...}{Optional name(s) of columns with variables to group the data by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence. If included prevalence is estimated spearately for each group defined by these columns}
 
 \item{alpha}{The confidence level to be used for the confidence and credible intervals. Defaults to 0.5\% (i.e. 95\% intervals)}
+
+\item{verbose}{Logical indicating whether to print progress to screen. Defaults to false (no printing to screen)}
 }
 \value{
-A dataframe with columns:
+A data.frame with columns:
 \itemize{
  \item{MLE (the Maximum Likleihood Estimate of prevelance)}
  \item{LR-CI Lower and LR-CI Upper (Lower and Upper Confidence intervals using the Likelihood Ratio method)}
