@@ -17,7 +17,7 @@ Start by loading the package:
 library(PoolTestR)
 ```
 
-Now it's time to load up your data into R using read.csv() or a similar function. For this example we'll be making a fake dataset. Our fake dataset is from 4 locations ("A","B","C","D") and 3 different dates ("2000/1/1","2001/1/1","2002/1/1"). We've taken a different number of pooled samples from each location and time period. The number of of specimiens/isolates/insect in each pool can be different. In our case there will be betwee 1 and 10 (there's no upper limit in practice). 
+Now it's time to load up your data into R using read.csv() or a similar function. For this example we'll be making a fake dataset. Our fake dataset is from 4 locations ("A","B","C","D") and 3 different dates (2000/1/1, 2001/1/1, 2002/1/1). We've taken a different number of pooled samples from each location and time period. The number of of specimiens/isolates/insects in each pool can be different. In our case there will be betwee 1 and 10 (there's no upper limit in practice). 
 
 ```R
 
@@ -38,12 +38,12 @@ PrevWholeDataset <- PoolPrev(Data, Result,NumInPool)
 
 PrevWholeDataset # This contains both a maximum likelihood and a Bayesian (uniform prior) estimate of prevalence for the whole dataset
 ```
-If we want to estimate prevalence seperately for each location we simply add the name of the column in the dataset holding the location (in our case Place) data as an extra argument
+If we want to estimate prevalence seperately for each location we simply add the name of the column in the dataset holding the location the sample was taken from (in our case, Place) as an extra argument
 ```R
 PrevByLocation <- PoolPrev(Data, Result,NumInPool,Place)
 PrevByLocation # This contains estimates for every location in the dataset
 ```
-Similarly if we want to estimate prevalence seperately for each time we simply add the name of the column in the dataset holding the time (in our case Date) data to the end:
+Similarly if we want to estimate prevalence seperately for each time we simply add the name of the column in the dataset holding the time the sample taken (in our case, Date) as an extra argument
 ```R
 PrevByTime <- PoolPrev(Data, Result,NumInPool,Date)
 PrevByTime # This contains estimates for every time in the dataset
@@ -53,6 +53,6 @@ Finally if we want to estimate prevalence seperately for each time AND place we 
 PrevByLocationAndTime <- PoolPrev(Data, Result,NumInPool,Place,Date)
 PrevByLocationAndTime # This contains estimates for every time and location in the dataset
 ```
-If we had more varaibles we wanted to group the data by (e.g. Gender or Species) we could keep on adding the appropriate column names. There is no limit to the number of columns we can group our data by. But remember that the more groups you split your data into, the smaller your groups will be and so confidence intervals and credible intervals will get wider. 
+If we had more varaibles we wanted to group the data by (e.g. gender, species, age...) we could keep on adding the appropriate column names to the function call. There is no limit to the number of columns we can group our data by. But remember that the more groups you split your data into, the fewer samples in each group which can lead to wider confidence/credible intervals. 
 
 ```
