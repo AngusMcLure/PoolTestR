@@ -1,12 +1,12 @@
 Package: PoolTestR
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Tools for Working with Pooled Samples.
+Version: 0.0.0.1
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Angus",
+           family = "McLure",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           email = "angus.mclure@anu.edu.au",
+           comment = c(ORCID = "0000-0003-2551-3059"))
 Description: What the package does (one paragraph).
 License: What license it uses
 Encoding: UTF-8
