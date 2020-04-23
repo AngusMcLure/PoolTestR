@@ -54,5 +54,3 @@ PrevByLocationAndTime <- PoolPrev(Data, Result,NumInPool,Place,Date)
 PrevByLocationAndTime # This contains estimates for every time and location in the dataset
 ```
 If we had more varaibles we wanted to group the data by (e.g. gender, species, age...) we could keep on adding the appropriate column names to the function call. There is no limit to the number of columns we can group our data by. But remember that the more groups you split your data into, the fewer samples in each group which can lead to wider confidence/credible intervals. 
-
-```
