@@ -29,15 +29,20 @@ Data <- data.frame(Place = sample(c("A","B","C","D"),1000, replace = T),
                    )
 head(Data) #Have a look at the form the data takes.                   
 ```
-Now that we some data we begin by estimating the prevalence across the whole dataset i.e. a single prevalence for all locations and times
+Now that we some data we begin by estimating the prevalence across the whole dataset i.e. a single prevalence across all locations and times
 
 ```R
-# First argument is the data (in our case Data), the second argument is the name of the column in the data containing the result of the test (in our case Result). This column must be 0 for negative pool test and 1 for a positive pool test and does not accept missing values. The third argument is the name of the column with the number of specimiens/isolates/insect in each pool
+# First argument is the data (in our case Data).
+# The second argument is the name of the column in the data containing the result of the test (in our case Result):
+# this column must be 0 for negative pool test and 1 for a positive pool test and does not accept missing values.
+# The third argument is the name of the column with the number of specimiens/isolates/insect in each pool
 
 PrevWholeDataset <- PoolPrev(Data, Result,NumInPool)
 
-PrevWholeDataset # This contains both a maximum likelihood and a Bayesian (uniform prior) estimate of prevalence for the whole dataset
+PrevWholeDataset 
 ```
+The output contains a maximum likelihood estimate of the prevalece with 95% Confidence intervals and a Bayesian (uniform prior) estimate of prevalence with 95 credible intervals. It also contains the total number of pools and the number of these that were positive.
+
 If we want to estimate prevalence seperately for each location we simply add the name of the column in the dataset holding the location the sample was taken from (in our case, Place) as an extra argument
 ```R
 PrevByLocation <- PoolPrev(Data, Result,NumInPool,Place)
