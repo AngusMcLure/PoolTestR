@@ -41,7 +41,7 @@ PrevWholeDataset <- PoolPrev(Data, Result,NumInPool)
 
 PrevWholeDataset 
 ```
-The output contains a maximum likelihood estimate of the prevalece with 95% Confidence intervals and a Bayesian (uniform prior) estimate of prevalence with 95 credible intervals. It also contains the total number of pools and the number of these that were positive.
+The output contains a maximum likelihood estimate of the prevalece with 95% confidence intervals and a Bayesian (uniform prior) estimate of prevalence with 95% credible intervals. It also contains the total number of pools and the number of these that were positive.
 
 If we want to estimate prevalence seperately for each location we simply add the name of the column in the dataset holding the location the sample was taken from (in our case, Place) as an extra argument
 ```R
