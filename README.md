@@ -3,7 +3,7 @@ Tools for working with pooled samples inspired by PoolScreen. The package is cur
 
 ## Installation
 
-PoolTestR is not currently available from CRAN, but you can install it from github with the following command in R (this will probably produce a lot of warning messages - these are related to the compilation of stan source code and I unfortunately cannot stop these messages) :
+PoolTestR is not currently available from CRAN, but you can install it from github with the following command in R (this will probably produce a lot of warning messages - these are related to the compilation of stan source code and I unfortunately cannot stop them for you) :
 
 ```R
 install.packages("devtools") #you can skip this if you already have devtools installed
