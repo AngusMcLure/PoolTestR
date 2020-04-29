@@ -1,21 +1,27 @@
 Package: PoolTestR
-Title: Tools for Working with Pooled Samples.
+Title: Tools for Working with Pooled Samples
 Version: 0.0.0.1
-Authors@R: 
-    person(given = "Angus",
+Authors@R: person(given = "Angus",
            family = "McLure",
            role = c("aut", "cre"),
            email = "angus.mclure@anu.edu.au",
            comment = c(ORCID = "0000-0003-2551-3059"))
-Description: What the package does (one paragraph).
-License: What license it uses
+Description: Tools for working with pooled samples inspired by PoolScreen.
+    The package is currently in early stages.
+    Currently the package only has core functionally, however more features are planned or in the works:
+    e.g. adjustments for imperfect test specificity/sensitivity;
+    functions for helping with optimal experimental design;
+    functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time.
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Biarch: true
 Depends: 
     R (>= 3.4.0)
 Imports: 
+    dplyr,
     methods,
+    parallel,
     Rcpp (>= 0.12.0),
     rstan (>= 2.18.1),
     rstantools (>= 2.0.0)

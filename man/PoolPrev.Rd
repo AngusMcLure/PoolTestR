@@ -2,34 +2,63 @@
 % Please edit documentation in R/PoolTestR.R
 \name{PoolPrev}
 \alias{PoolPrev}
-\title{Estimation of prevalence based on results of tests on pooled samples}
+\title{Estimation of prevalence based on presence/absence tests on pooled samples}
 \usage{
 PoolPrev(data, TestResult, PoolSize, ..., alpha = 0.05, verbose = F)
 }
 \arguments{
-\item{TestResult}{The name of column with the result of each test on each pooled sample}
+\item{data}{A \code{data.frame} with one row for each pooled sampled and columns for
+the size of the pool (i.e. the number of specimens / isolates / insects
+pooled to make that particular pool), the result of the test of the pool.
+It may also contain additional columns with additional information (e.g.
+location where pool was taken) which can optionally be used for splitting
+the data into smaller groups and calculting prevalence by group (e.g.
+calculating prevalence for each location)}
 
-\item{PoolSize}{The name of the column with number of bugs in each pool}
+\item{TestResult}{The name of column with the result of each test on each pooled sample.
+The result must be stored with 1 indicating a positive test result and
+0 indicating a negative test result.}
 
-\item{...}{Optional name(s) of columns with variables to group the data by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence. If included prevalence is estimated spearately for each group defined by these columns}
+\item{PoolSize}{The name of the column with number of specimens/isolates/insects in each pool}
+
+\item{...}{Optional name(s) of columns with variables to group the data by.
+If ommitted the complete dataset is used to estimate a single prevalence.
+If included prevalence is estimated spearately for each group defined by these columns}
 
 \item{alpha}{The confidence level to be used for the confidence and credible intervals. Defaults to 0.5\% (i.e. 95\% intervals)}
 
 \item{verbose}{Logical indicating whether to print progress to screen. Defaults to false (no printing to screen)}
 }
 \value{
-A data.frame with columns:
+A \code{data.frame} with columns:
 \itemize{
- \item{MLE (the Maximum Likleihood Estimate of prevelance)}
- \item{LR-CI Lower and LR-CI Upper (Lower and Upper Confidence intervals using the Likelihood Ratio method)}
- \item{Bayesian Posterior Expectation}
- \item{Bayesian CI Lower and Bayesian CI Upper}
- \item{Number of Pools}
- \item{Number Positive}
+ \item{\code{MLE} (the Maximum Likleihood Estimate of prevelance)}
+ \item{\code{LR-CI Lower} and \code{LR-CI Upper} (Lower and Upper Confidence intervals using the Likelihood Ratio method)}
+ \item{\code{Bayesian Posterior Expectation}}
+ \item{\code{Bayesian CI Lower} and \code{Bayesian CI Upper}}
+ \item{\code{Number of Pools}}
+ \item{\code{Number Positive}}
 }
-When there are no grouping variables (supplied in ...) then the dataframe has only one row with the prevalence estimates for the whole dataset.
-When grouping varaibles are supplied, then there is a seperate row for each group.
+If grouping variables are provided in \code{...} there will be an additional column for each grouping variable.
+When there are no grouping variables (supplied in \code{...}) then the dataframe has only one row with the prevalence estimates for the whole dataset.
+When grouping variables are supplied, then there is a seperate row for each group.
 }
 \description{
-Estimation of prevalence based on results of tests on pooled samples
+Estimation of prevalence based on presence/absence tests on pooled samples
+}
+\examples{
+#Build a fake dataset with 1000 pools taken from 4 different locations and 3 different times
+Data <- data.frame(Place = sample(c("A","B","C","D"),1000, replace = TRUE),
+                   Date = sample(as.Date(c("2000/1/1","2001/1/1","2002/1/1")),1000, replace = TRUE),
+                   NumInPool = sample(1:10,1000, replace = TRUE),
+                   Result = sample(0:1,1000,replace = TRUE)
+                   )
+#Prevalence across the whole (fake) dataset
+PoolPrev(Data, Result,NumInPool)
+#Prevalence at each location
+PoolPrev(Data, Result,NumInPool,Place)
+#Prevalence for each time period
+PoolPrev(Data, Result,NumInPool,Date)
+#Prevalence for each combination of location and time period
+PoolPrev(Data, Result,NumInPool,Place,Date)
 }

@@ -1,6 +1,13 @@
 #' The 'PoolTestR' package.
 #'
-#' @description Tools for working with pooled samples. Currently in early stages. Inspired by PoolScreen. Currently only has basic functionally reproducing PoolScreen functionality for R, however more features are planned or in the works: e.g. adjustments for imperfect test specificity/sensitivity; functions for helping with optimal experimental design; functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time
+#' @description Tools for working with pooled samples.
+#'     Currently in early stages.
+#'     Inspired by PoolScreen.
+#'     Currently only has basic functionally reproducing PoolScreen functionality for R, however more features are planned or in the works:
+#'     e.g. adjustments for imperfect test specificity/sensitivity;
+#'     functions for helping with optimal experimental design;
+#'     functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time.
+#'     Uses rstan to do bayesian prevalence estiamtes
 #'
 #' @docType package
 #' @name PoolTestR-package
@@ -10,6 +17,9 @@
 #' @import methods
 #' @import Rcpp
 #' @import rstan
+#' @importFrom stats qchisq uniroot
+#' @importFrom parallel detectCores
+
 #'
 #' @references
 #' Stan Development Team (2019). RStan: the R interface to Stan. R package version 2.19.2. https://mc-stan.org
