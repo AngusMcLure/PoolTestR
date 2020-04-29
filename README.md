@@ -3,8 +3,25 @@ Tools for working with pooled samples inspired by PoolScreen. The package is cur
 
 ## Installation
 
-PoolTestR is not currently available from CRAN, but you can install it from github with the following command in R (this will probably produce a lot of warning messages - these are related to the compilation of stan source code and I unfortunately cannot stop them for you) :
+PoolTestR is not currently available from CRAN, but you can install it from github. Thankfully this can be done easily from within R.
 
+### Windows only
+If you are installing onto a windows machine you may need to adjust some settings in your Makevars file so that you can compile the package. If you regularly install R packages from source and are comfortable configuring this yourself, see [this link](https://github.com/stan-dev/rstan/wiki/Installing-RStan-from-source-on-Windows) for tips on how to do thus. Otherwise, just copy-paste and run the following code in R:
+
+```R
+dotR <- file.path(Sys.getenv("HOME"), ".R")
+if (!file.exists(dotR)) dir.create(dotR)
+M <- file.path(dotR, "Makevars.win")
+if (!file.exists(M)) file.create(M)
+cat("\nCXX14FLAGS=-O3 -march=corei7 -mtune=corei7",
+    "CXX14 = $(BINPREF)g++ -m$(WIN) -std=c++1y",
+    "CXX11FLAGS=-O3 -march=corei7 -mtune=corei7",
+    file = M, sep = "\n", append = TRUE)
+```
+You should now be able to proceed with the rest of the installation.
+
+### All operating systems
+The following commands in R should now install the package: (This will probably produce a lot of warning messages - these are related to the compilation of stan source code and I unfortunately cannot stop them for you)
 ```R
 install.packages("devtools") #you can skip this if you already have devtools installed
 devtools::install_github("AngusMcLure/PoolTestR")
@@ -12,12 +29,12 @@ devtools::install_github("AngusMcLure/PoolTestR")
 
 ## Usage
 
-Start by loading the package (if this doesn't work this means you were unable to install the pacakge. Please let me know if this happens for you):
+Start by loading the package: (If this doesn't work this means you were unable to install the package. Please let [me](mailto:angus.mclure@anu.edu.au) know if this happens for you)
 ```R
 library(PoolTestR)
 ```
 
-Now it's time to load up your data into R using read.csv() or a similar function. For this example we'll be making a fake dataset. Our fake dataset is from 4 locations (A, B, C, D) and 3 different dates (2000/1/1, 2001/1/1, 2002/1/1). We've taken a different number of pooled samples from each location and time period. The number of of specimiens/isolates/insects in each pool can be different. In our case there will be betwee 1 and 10 (there's no upper limit in practice). 
+Now it's time to load up your data into R using read.csv() or a similar function. For this example we'll be making a fake dataset. Our fake dataset is from 4 locations (A, B, C, D) and 3 different dates (2000/1/1, 2001/1/1, 2002/1/1). We've taken a different number of pooled samples from each location and time period. The number of of specimiens/isolates/insects in each pool can be different. In our case there will be between 1 and 10 (there's no upper limit in practice). 
 
 ```R
 
