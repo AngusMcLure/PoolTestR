@@ -13,7 +13,7 @@ transformed parameters{
   }
 }
 model{
-  p ~ beta_lpdf(1,1);
-  Result ~ bernoulli_lpmf(ps);
+  p ~ beta(1,1);
+  Result ~ bernoulli(ps);
 }
 

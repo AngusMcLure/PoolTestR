@@ -212,9 +212,9 @@ public:
             }
             // model body
             current_statement_begin__ = 16;
-            lp_accum__.add(beta_log(p, 1, 1));
+            lp_accum__.add(beta_log<propto__>(p, 1, 1));
             current_statement_begin__ = 17;
-            lp_accum__.add(bernoulli_log(Result, ps));
+            lp_accum__.add(bernoulli_log<propto__>(Result, ps));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
             // Next line prevents compiler griping about no return
