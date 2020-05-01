@@ -8,13 +8,13 @@ using namespace Rcpp;
 
 
 RcppExport SEXP _rcpp_module_boot_stan_fit4BayesianPoolScreen_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4BayesianPoolScreenGeneralised_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4PooledLogisticRegression_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4PooledLogisticRegressionBinom_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_stan_fit4BayesianPoolScreen_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4BayesianPoolScreen_mod, 0},
-    {"_rcpp_module_boot_stan_fit4BayesianPoolScreenGeneralised_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4BayesianPoolScreenGeneralised_mod, 0},
     {"_rcpp_module_boot_stan_fit4PooledLogisticRegression_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4PooledLogisticRegression_mod, 0},
+    {"_rcpp_module_boot_stan_fit4PooledLogisticRegressionBinom_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4PooledLogisticRegressionBinom_mod, 0},
     {NULL, NULL, 0}
 };
 
