@@ -32,3 +32,32 @@ TBC
 \description{
 Logistic regression with presence/absence tests on pooled samples
 }
+\examples{
+
+#Same synthetic data with four locations (A-D) and three sampling years (0-2)
+#Locations A-C have different baseline prevalences.
+#Prevalence at D = Prevalence at A.
+#All locations have the same expoential growth rate, -0.5, i.e. falling prevalence
+
+N <- 5000
+DataTrend <- data.frame(Place = sample(c("A","B","C","D"),N, replace = T),
+                        Year = sample(c(0:2), N, replace = T),
+                        NumInPool = sample(25:30, N, replace = T)
+                        )
+BasePrev <- c(A = 0.1, B = 0.05, C = 0.02, D = 0.1) #The baseline prevalences at each location
+GrowthRate = -0.5 #The (negative) growth rate
+#Calculate the true prevalence at each time and place
+DataTrend$TruePrev <- with(DataTrend,
+                          BasePrev[Place] * exp(GrowthRate*(Year-min(Year))))
+#Simulate some pooled samples from each location
+DataTrend$Result <- with(DataTrend,
+                         runif(N) < 1-(1-TruePrev)^NumInPool)
+
+#Calculate the prevalence at each location and timepoint
+Prevs <- PoolPrev(DataTrend,Result,NumInPool,Place,Year)
+Prevs
+
+#Perform logistic regression with explanatory variables Place and Year
+Reg <- PooledLogitRegression(DataTrend,"NumInPool",Result ~ Year + Place)
+Reg$OR
+}
