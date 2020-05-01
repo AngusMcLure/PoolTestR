@@ -95,6 +95,10 @@ PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05,verbose = F){
 
     #Calculate the Maximum likelihood estimate -- this is exactly zero if all the pools are negative or positive
     if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){ #if there is at least one positive and one negative result
+
+      # 'optimizing' from stan actaully maximizes the joint posterior, not the likelihood,
+      # but since we are using a uniform prior they are equivalent. However, with an alternate prior,
+      # they would not be the same, so be careful!
       out$MLE <- optimizing(attr(sfit,"stanmodel"),sdata)$par["p"]
       out[,'LR-CI Lower'] <- uniroot(LogLikPrev,
                                    c(0,out$MLE),

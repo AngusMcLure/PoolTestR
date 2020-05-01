@@ -19,7 +19,8 @@
 #' @import rstan
 #' @importFrom stats qchisq uniroot
 #' @importFrom parallel detectCores
-
+#' @importFrom tidyr unite
+#' @importFrom vcd structable
 #'
 #' @references
 #' Stan Development Team (2019). RStan: the R interface to Stan. R package version 2.19.2. https://mc-stan.org
