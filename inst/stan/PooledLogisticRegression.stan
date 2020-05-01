@@ -19,7 +19,6 @@ transformed data{
     }
   }
   RegMM = diag_post_multiply(MM - rep_matrix(r,N),R);
-  print(RegMM)
 }
 parameters {
   vector[A] RegAlpha; //regularised regression parameters
