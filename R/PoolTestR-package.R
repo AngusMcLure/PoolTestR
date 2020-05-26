@@ -3,11 +3,11 @@
 #' @description Tools for working with pooled samples.
 #'     Currently in early stages.
 #'     Inspired by PoolScreen.
+#'     Uses rstan to do bayesian prevalence estimates
 #'     Currently only has basic functionally reproducing PoolScreen functionality for R, however more features are planned or in the works:
 #'     e.g. adjustments for imperfect test specificity/sensitivity;
 #'     functions for helping with optimal experimental design;
 #'     functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time.
-#'     Uses rstan to do bayesian prevalence estiamtes
 #'
 #' @docType package
 #' @name PoolTestR-package
@@ -17,7 +17,7 @@
 #' @import methods
 #' @import Rcpp
 #' @import rstan
-#' @importFrom stats qchisq uniroot
+#' @importFrom stats qchisq uniroot quantile model.matrix quantile na.omit terms reformulate
 #' @importFrom parallel detectCores
 #' @importFrom tidyr unite
 #' @importFrom vcd structable

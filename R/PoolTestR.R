@@ -18,8 +18,8 @@
 #' @param prior.alpha,prior.beta,prior.absent The prior on the prevalence in each group takes the
 #'        form of beta distribution (with parameters alpha and beta) modified to have a point mass of zero
 #'        i.e. allowing for some prior proability that the true prevalence is exactly zero (prior.absent)
-#'        The default is \code{prior.alpha = prior.beta = 0, prior.absent = 0} i.e. an uninformative uniform prior.
-#'        Another popular uninformative choice is \code{prior.alpha = prior.beta = 0.5}.
+#'        The default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0} i.e. the uninformative "Jeffrey's" prior
+#'        Another popular uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e. a uniform prior.
 #' @param alpha The confidence level to be used for the confidence and credible intervals. Defaults to 0.5\% (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen. Defaults to false (no printing to screen)
 #' @return A \code{data.frame} with columns:
@@ -51,12 +51,9 @@
 #' #Prevalence for each combination of location and time period
 #' PoolPrev(Data, Result,NumInPool,Place,Date)
 
-
-
 PoolPrev <- function(data,TestResult,PoolSize,...,
                      prior.alpha = 0.5, prior.beta = 0.5, prior.absent = 0,
-                     alpha=0.05,
-                     verbose = F){
+                     alpha=0.05, verbose = F){
   TestResult <- enquo(TestResult) #The name of column with the result of each test on each pooled sample
   PoolSize <- enquo(PoolSize) #The name of the column with number of bugs in each pool
   group_var <- enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
@@ -97,8 +94,6 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
     }
 
     # This is the log-likelihood difference used to calculate Likelihood ratio confidence intervals
-    # Currently not used (as we are trying to reproduce the original PoolScreen's odd behaviour)
-    # but we could uncomment below if we want users to supply confidence level (alpha)
     LogLikDiff <- qchisq(1-alpha, df = 1)/2
 
 
@@ -108,9 +103,13 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
       out[,'Bayesian CI Lower'] <- quantile(sfit,alpha/2)
       out[,'Bayesian CI Upper'] <- quantile(sfit,1-alpha/2)
       out$ProbAbsent <- ifelse(prior.absent,0,NA)
+
+      # calculate maximum likelihood estimate
       # 'optimizing' from stan actaully maximizes the joint posterior, not the likelihood,
-      # but if use a uniform prior they are equivalent
+      # but if we use a uniform prior they are equivalent
       MLEdata <- sdata
+      MLEdata$PriorAlpha <- 1
+      MLEdata$PriorBeta  <- 1
       out$MLE <- optimizing(stanmodels$BayesianPoolScreen,MLEdata)$par["p"]
 
 
@@ -180,11 +179,12 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
   }else{ #if there are grouping variables the function calls itself iteratively on each group
     out <- data %>%
       group_by(!!! group_var) %>%
-      do(PoolPrev(.,!! TestResult,!! PoolSize,
-                  alpha=alpha,verbose = verbose,
-                  prior.absent = prior.absent,
-                  prior.alpha = prior.alpha,
-                  prior.beta = prior.beta)) %>%
+      group_modify(function(x,...){
+        PoolPrev(x,!! TestResult,!! PoolSize,
+                 alpha=alpha,verbose = verbose,
+                 prior.absent = prior.absent,
+                 prior.alpha = prior.alpha,
+                 prior.beta = prior.beta)}) %>%
       as.data.frame()
     cat("\n")
   }

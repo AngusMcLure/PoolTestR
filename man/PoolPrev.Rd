@@ -38,8 +38,8 @@ If included prevalence is estimated spearately for each group defined by these c
 \item{prior.alpha, prior.beta, prior.absent}{The prior on the prevalence in each group takes the
 form of beta distribution (with parameters alpha and beta) modified to have a point mass of zero
 i.e. allowing for some prior proability that the true prevalence is exactly zero (prior.absent)
-The default is \code{prior.alpha = prior.beta = 0, prior.absent = 0} i.e. an uninformative uniform prior.
-Another popular uninformative choice is \code{prior.alpha = prior.beta = 0.5}.}
+The default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0} i.e. the uninformative "Jeffrey's" prior
+Another popular uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e. a uniform prior.}
 
 \item{alpha}{The confidence level to be used for the confidence and credible intervals. Defaults to 0.5\% (i.e. 95\% intervals)}
 

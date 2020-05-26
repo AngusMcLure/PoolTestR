@@ -33,7 +33,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_PooledLogisticRegression");
-    reader.add_event(43, 41, "end", "model_PooledLogisticRegression");
+    reader.add_event(42, 40, "end", "model_PooledLogisticRegression");
     return reader;
 }
 #include <stan_meta_header.hpp>
@@ -178,16 +178,11 @@ public:
             }
             current_statement_begin__ = 21;
             stan::math::assign(RegMM, diag_post_multiply(subtract(MM, rep_matrix(r, N)), R));
-            current_statement_begin__ = 22;
-            if (pstream__) {
-                stan_print(pstream__,RegMM);
-                *pstream__ << std::endl;
-            }
             // validate transformed data
             // validate, set parameter ranges
             num_params_r__ = 0U;
             param_ranges_i__.clear();
-            current_statement_begin__ = 25;
+            current_statement_begin__ = 24;
             validate_non_negative_index("RegAlpha", "A", A);
             num_params_r__ += A;
         } catch (const std::exception& e) {
@@ -207,7 +202,7 @@ public:
         (void) pos__; // dummy call to supress warning
         std::vector<double> vals_r__;
         std::vector<int> vals_i__;
-        current_statement_begin__ = 25;
+        current_statement_begin__ = 24;
         if (!(context__.contains_r("RegAlpha")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable RegAlpha missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("RegAlpha");
@@ -249,7 +244,7 @@ public:
         try {
             stan::io::reader<local_scalar_t__> in__(params_r__, params_i__);
             // model parameters
-            current_statement_begin__ = 25;
+            current_statement_begin__ = 24;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> RegAlpha;
             (void) RegAlpha;  // dummy to suppress unused var warning
             if (jacobian__)
@@ -257,21 +252,21 @@ public:
             else
                 RegAlpha = in__.vector_constrain(A);
             // transformed parameters
-            current_statement_begin__ = 28;
+            current_statement_begin__ = 27;
             validate_non_negative_index("p", "N", N);
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> p(N);
             stan::math::initialize(p, DUMMY_VAR__);
             stan::math::fill(p, DUMMY_VAR__);
             stan::math::assign(p,inv_logit(multiply(RegMM, RegAlpha)));
-            current_statement_begin__ = 29;
+            current_statement_begin__ = 28;
             validate_non_negative_index("ps", "N", N);
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> ps(N);
             stan::math::initialize(ps, DUMMY_VAR__);
             stan::math::fill(ps, DUMMY_VAR__);
             // transformed parameters block statements
-            current_statement_begin__ = 30;
+            current_statement_begin__ = 29;
             for (int n = 1; n <= N; ++n) {
-                current_statement_begin__ = 31;
+                current_statement_begin__ = 30;
                 stan::model::assign(ps, 
                             stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list()), 
                             (1 - pow((1 - get_base1(p, n, "p", 1)), get_base1(PoolSize, n, "PoolSize", 1))), 
@@ -280,7 +275,7 @@ public:
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 28;
+            current_statement_begin__ = 27;
             size_t p_j_1_max__ = N;
             for (size_t j_1__ = 0; j_1__ < p_j_1_max__; ++j_1__) {
                 if (stan::math::is_uninitialized(p(j_1__))) {
@@ -291,7 +286,7 @@ public:
             }
             check_greater_or_equal(function__, "p", p, 0);
             check_less_or_equal(function__, "p", p, 1);
-            current_statement_begin__ = 29;
+            current_statement_begin__ = 28;
             size_t ps_j_1_max__ = N;
             for (size_t j_1__ = 0; j_1__ < ps_j_1_max__; ++j_1__) {
                 if (stan::math::is_uninitialized(ps(j_1__))) {
@@ -303,9 +298,9 @@ public:
             check_greater_or_equal(function__, "ps", ps, 0);
             check_less_or_equal(function__, "ps", ps, 1);
             // model body
-            current_statement_begin__ = 35;
+            current_statement_begin__ = 34;
             lp_accum__.add(normal_log<propto__>(RegAlpha, 0, 1));
-            current_statement_begin__ = 36;
+            current_statement_begin__ = 35;
             lp_accum__.add(bernoulli_log<propto__>(Result, ps));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -375,21 +370,21 @@ public:
         if (!include_tparams__ && !include_gqs__) return;
         try {
             // declare and define transformed parameters
-            current_statement_begin__ = 28;
+            current_statement_begin__ = 27;
             validate_non_negative_index("p", "N", N);
             Eigen::Matrix<double, Eigen::Dynamic, 1> p(N);
             stan::math::initialize(p, DUMMY_VAR__);
             stan::math::fill(p, DUMMY_VAR__);
             stan::math::assign(p,inv_logit(multiply(RegMM, RegAlpha)));
-            current_statement_begin__ = 29;
+            current_statement_begin__ = 28;
             validate_non_negative_index("ps", "N", N);
             Eigen::Matrix<double, Eigen::Dynamic, 1> ps(N);
             stan::math::initialize(ps, DUMMY_VAR__);
             stan::math::fill(ps, DUMMY_VAR__);
             // do transformed parameters statements
-            current_statement_begin__ = 30;
+            current_statement_begin__ = 29;
             for (int n = 1; n <= N; ++n) {
-                current_statement_begin__ = 31;
+                current_statement_begin__ = 30;
                 stan::model::assign(ps, 
                             stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list()), 
                             (1 - pow((1 - get_base1(p, n, "p", 1)), get_base1(PoolSize, n, "PoolSize", 1))), 
@@ -399,10 +394,10 @@ public:
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 28;
+            current_statement_begin__ = 27;
             check_greater_or_equal(function__, "p", p, 0);
             check_less_or_equal(function__, "p", p, 1);
-            current_statement_begin__ = 29;
+            current_statement_begin__ = 28;
             check_greater_or_equal(function__, "ps", ps, 0);
             check_less_or_equal(function__, "ps", ps, 1);
             // write transformed parameters
@@ -418,20 +413,20 @@ public:
             }
             if (!include_gqs__) return;
             // declare and define generated quantities
-            current_statement_begin__ = 39;
+            current_statement_begin__ = 38;
             validate_non_negative_index("Alpha", "A", A);
             Eigen::Matrix<double, Eigen::Dynamic, 1> Alpha(A);
             stan::math::initialize(Alpha, DUMMY_VAR__);
             stan::math::fill(Alpha, DUMMY_VAR__);
             stan::math::assign(Alpha,elt_multiply(R, RegAlpha));
             // generated quantities statements
-            current_statement_begin__ = 40;
+            current_statement_begin__ = 39;
             stan::model::assign(Alpha, 
                         stan::model::cons_list(stan::model::index_uni(1), stan::model::nil_index_list()), 
                         (get_base1(Alpha, 1, "Alpha", 1) - multiply(stan::model::rvalue(r, stan::model::cons_list(stan::model::index_min_max(2, A), stan::model::nil_index_list()), "r"), stan::model::rvalue(RegAlpha, stan::model::cons_list(stan::model::index_min_max(2, A), stan::model::nil_index_list()), "RegAlpha"))), 
                         "assigning variable Alpha");
             // validate, write generated quantities
-            current_statement_begin__ = 39;
+            current_statement_begin__ = 38;
             size_t Alpha_j_1_max__ = A;
             for (size_t j_1__ = 0; j_1__ < Alpha_j_1_max__; ++j_1__) {
                 vars__.push_back(Alpha(j_1__));
