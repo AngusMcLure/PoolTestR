@@ -18,16 +18,15 @@
 #' @return TBC
 #'
 #' @examples
-#'
-#' #Same synthetic data with four locations (A-D) and three sampling years (0-2)
+#' #Create a synthetic dataset of prevalence in different times and places
 #' #Locations A-C have different baseline prevalences.
 #' #Prevalence at D = Prevalence at A.
 #' #All locations have the same expoential growth rate, -0.5, i.e. falling prevalence
 #'
-#' N <- 5000
-#' DataTrend <- data.frame(Place = sample(c("A","B","C","D"),N, replace = T),
-#'                         Year = sample(c(0:2), N, replace = T),
-#'                         NumInPool = sample(25:30, N, replace = T)
+#' N <- 500
+#' DataTrend <- data.frame(Place = sample(c("A","B","C","D"),N, replace = TRUE),
+#'                         Year = sample(c(0:2), N, replace = TRUE),
+#'                         NumInPool = sample(25:30, N, replace = TRUE)
 #'                         )
 #' BasePrev <- c(A = 0.1, B = 0.05, C = 0.02, D = 0.1) #The baseline prevalences at each location
 #' GrowthRate = -0.5 #The (negative) growth rate
@@ -37,11 +36,6 @@
 #' #Simulate some pooled samples from each location
 #' DataTrend$Result <- with(DataTrend,
 #'                          runif(N) < 1-(1-TruePrev)^NumInPool)
-#'
-#' #Calculate the prevalence at each location and timepoint
-#' Prevs <- PoolPrev(DataTrend,Result,NumInPool,Place,Year)
-#' Prevs
-#'
 #' #Perform logistic regression with explanatory variables Place and Year
 #' Reg <- PooledLogitRegression(DataTrend,"NumInPool",Result ~ Year + Place)
 #' Reg$OR

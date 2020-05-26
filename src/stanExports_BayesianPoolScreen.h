@@ -33,7 +33,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_BayesianPoolScreen");
-    reader.add_event(20, 18, "end", "model_BayesianPoolScreen");
+    reader.add_event(22, 20, "end", "model_BayesianPoolScreen");
     return reader;
 }
 #include <stan_meta_header.hpp>
@@ -42,6 +42,8 @@ private:
         int N;
         std::vector<int> Result;
         std::vector<int> PoolSize;
+        double PriorAlpha;
+        double PriorBeta;
 public:
     model_BayesianPoolScreen(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
@@ -108,13 +110,27 @@ public:
             for (size_t i_0__ = 0; i_0__ < PoolSize_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "PoolSize[i_0__]", PoolSize[i_0__], 0);
             }
+            current_statement_begin__ = 5;
+            context__.validate_dims("data initialization", "PriorAlpha", "double", context__.to_vec());
+            PriorAlpha = double(0);
+            vals_r__ = context__.vals_r("PriorAlpha");
+            pos__ = 0;
+            PriorAlpha = vals_r__[pos__++];
+            check_greater_or_equal(function__, "PriorAlpha", PriorAlpha, 0);
+            current_statement_begin__ = 6;
+            context__.validate_dims("data initialization", "PriorBeta", "double", context__.to_vec());
+            PriorBeta = double(0);
+            vals_r__ = context__.vals_r("PriorBeta");
+            pos__ = 0;
+            PriorBeta = vals_r__[pos__++];
+            check_greater_or_equal(function__, "PriorBeta", PriorBeta, 0);
             // initialize transformed data variables
             // execute transformed data statements
             // validate transformed data
             // validate, set parameter ranges
             num_params_r__ = 0U;
             param_ranges_i__.clear();
-            current_statement_begin__ = 7;
+            current_statement_begin__ = 9;
             num_params_r__ += 1;
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -133,7 +149,7 @@ public:
         (void) pos__; // dummy call to supress warning
         std::vector<double> vals_r__;
         std::vector<int> vals_i__;
-        current_statement_begin__ = 7;
+        current_statement_begin__ = 9;
         if (!(context__.contains_r("p")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable p missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("p");
@@ -171,7 +187,7 @@ public:
         try {
             stan::io::reader<local_scalar_t__> in__(params_r__, params_i__);
             // model parameters
-            current_statement_begin__ = 7;
+            current_statement_begin__ = 9;
             local_scalar_t__ p;
             (void) p;  // dummy to suppress unused var warning
             if (jacobian__)
@@ -179,15 +195,15 @@ public:
             else
                 p = in__.scalar_lub_constrain(0, 1);
             // transformed parameters
-            current_statement_begin__ = 10;
+            current_statement_begin__ = 12;
             validate_non_negative_index("ps", "N", N);
             std::vector<local_scalar_t__> ps(N, local_scalar_t__(0));
             stan::math::initialize(ps, DUMMY_VAR__);
             stan::math::fill(ps, DUMMY_VAR__);
             // transformed parameters block statements
-            current_statement_begin__ = 11;
+            current_statement_begin__ = 13;
             for (int n = 1; n <= N; ++n) {
-                current_statement_begin__ = 12;
+                current_statement_begin__ = 14;
                 stan::model::assign(ps, 
                             stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list()), 
                             (1 - pow((1 - p), get_base1(PoolSize, n, "PoolSize", 1))), 
@@ -196,7 +212,7 @@ public:
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 10;
+            current_statement_begin__ = 12;
             size_t ps_k_0_max__ = N;
             for (size_t k_0__ = 0; k_0__ < ps_k_0_max__; ++k_0__) {
                 if (stan::math::is_uninitialized(ps[k_0__])) {
@@ -211,9 +227,9 @@ public:
                 check_less_or_equal(function__, "ps[i_0__]", ps[i_0__], 1);
             }
             // model body
-            current_statement_begin__ = 16;
-            lp_accum__.add(beta_log<propto__>(p, 1, 1));
-            current_statement_begin__ = 17;
+            current_statement_begin__ = 18;
+            lp_accum__.add(beta_log<propto__>(p, PriorAlpha, PriorBeta));
+            current_statement_begin__ = 19;
             lp_accum__.add(bernoulli_log<propto__>(Result, ps));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -271,15 +287,15 @@ public:
         if (!include_tparams__ && !include_gqs__) return;
         try {
             // declare and define transformed parameters
-            current_statement_begin__ = 10;
+            current_statement_begin__ = 12;
             validate_non_negative_index("ps", "N", N);
             std::vector<double> ps(N, double(0));
             stan::math::initialize(ps, DUMMY_VAR__);
             stan::math::fill(ps, DUMMY_VAR__);
             // do transformed parameters statements
-            current_statement_begin__ = 11;
+            current_statement_begin__ = 13;
             for (int n = 1; n <= N; ++n) {
-                current_statement_begin__ = 12;
+                current_statement_begin__ = 14;
                 stan::model::assign(ps, 
                             stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list()), 
                             (1 - pow((1 - p), get_base1(PoolSize, n, "PoolSize", 1))), 
@@ -289,7 +305,7 @@ public:
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 10;
+            current_statement_begin__ = 12;
             size_t ps_i_0_max__ = N;
             for (size_t i_0__ = 0; i_0__ < ps_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "ps[i_0__]", ps[i_0__], 0);

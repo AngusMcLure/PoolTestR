@@ -15,6 +15,11 @@
 #' @param ... Optional name(s) of columns with variables to group the data by.
 #'            If ommitted the complete dataset is used to estimate a single prevalence.
 #'            If included prevalence is estimated spearately for each group defined by these columns
+#' @param prior.alpha,prior.beta,prior.absent The prior on the prevalence in each group takes the
+#'        form of beta distribution (with parameters alpha and beta) modified to have a point mass of zero
+#'        i.e. allowing for some prior proability that the true prevalence is exactly zero (prior.absent)
+#'        The default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0} i.e. the uninformative "Jeffrey's" prior
+#'        Another popular uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e. a uniform prior.
 #' @param alpha The confidence level to be used for the confidence and credible intervals. Defaults to 0.5\% (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen. Defaults to false (no printing to screen)
 #' @return A \code{data.frame} with columns:
@@ -46,9 +51,9 @@
 #' #Prevalence for each combination of location and time period
 #' PoolPrev(Data, Result,NumInPool,Place,Date)
 
-
-
-PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05,verbose = F){
+PoolPrev <- function(data,TestResult,PoolSize,...,
+                     prior.alpha = 0.5, prior.beta = 0.5, prior.absent = 0,
+                     alpha=0.05, verbose = F){
   TestResult <- enquo(TestResult) #The name of column with the result of each test on each pooled sample
   PoolSize <- enquo(PoolSize) #The name of the column with number of bugs in each pool
   group_var <- enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
@@ -67,12 +72,13 @@ PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05,verbose = F){
     #   num_workers <- parallel::detectCores()
     # }
     #options(mc.cores = num_workers)
-
     sdata <- list(N = nrow(data),
-                  Result = as.array(as.matrix(dplyr::select(data, !! TestResult))[,1]), #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
-                  PoolSize = as.array(as.matrix(dplyr::select(data, !! PoolSize))[,1])
+                  #Result = array(data$Result), #PERHAPS TRY REMOVING COLUMN NAMES?
+                  Result = dplyr::select(data, !! TestResult)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
+                  PoolSize = dplyr::select(data, !! PoolSize)[,1] %>% as.matrix %>% array,
+                  PriorAlpha = prior.alpha,
+                  PriorBeta = prior.beta
                   )
-
     sfit <- sampling(stanmodels$BayesianPoolScreen,
                      data = sdata,
                      pars = c('p'),
@@ -81,25 +87,32 @@ PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05,verbose = F){
                      warmup = 1000,
                      refresh = ifelse(verbose,200,0),
                      cores = 1)
+    sfit <- as.matrix(sfit)[,"p"]
 
     LogLikPrev = function(p,Result,PoolSize,goal=0){
       sum(log(Result + (-1)^Result * (1-p)^PoolSize)) - goal
     }
 
     # This is the log-likelihood difference used to calculate Likelihood ratio confidence intervals
-    # Currently not used (as we are trying to reproduce the original PoolScreen's odd behaviour)
-    # but we could uncomment below if we want users to supply confidence level (alpha)
     LogLikDiff <- qchisq(1-alpha, df = 1)/2
 
-    out <- summary(sfit,probs = c(alpha/2,1-alpha/2))$summary["p",] %>% t() %>% as.data.frame()
 
-    #Calculate the Maximum likelihood estimate -- this is exactly zero if all the pools are negative or positive
+    #Calculate the Maximum likelihood estimate -- this is exactly zero if all the pools are negative and exactly one if all are positive
     if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){ #if there is at least one positive and one negative result
+      out <- data.frame(mean = mean(sfit))
+      out[,'Bayesian CI Lower'] <- quantile(sfit,alpha/2)
+      out[,'Bayesian CI Upper'] <- quantile(sfit,1-alpha/2)
+      out$ProbAbsent <- ifelse(prior.absent,0,NA)
 
+      # calculate maximum likelihood estimate
       # 'optimizing' from stan actaully maximizes the joint posterior, not the likelihood,
-      # but since we are using a uniform prior they are equivalent. However, with an alternate prior,
-      # they would not be the same, so be careful!
-      out$MLE <- optimizing(attr(sfit,"stanmodel"),sdata)$par["p"]
+      # but if we use a uniform prior they are equivalent
+      MLEdata <- sdata
+      MLEdata$PriorAlpha <- 1
+      MLEdata$PriorBeta  <- 1
+      out$MLE <- optimizing(stanmodels$BayesianPoolScreen,MLEdata)$par["p"]
+
+
       out[,'LR-CI Lower'] <- uniroot(LogLikPrev,
                                    c(0,out$MLE),
                                    goal = LogLikPrev(out$MLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
@@ -115,6 +128,10 @@ PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05,verbose = F){
                                    PoolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
     }else if(all(as.logical(sdata$Result))){ #If all tests are positive
+      out <- data.frame(mean = mean(sfit))
+      out[,'Bayesian CI Lower'] <- quantile(sfit,alpha)
+      out[,'Bayesian CI Upper'] <- 1
+      out$ProbAbsent <- ifelse(prior.absent,0,NA)
       out$MLE <- 1
       out[,'LR-CI Lower'] <- uniroot(LogLikPrev,
                                    c(0,1),
@@ -125,6 +142,19 @@ PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05,verbose = F){
                                    tol = 1e-10)$root
       out[,'LR-CI Upper'] <- 1
     }else{ #if all tests are negative
+      ProbAbsent <- 1/(1 + (1/prior.absent - 1) * beta(prior.alpha, prior.beta + sdata$N)/beta(prior.alpha, prior.beta))
+
+      #This is the quantile we need to extract from the posterior from sfit to get the 1-alpha credible interval
+      q <- (1 - alpha - ProbAbsent)/(1 - ProbAbsent)
+
+      out <- data.frame(mean = mean(sfit)*(1-ProbAbsent))
+      out[,'Bayesian CI Lower'] <- 0
+      out[,'Bayesian CI Upper'] <- ifelse(q<0, #i.e. if the probablity that the disease is absent exceeds the desired size of the credible interval
+                                          0,
+                                          quantile(sfit,q))
+      out$ProbAbsent <- ifelse(prior.absent,
+                               ProbAbsent,
+                               NA)
       out$MLE <- 0
       out[,'LR-CI Lower'] <- 0
       out[,'LR-CI Upper'] <- uniroot(LogLikPrev,
@@ -140,18 +170,21 @@ PoolPrev <- function(data,TestResult,PoolSize,...,alpha=0.05,verbose = F){
 
     out <- out %>%
       rename('Bayesian Posterior Expectation' = mean) %>%
-      rename('Bayesian CI Lower' = paste0(as.character((alpha/2) * 100),'%')) %>%
-      rename('Bayesian CI Upper' = paste0(as.character((1-alpha/2) * 100),'%')) %>%
       dplyr::select('MLE', 'LR-CI Lower', 'LR-CI Upper',
                     'Bayesian Posterior Expectation',
                     'Bayesian CI Lower','Bayesian CI Upper',
-                    'Number of Pools', 'Number Positive')
+                    'Number of Pools', 'Number Positive','ProbAbsent')
 
     out
   }else{ #if there are grouping variables the function calls itself iteratively on each group
     out <- data %>%
       group_by(!!! group_var) %>%
-      do(PoolPrev(.,!! TestResult,!! PoolSize,alpha=alpha,verbose = verbose)) %>%
+      group_modify(function(x,...){
+        PoolPrev(x,!! TestResult,!! PoolSize,
+                 alpha=alpha,verbose = verbose,
+                 prior.absent = prior.absent,
+                 prior.alpha = prior.alpha,
+                 prior.beta = prior.beta)}) %>%
       as.data.frame()
     cat("\n")
   }
