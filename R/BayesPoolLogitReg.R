@@ -1,4 +1,4 @@
-#' Logistic regression with presence/absence tests on pooled samples
+#' Bayesian Logistic Regression with Presence/Absence Tests on Pooled Samples
 #'
 #' @export
 #' @param data A \code{data.frame} with one row for each pooled sampled and columns for
@@ -37,10 +37,10 @@
 #' DataTrend$Result <- with(DataTrend,
 #'                          runif(N) < 1-(1-TruePrev)^NumInPool)
 #' #Perform logistic regression with explanatory variables Place and Year
-#' Reg <- PooledLogitRegression(DataTrend,"NumInPool",Result ~ Year + Place)
+#' Reg <- BayesPoolLogitReg(DataTrend,"NumInPool",Result ~ Year + Place)
 #' Reg$OR
 
-PooledLogitRegression <- function(data, PoolSize, formula, alpha=0.05,verbose = F){
+BayesPoolLogitReg <- function(data, PoolSize, formula, alpha=0.05,verbose = F){
 
   if(!attr(terms(formula),"response")){
     stop("formula needs left hand side")
