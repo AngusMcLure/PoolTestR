@@ -1,9 +1,10 @@
 #Fake data with no trend
 pkgbuild::compile_dll(force =T)
+pkgbuild::compile_dll()
 roxygen2::roxygenize()
 devtools::check()
 
-N <- 100
+N <- 200
 
 Data <- data.frame(Place = sample(c("A","B","C","D"),N, replace = T),
                    Year = sample(c(2000,2001,2002),N, replace = T),
@@ -15,7 +16,7 @@ Data <- data.frame(Place = sample(c("A","B","C","D"),N, replace = T),
 
 DataTrend <- data.frame(Place = sample(c("A","B","C","D"),N, replace = T),
                         Year = sample(c(0:2), N, replace = T),
-                        NumInPool = sample(20:25, N, replace = T)
+                        NumInPool = sample(10:25, N, replace = T)
                         )
 BaseOdds <- c(A = 0.1, B = 0.05, C = 0.002, D = 0.1)
 GrowthRate = -0.5 #This is equivalent to an odds ratio for year of exp(-0.5) = 0.6065
@@ -26,10 +27,6 @@ DataTrend$Result <- with(DataTrend,as.numeric(runif(N) < 1-(1-TruePrev)^NumInPoo
 PrevsYearPlaceTrend <- PoolPrev(DataTrend,Result,NumInPool,Place,Year,prior.absent = 0.05)
 PrevsYearPlaceTrend
 
-RegPlace <- PooledLogitRegression(DataTrend,"NumInPool",Result ~ Place,verbose = T)
-RegPlace
-exp(rstan::summary(RegPlace$fit)$summary)
-
 #This has issues - the model matrix regularisation doesn't work that well here.
 #This makes it slow to run, but should still have correct result.
 #A way round this would be to do a change of varaibles to make 2000 year 0.
@@ -37,22 +34,20 @@ exp(rstan::summary(RegPlace$fit)$summary)
 #RegFull
 #exp(rstan::summary(RegFull$fit)$summary)
 
+#Bayesian
+BRegYearPlaceTrend <- BayesPoolLogitReg(DataTrend,"NumInPool",Result ~ Year + Place,verbose = T)
+BRegYearPlaceTrend
+exp(rstan::summary(BRegYearPlaceTrend$fit)$summary)
+#Frequentist
+FRegYearPlaceTrend <- PoolLogitReg(DataTrend,Result ~ Year + Place,NumInPool)
+FRegYearPlaceTrend
+summary(FRegYearPlaceTrend)
+exp(cbind(Estimate = coefficients(FRegYearPlaceTrend), confint(FRegYearPlaceTrend)))
 
-RegYearATrend <- PooledLogitRegression(subset(DataTrend,Place == "A"),"NumInPool",Result ~ Year,verbose = T)
-RegYearATrend
-exp(rstan::summary(RegYearATrend$fit)$summary)
+#Compare with standard logistic regression (i.e. assuming all pool sizes are 1)
+FLogit <- glm(Result ~ Year + Place,data = DataTrend,family = 'binomial')
+summary(FLogit)
+exp(cbind(Estimate = coefficients(FLogit), confint(FLogit)))
 
-RegYearBTrend <- PooledLogitRegression(subset(DataTrend,Place == "B"),"NumInPool",Result ~ Year,verbose = T)
-RegYearBTrend
-exp(rstan::summary(RegYearBTrend$fit)$summary)
-
-
-RegYearPlaceTrend <- PooledLogitRegression(DataTrend,"NumInPool",Result ~ Year + Place,verbose = T)
-RegYearPlaceTrend
-exp(rstan::summary(RegYearPlaceTrend$fit)$summary)
-
-
-test <- glm(Result ~ Year + Place,data = DataTrend,family = 'binomial')
-test
-rstanarmTest <- rstanarm::stan_glm(formula = Result ~ Year + Place,family = binomial(), data = DataTrend)
-rstanarmTest
+BLogit <- rstanarm::stan_glm(formula = Result ~ Year + Place,family = binomial(), data = DataTrend)
+summary(BLogit)
