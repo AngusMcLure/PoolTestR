@@ -1,53 +1,92 @@
-#Fake data with no trend
-pkgbuild::compile_dll(force =T)
 pkgbuild::compile_dll()
 roxygen2::roxygenize()
-devtools::check()
 
-N <- 200
+### Create a simulated dataset with 4 locations across 5 years, where prevalence is declining
+NumPools <- 1000
+#Odds that individual sample is positive in each location in the first year
+BaseOdds <- c(A = 0.16, B = 0.04, C = 0.01, D = 0.16)
+OddsRatioYear <- 0.8
+#Randomly distribute pools between the 4 locations and 5 years,
+#and chose random pool sizes between 10 and 25
+Data <- data.frame(Place = sample(c("A","B","C","D"),NumPools, replace = T),
+                   Year = sample(c(0:4), NumPools, replace = T),
+                   NumInPool = sample(10:25, NumPools, replace = T))
+#'True' odds/prevalence in each location
+Data$TrueOdds <- with(Data,BaseOdds[Place] * OddsRatioYear^(Year-min(Year)))
+Data$TruePrev <- with(Data, TrueOdds/(1+TrueOdds))
+#Simulate test results on pools
+Data$Result <- with(Data,as.numeric(runif(NumPools) < 1-(1-TruePrev)^NumInPool))
 
-Data <- data.frame(Place = sample(c("A","B","C","D"),N, replace = T),
-                   Year = sample(c(2000,2001,2002),N, replace = T),
-                   NumInPool = sample(10:30,N, replace = T),
-                   Result = sample(0:1,N,replace = T)
-                   )
+### Fit modified logistic regression model
 
-#Simulated data with the same trend but different baselines in every place
+#The below two lines produce identical results and support all the same methods
+Reg <- PoolLogitReg(Data,
+                    Result ~ Place + Year,
+                    NumInPool)
+Reg.glm <- glm(Result ~ Place + Year,
+               data = Data,
+               family = binomial(PoolLink(Data$NumInPool)))
+#View summary of model
+summary(Reg)
 
-DataTrend <- data.frame(Place = sample(c("A","B","C","D"),N, replace = T),
-                        Year = sample(c(0:2), N, replace = T),
-                        NumInPool = sample(10:25, N, replace = T)
-                        )
-BaseOdds <- c(A = 0.1, B = 0.05, C = 0.002, D = 0.1)
-GrowthRate = -0.5 #This is equivalent to an odds ratio for year of exp(-0.5) = 0.6065
-DataTrend$TrueOdds <- with(DataTrend,BaseOdds[Place] * exp(GrowthRate*(Year-min(Year))))
-DataTrend$TruePrev <- with(DataTrend, TrueOdds/(1+TrueOdds))
-DataTrend$Result <- with(DataTrend,as.numeric(runif(N) < 1-(1-TruePrev)^NumInPool))
+#Estimate and confidence intervals for the base odds and odds ratios
+#These should be approx 0.16 for the intercept (i.e. Place A, Year 0),
+#0.25, 0.0625, and 1.0 for places B-D and 0.8 for Year
+exp(cbind(Estimate = coefficients(Reg), confint(Reg)))
 
-PrevsYearPlaceTrend <- PoolPrev(DataTrend,Result,NumInPool,Place,Year,prior.absent = 0.05)
-PrevsYearPlaceTrend
+#Compare the predicted prevalence at each location and time
+Comparison <- Data %>% select(Place, Year, TruePrev) %>% unique()
+Comparison <- Comparison[with(Comparison,order(Place, Year)),]
+Comparison$PredictPrev <- plogis(predict(Reg, newdata = Comparison))
+Comparison
 
-#This has issues - the model matrix regularisation doesn't work that well here.
-#This makes it slow to run, but should still have correct result.
-#A way round this would be to do a change of varaibles to make 2000 year 0.
-#RegFull <- PooledLogitRegression(DataTrend,"NumInPool",Result ~ Place*Year,verbose = T)
-#RegFull
-#exp(rstan::summary(RegFull$fit)$summary)
+#You can also use the fitted model to predict the prevalence at other times
+DataPredict <- expand.grid(Place = c("A","B","C","D"),Year = seq(2,3,by = 0.2)) #Times and places to predict
+DataPredict$PredictPrev <- plogis(predict(Reg, newdata = DataPredict)) #Predicted prevalence
+DataPredict
 
-#Bayesian
-BRegYearPlaceTrend <- BayesPoolLogitReg(DataTrend,"NumInPool",Result ~ Year + Place,verbose = T)
-BRegYearPlaceTrend
-exp(rstan::summary(BRegYearPlaceTrend$fit)$summary)
-#Frequentist
-FRegYearPlaceTrend <- PoolLogitReg(DataTrend,Result ~ Year + Place,NumInPool)
-FRegYearPlaceTrend
-summary(FRegYearPlaceTrend)
-exp(cbind(Estimate = coefficients(FRegYearPlaceTrend), confint(FRegYearPlaceTrend)))
+# Note that predicting the response using predict(type = "response")
+# (i.e. the predicting the probability of observing a positive test)
+# does not work as expected on new data. Use the following instead:
 
-#Compare with standard logistic regression (i.e. assuming all pool sizes are 1)
-FLogit <- glm(Result ~ Year + Place,data = DataTrend,family = 'binomial')
-summary(FLogit)
-exp(cbind(Estimate = coefficients(FLogit), confint(FLogit)))
-
-BLogit <- rstanarm::stan_glm(formula = Result ~ Year + Place,family = binomial(), data = DataTrend)
-summary(BLogit)
+#Generate new random pool sizes
+DataPredict$NumInPool <- sample(5:10,nrow(DataPredict),replace = T)
+#Predicted probability of test being positive based on predicted prevalence and the size of the pool
+DataPredict$PredictTestProb <- with(DataPredict, 1 - (1-PredictPrev)^NumInPool)
+DataPredict
+library(ggplot2)
+PrevsYearPlace <- PoolPrev(Data, Result,NumInPool,Place,Year)
+PO <- PrevsYearPlace %>%
+  mutate(BaseOdds = BaseOdds[Place],
+         TrueOdds = BaseOdds * OddsRatioYear^(Year-min(Year)),
+         TruePrev = TrueOdds/(1+TrueOdds),
+         FreqPred = plogis(predict(Reg,newdata = PrevsYearPlace)),
+         FreqPredCILow = with(predict(Reg,
+                                      newdata = PrevsYearPlace,
+                                      se.fit =T),
+                              fit - se.fit * 1.96) %>% plogis,
+         FreqPredCIHigh = with(predict(Reg,
+                                       newdata = PrevsYearPlace,
+                                       se.fit =T),
+                               fit + se.fit * 1.96) %>% plogis
+  ) %>%
+  ggplot() +
+  geom_pointrange(aes(x = Year,
+                      color = Place,
+                      y = PrevMLE,
+                      ymin = CILow,
+                      ymax = CIHigh)) +
+  geom_line(aes(x = Year,
+                y= FreqPred,
+                color = Place)) +
+  geom_ribbon(aes(x = Year,
+                  ymin = FreqPredCILow,
+                  ymax = FreqPredCIHigh,
+                  fill = Place),
+              alpha = 0.3) +
+  geom_point(aes(x = Year, color = Place, y = TruePrev),
+             shape = 4,
+             size = 3) +
+  #scale_y_log10() +
+  ylab('Prevalence')
+PO

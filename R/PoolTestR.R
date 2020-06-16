@@ -24,10 +24,10 @@
 #' @param verbose Logical indicating whether to print progress to screen. Defaults to false (no printing to screen)
 #' @return A \code{data.frame} with columns:
 #' \itemize{
-#'  \item{\code{MLE} (the Maximum Likleihood Estimate of prevelance)}
-#'  \item{\code{LR-CI Lower} and \code{LR-CI Upper} (Lower and Upper Confidence intervals using the Likelihood Ratio method)}
+#'  \item{\code{PrevMLE} (the Maximum Likleihood Estimate of prevelance)}
+#'  \item{\code{CILow} and \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood Ratio method)}
 #'  \item{\code{Bayesian Posterior Expectation}}
-#'  \item{\code{Bayesian CI Lower} and \code{Bayesian CI Upper}}
+#'  \item{\code{CrILow} and \code{CrIHigh}}
 #'  \item{\code{Number of Pools}}
 #'  \item{\code{Number Positive}}
 #' }
@@ -42,13 +42,13 @@
 #'                    NumInPool = sample(1:10,1000, replace = TRUE),
 #'                    Result = sample(0:1,1000,replace = TRUE)
 #'                    )
-#' #Prevalence across the whole (fake) dataset
+#' #Prev across the whole (fake) dataset
 #' PoolPrev(Data, Result,NumInPool)
-#' #Prevalence at each location
+#' #Prev at each location
 #' PoolPrev(Data, Result,NumInPool,Place)
-#' #Prevalence for each time period
+#' #Prev for each time period
 #' PoolPrev(Data, Result,NumInPool,Date)
-#' #Prevalence for each combination of location and time period
+#' #Prev for each combination of location and time period
 #' PoolPrev(Data, Result,NumInPool,Place,Date)
 
 PoolPrev <- function(data,TestResult,PoolSize,...,
@@ -82,7 +82,7 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
     sfit <- sampling(stanmodels$BayesianPoolScreen,
                      data = sdata,
                      pars = c('p'),
-                     chains = 1,
+                     chains = 4,
                      iter = 2000,
                      warmup = 1000,
                      refresh = ifelse(verbose,200,0),
@@ -100,8 +100,8 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
     #Calculate the Maximum likelihood estimate -- this is exactly zero if all the pools are negative and exactly one if all are positive
     if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){ #if there is at least one positive and one negative result
       out <- data.frame(mean = mean(sfit))
-      out[,'Bayesian CI Lower'] <- quantile(sfit,alpha/2)
-      out[,'Bayesian CI Upper'] <- quantile(sfit,1-alpha/2)
+      out[,'CrILow'] <- quantile(sfit,alpha/2)
+      out[,'CrIHigh'] <- quantile(sfit,1-alpha/2)
       out$ProbAbsent <- ifelse(prior.absent,0,NA)
 
       # calculate maximum likelihood estimate
@@ -110,54 +110,54 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
       MLEdata <- sdata
       MLEdata$PriorAlpha <- 1
       MLEdata$PriorBeta  <- 1
-      out$MLE <- optimizing(stanmodels$BayesianPoolScreen,MLEdata)$par["p"]
+      out$PrevMLE <- optimizing(stanmodels$BayesianPoolScreen,MLEdata)$par["p"]
 
 
-      out[,'LR-CI Lower'] <- uniroot(LogLikPrev,
-                                   c(0,out$MLE),
-                                   goal = LogLikPrev(out$MLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
-                                   #goal = LogLikPrev(out$MLE,sdata$Result,sdata$PoolSize) - 2.51,
+      out[,'CILow'] <- uniroot(LogLikPrev,
+                                   c(0,out$PrevMLE),
+                                   goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
+                                   #goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - 2.51,
                                    Result= sdata$Result,
                                    PoolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
-      out[,'LR-CI Upper'] <- uniroot(LogLikPrev,
-                                   c(out$MLE,1),
-                                   goal = LogLikPrev(out$MLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
-                                   #goal = LogLikPrev(out$MLE,sdata$Result,sdata$PoolSize) - 2.51, #Poolscreen uses the 2.51 value for a 95% confidence interval, which is the value one would use for 97.5% confidence interval (perhpas they thought they needed to make an adjustment for a 'two-sided' test?) For consistency I have reproduced it here
+      out[,'CIHigh'] <- uniroot(LogLikPrev,
+                                   c(out$PrevMLE,1),
+                                   goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
+                                   #goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - 2.51, #Poolscreen uses the 2.51 value for a 95% confidence interval, which is the value one would use for 97.5% confidence interval (perhpas they thought they needed to make an adjustment for a 'two-sided' test?) For consistency I have reproduced it here
                                    Result= sdata$Result,
                                    PoolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
     }else if(all(as.logical(sdata$Result))){ #If all tests are positive
       out <- data.frame(mean = mean(sfit))
-      out[,'Bayesian CI Lower'] <- quantile(sfit,alpha)
-      out[,'Bayesian CI Upper'] <- 1
+      out[,'CrILow'] <- quantile(sfit,alpha)
+      out[,'CrIHigh'] <- 1
       out$ProbAbsent <- ifelse(prior.absent,0,NA)
-      out$MLE <- 1
-      out[,'LR-CI Lower'] <- uniroot(LogLikPrev,
+      out$PrevMLE <- 1
+      out[,'CILow'] <- uniroot(LogLikPrev,
                                    c(0,1),
                                    goal = -LogLikDiff, # the version we would use if we let users supply confidence
                                    #goal = -1.92, # When all results are positive, the original Poolscreen uses this (more expected) value for the logliklihood difference (1.92) for a 95% confidence interval
                                    Result= sdata$Result,
                                    PoolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
-      out[,'LR-CI Upper'] <- 1
+      out[,'CIHigh'] <- 1
     }else{ #if all tests are negative
-      ProbAbsent <- 1/(1 + (1/prior.absent - 1) * beta(prior.alpha, prior.beta + sdata$N)/beta(prior.alpha, prior.beta))
+      ProbAbsent <- 1/(1 + (1/prior.absent - 1) * beta(prior.alpha, prior.beta + sum(sdata$PoolSize))/beta(prior.alpha, prior.beta))
 
       #This is the quantile we need to extract from the posterior from sfit to get the 1-alpha credible interval
       q <- (1 - alpha - ProbAbsent)/(1 - ProbAbsent)
 
       out <- data.frame(mean = mean(sfit)*(1-ProbAbsent))
-      out[,'Bayesian CI Lower'] <- 0
-      out[,'Bayesian CI Upper'] <- ifelse(q<0, #i.e. if the probablity that the disease is absent exceeds the desired size of the credible interval
+      out[,'CrILow'] <- 0
+      out[,'CrIHigh'] <- ifelse(q<0, #i.e. if the probablity that the disease is absent exceeds the desired size of the credible interval
                                           0,
                                           quantile(sfit,q))
       out$ProbAbsent <- ifelse(prior.absent,
                                ProbAbsent,
                                NA)
-      out$MLE <- 0
-      out[,'LR-CI Lower'] <- 0
-      out[,'LR-CI Upper'] <- uniroot(LogLikPrev,
+      out$PrevMLE <- 0
+      out[,'CILow'] <- 0
+      out[,'CIHigh'] <- uniroot(LogLikPrev,
                                    c(0,1),
                                    goal = -LogLikDiff, # the version we would use if we let users supply confidence
                                    #goal = -1.92, # When all results are negative, the original Poolscreen uses this (more expected) value for the logliklihood difference (1.92) for a 95% confidence interval
@@ -165,15 +165,17 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
                                    PoolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
     }
-    out[,'Number of Pools'] <- sdata$N
-    out[,'Number Positive'] <- sum(sdata$Result)
+    out[,'NumberOfPools'] <- sdata$N
+    out[,'NumberPositive'] <- sum(sdata$Result)
 
     out <- out %>%
-      rename('Bayesian Posterior Expectation' = mean) %>%
-      dplyr::select('MLE', 'LR-CI Lower', 'LR-CI Upper',
-                    'Bayesian Posterior Expectation',
-                    'Bayesian CI Lower','Bayesian CI Upper',
-                    'Number of Pools', 'Number Positive','ProbAbsent')
+      rename('PrevBayes' = mean) %>%
+      dplyr::select('PrevMLE',
+                    'CILow', 'CIHigh',
+                    'PrevBayes',
+                    'CrILow','CrIHigh',
+                    'ProbAbsent',
+                    'NumberOfPools', 'NumberPositive')
 
     out
   }else{ #if there are grouping variables the function calls itself iteratively on each group
@@ -188,6 +190,6 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
       as.data.frame()
     cat("\n")
   }
-  out
+  tibble(out)
 }
 

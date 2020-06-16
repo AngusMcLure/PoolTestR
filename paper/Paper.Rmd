@@ -1,0 +1,143 @@
+---
+title: "PoolTestRPaper"
+author: "AngusMcLure"
+date: "05/06/2020"
+output:
+  pdf_document: default
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The PoolTestR package [Angus]
+The `PoolTestR` package has been designed to be a simple, fast, and user-friendly way to work with data from pooled samples of insects or other specimens. The package has two primary functions. `PoolPrev` estimates the prevalence of a marker based on the outcome of tests on pooled samples, calculating prevalence for many subgroups of the dataset if desired. `PoolLogitReg` fits a logistic regression model modified to account for the size of pools, allowing users to identify temporal trends or variables (e.g. altitude, population density, interventions) associated with higher prevalence. 
+`PoolPrev` was designed to produce comparable results to the popular stand-alone application PoolScreen for familiarity to existing users of the software. However, PoolScreen requires many manual steps to import data, run analyses, and export results and lacks the flexibility of a general-purpose statistical environment like `R`. Using PoolPrev users can estimate the prevalence of a marker for their whole dataset or for many different subgroups of their data (e.g. by vector species, location, season, or the combination of all variables) with a few lines of `R` code and simple syntax. This is achieved by utilising non-standard evaluation and tools for working with grouped datasets provided in the `R` package, `dplyr`. `PoolLogitReg` builds on the generalized linear modelling function, `glm`, from the in the `stats` package for familiarity to `R` users and to leverage the diagnostics from `glm`.
+
+
+### PoolPrev
+Given a dataset containing the number of samples and the result of tests for each pool, `PoolPrev` returns Bayesian and maximum likelihood estimates of the prevalence together with uncertainty intervals. Efficient Bayesian inference is performed with Hamiltonian Markov Chain Monte Carlo using the Stan programming language and the `rstan` package. Users can specify their prior belief for the prevalence from the Beta distribution, or use the uninformative 'Jefferey's' prior i.e. Beta(0.5,0.5). Users can also optionally specify the prior probability that the marker of interested is entirely absent from the population, in which case `PoolPrev` also returns the probability of absence given the data. As we assume the test performed on the pooled samples does not produce false positive or negatives, the probability of absence is always zero if any of the pools test positive. In most cases the credible interval (CrI) for the prevalence are the 2.5% and 97.5% quantiles of the posterior distribution. However, if all tests are positive the upper bound of the CrI is 1 and the lower bound is the 5% quantile of the posterior. Similarly, if all tests are negative the lower bound of the CrI is 0 and the lower bound is the 95% quantile of the posterior.
+The maximum likelihood estimate is calculated using the `optimizing` function from the `rstan` package. The uncertainty interval for the maximum likelihood estimate is calculated using the likelihood ratio method (i.e. a Wilk’s confidence interval) using the `uniroot` function from the `stats` package. As with the Bayesian credible interval, the lower or upper bound of the confidence intervals are zero or one when all pools are negative or positive, respectively.
+
+The boxes below demonstrated the use of `PoolPrev` on a synthetic dataset. The synthetic dataset consists of 1000 pools from four different locations (A-D) over five years (0-4) of sampling. The ‘true’ prevalence in the initial year was 14% in locations A and D, 4% in location B and 1% in location C, and declined by approximately 18% each year. 
+
+```{r buildpackage, include=FALSE}
+pkgbuild::compile_dll()
+roxygen2::roxygenize()
+
+```
+
+```{r GenerateDataset, include=FALSE}
+### Create a synthetic dataset with 4 locations across 5 years,
+### where prevalence is declining
+NumPools <- 1000
+#Odds that a individual sample is positive in each location in the first year
+BaseOdds <- c(A = 0.16, B = 0.04, C = 0.01, D = 0.16)
+OddsRatioYear <- 0.8
+#Randomly distribute pools between the 4 locations and 5 years,
+#and chose random pool sizes between 10 and 25
+Data <- data.frame(Place = sample(c("A","B","C","D"),NumPools, replace = T),
+                   Year = sample(c(0:4), NumPools, replace = T),
+                   NumInPool = sample(10:25, NumPools, replace = T))
+#'True' odds/prevalence in each location
+Data$TrueOdds <- with(Data,BaseOdds[Place] * OddsRatioYear^(Year-min(Year)))
+Data$TruePrev <- with(Data, TrueOdds/(1+TrueOdds))
+#Simulate test results on pools
+Data$Result <- with(Data,as.numeric(runif(NumPools) < 1-(1-TruePrev)^NumInPool))
+library(dplyr)
+Data <- Data %>% select(-TrueOdds,-TruePrev)
+```
+
+```{r PoolPrevExample}
+#Looking at the first few rows of the synthetic dataset to see structure
+head(Data)
+#Prevalence across the whole synthetic dataset
+PoolPrev(Data, Result,NumInPool)
+#Prevalence at each location
+PoolPrev(Data, Result,NumInPool,Place)
+#Prevalence for each Year
+PoolPrev(Data, Result,NumInPool,Year)
+#Prevalence for each combination of location and Year
+PoolPrev(Data, Result,NumInPool,Place,Year)
+```
+
+### PoolLogitReg
+Given a dataset containing the number of samples, the result of tests for each pool, potential dependent variables associated with each pool, and a formula defining the model, `PoolLogitReg` fits a logistic regression model that adjusts for the sizes of pools. The output is a S3-object of class `glm` which supports that same methods (e.g. summary, predict, plot, confint) as any other object returned by the `glm` function.
+
+The boxes below apply `PoolLogitReg` to the same synthetic dataset used to demonstrate `PoolPrev`, correctly identifying that locations A and D have the same prevalence, and estimating the rate of decline in prevalence over time.
+
+```{r PoolLogitRegExample}
+# Fit modified logistic regression model
+#The below two lines produce identical results and support all the same methods
+Reg <- PoolLogitReg(Data,
+                    Result ~ Place + Year,
+                    NumInPool)
+Reg.glm <- glm(Result ~ Place + Year,
+               data = Data,
+               family = binomial(PoolLink(Data$NumInPool)))
+#View summary of model
+summary(Reg)
+
+#Estimate and confidence intervals for the base odds and odds ratios
+#These should be approx 0.16 for the intercept (i.e. Place A, Year 0),
+#0.25, 0.0625, and 1.0 for places B-D and 0.8 for Year
+exp(cbind(Estimate = coefficients(Reg), confint(Reg)))
+
+#You can use the fitted model to predict the prevalence at other times
+#The times and places at which to predict the prevalence
+DataPredict <- expand.grid(Place = c("A","B","C","D"),Year = seq(2.2,2.8,by = 0.2))
+#Predicted prevalence
+DataPredict$PredictPrev <- plogis(predict(Reg, newdata = DataPredict)) 
+head(DataPredict)
+
+# Note that predicting the response (i.e. the predicting the probability of
+# observing a positive test) using predict(type = "response") does not work
+# as expected on new data. Use the following instead:
+
+#Generate new random pool sizes for new data
+DataPredict$NumInPool <- sample(5:10,nrow(DataPredict),replace = T)
+DataPredict$PredictTestProb <- with(DataPredict, 1 - (1-PredictPrev)^NumInPool)
+head(DataPredict)
+```
+
+Figure 1 compares the prevalence estimates based on the modified logisitic model (`PoolPrevLogit`), estimates based on each time and place independently (`PoolPrev`) and the 'true' prevalence at each location. Note that while both methods produce good estimates with the true values falling within confidence intervals, the modified logistic regression model has tigher confidence intervals.
+```{r Comparison, echo=FALSE}
+library(ggplot2)
+PrevsYearPlace <- PoolPrev(Data, Result,NumInPool,Place,Year)
+PO <- PrevsYearPlace %>%
+  mutate(BaseOdds = BaseOdds[Place],
+         TrueOdds = BaseOdds * OddsRatioYear^(Year-min(Year)),
+         TruePrev = TrueOdds/(1+TrueOdds),
+         FreqPred = plogis(predict(Reg,newdata = PrevsYearPlace)),
+         FreqPredCILow = with(predict(Reg,
+                                      newdata = PrevsYearPlace,
+                                      se.fit =T),
+                              fit - se.fit * 1.96) %>% plogis,
+         FreqPredCIHigh = with(predict(Reg,
+                                       newdata = PrevsYearPlace,
+                                       se.fit =T),
+                               fit + se.fit * 1.96) %>% plogis
+  ) %>%
+  ggplot() +
+  geom_pointrange(aes(x = Year,
+                      color = Place,
+                      y = PrevMLE,
+                      ymin = CILow,
+                      ymax = CIHigh)) +
+  geom_line(aes(x = Year,
+                y= FreqPred,
+                color = Place)) +
+  geom_ribbon(aes(x = Year,
+                  ymin = FreqPredCILow,
+                  ymax = FreqPredCIHigh,
+                  fill = Place),
+              alpha = 0.3) +
+  geom_point(aes(x = Year, color = Place, y = TruePrev),
+             shape = 4,
+             size = 3) +
+  #scale_y_log10() +
+  ylab('Prevalence')
+PO
+```

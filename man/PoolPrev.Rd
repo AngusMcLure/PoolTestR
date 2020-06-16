@@ -48,10 +48,10 @@ Another popular uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e
 \value{
 A \code{data.frame} with columns:
 \itemize{
- \item{\code{MLE} (the Maximum Likleihood Estimate of prevelance)}
- \item{\code{LR-CI Lower} and \code{LR-CI Upper} (Lower and Upper Confidence intervals using the Likelihood Ratio method)}
+ \item{\code{PrevMLE} (the Maximum Likleihood Estimate of prevelance)}
+ \item{\code{CILow} and \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood Ratio method)}
  \item{\code{Bayesian Posterior Expectation}}
- \item{\code{Bayesian CI Lower} and \code{Bayesian CI Upper}}
+ \item{\code{CrILow} and \code{CrIHigh}}
  \item{\code{Number of Pools}}
  \item{\code{Number Positive}}
 }
@@ -69,12 +69,12 @@ Data <- data.frame(Place = sample(c("A","B","C","D"),1000, replace = TRUE),
                    NumInPool = sample(1:10,1000, replace = TRUE),
                    Result = sample(0:1,1000,replace = TRUE)
                    )
-#Prevalence across the whole (fake) dataset
+#Prev across the whole (fake) dataset
 PoolPrev(Data, Result,NumInPool)
-#Prevalence at each location
+#Prev at each location
 PoolPrev(Data, Result,NumInPool,Place)
-#Prevalence for each time period
+#Prev for each time period
 PoolPrev(Data, Result,NumInPool,Date)
-#Prevalence for each combination of location and time period
+#Prev for each combination of location and time period
 PoolPrev(Data, Result,NumInPool,Place,Date)
 }
