@@ -35,21 +35,8 @@
 #' When there are no grouping variables (supplied in \code{...}) then the dataframe has only one row with the prevalence estimates for the whole dataset.
 #' When grouping variables are supplied, then there is a seperate row for each group.
 #'
-#' @examples
-#' #Build a fake dataset with 1000 pools taken from 4 different locations and 3 different times
-#' Data <- data.frame(Place = sample(c("A","B","C","D"),1000, replace = TRUE),
-#'                    Date = sample(as.Date(c("2000/1/1","2001/1/1","2002/1/1")),1000, replace = TRUE),
-#'                    NumInPool = sample(1:10,1000, replace = TRUE),
-#'                    Result = sample(0:1,1000,replace = TRUE)
-#'                    )
-#' #Prev across the whole (fake) dataset
-#' PoolPrev(Data, Result,NumInPool)
-#' #Prev at each location
-#' PoolPrev(Data, Result,NumInPool,Place)
-#' #Prev for each time period
-#' PoolPrev(Data, Result,NumInPool,Date)
-#' #Prev for each combination of location and time period
-#' PoolPrev(Data, Result,NumInPool,Place,Date)
+#' @example examples/Prevalence.R
+
 
 PoolPrev <- function(data,TestResult,PoolSize,...,
                      prior.alpha = 0.5, prior.beta = 0.5, prior.absent = 0,
