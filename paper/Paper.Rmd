@@ -141,3 +141,79 @@ PO <- PrevsYearPlace %>%
   ylab('Prevalence')
 PO
 ```
+
+## Testing
+A more realistic example:
+- 3 regions with prevalence:
+  - low (0.5%)
+  - medium (2%)
+  - high (4%) 
+- 10 villages in each region with prevalence:
+  - random normal distribted tight around region average, or 
+  - one hotspot and one coldspot village
+- 15 sites at each village.
+  - Mosquitos caught at each site is random from normal/lognormal distribution so that 0 and 500 and both rare
+  - Mosquitos pooled into test-tubes of 25 + one pool with remainder
+  
+```{r GenerateMoreRealisticDataset}
+RegionPrevs <- c(A = 0.5, B = 2, C = 4)/100 #Prevalence in each region
+NumRegions <- length(RegionPrevs)
+NumVillages <- 10 #Villages per Region
+NumSites <- 15 #Sites per village
+MeanCatch <- 100; SDCatch <- 30 #Mean and SD of mosquito catch sizes
+DispersionCatch <- 1.5
+#expand.grid(1:NumSites,1:NumVillages,names(RegionPrevs))
+#Catches <- data.frame(Catch = rnorm(NumRegions * NumVillages * NumSites, MeanCatch,sd = SDCatch))
+Data <- data.frame()
+for(R in names(RegionPrevs)){
+  for(V in 1:NumVillages){
+    VillageTruePrev <- 0
+    while(VillageTruePrev<=0){
+      VillageTruePrev <- rnorm(1,mean = RegionPrevs[[R]],sd = RegionPrevs[[R]]/5)
+    }
+    for(S in 1:NumSites){
+      SiteTruePrev <- 0
+      while(SiteTruePrev<=0){
+        SiteTruePrev <- rnorm(1,mean = VillageTruePrev,sd = VillageTruePrev/5)
+      }
+      #Generate catch sizes from zero-truncated negative binomial distribution. 're-roll' sizes <= 0 to guarantee at least one mossie
+      Catch <- 0
+      while(Catch<=0){
+        Catch <- rnbinom(1,mu = MeanCatch,DispersionCatch)
+      }
+      NumBigPools <- Catch %/% MaxPoolSize
+      if(NumBigPools){
+        Data <- rbind(Data,
+                      data.frame(Region = R,
+                                 Village = paste(R,V,sep = "-"),
+                                 Site = paste(R,V,S,sep = "-"),
+                                 PoolSize = rep(MaxPoolSize,NumBigPools),
+                                 PrevalenceSite = SiteTruePrev,
+                                 PrevalenceVillage = VillageTruePrev,
+                                 PrevalenceRegion = RegionPrevs[[R]]))
+      }
+      SizeSmallPool <- Catch %% MaxPoolSize
+      if(SizeSmallPool){
+        Data <- rbind(Data,
+                      data.frame(Region = R,
+                                 Village = paste(R,V,sep = "-"),
+                                 Site = paste(R,V,S,sep = "-"),
+                                 PoolSize = SizeSmallPool,
+                                 PrevalenceSite = SiteTruePrev,
+                                 PrevalenceVillage = VillageTruePrev,
+                                 PrevalenceRegion = RegionPrevs[[R]]))
+      }
+      
+    }
+  }
+}
+Data$Result <- with(Data,as.numeric(runif(nrow(Data)) < 1-(1-PrevalenceSite)^PoolSize))
+
+
+PrevAll <- PoolPrev(Data,Result,PoolSize)
+PrevRegion <- PoolPrev(Data,Result,PoolSize,Region)
+PrevVillage <- PoolPrev(Data,Result,PoolSize,Region,Village)
+PrevSite <- PoolPrev(Data,Result,PoolSize,Region,Village,Site)
+
+```
+
