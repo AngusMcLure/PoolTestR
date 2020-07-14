@@ -4,7 +4,7 @@
 #' pooled samples, however one must adjust for the size of each pool to correctly
 #' identify trends and associations. This can done using \code{glm} from the \code{stats}
 #'  package and the custom link function \code{\link{PoolLink}}, defined in this package.
-#'  \code{PoolLegitReg} is provided as a more convenient way to fit the same model
+#'  \code{PoolLogitReg} is provided as a more convenient way to fit the same model
 #'
 #' @export
 #' @param data A \code{data.frame} with one row for each pooled sampled and columns for

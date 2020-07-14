@@ -17,6 +17,7 @@
 #' @import methods
 #' @import Rcpp
 #' @import rstan
+#' @import lme4
 #' @importFrom stats qchisq uniroot quantile model.matrix quantile na.omit terms reformulate
 #' @importFrom parallel detectCores
 #' @importFrom tidyr unite
