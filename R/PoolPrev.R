@@ -8,10 +8,10 @@
 #'             location where pool was taken) which can optionally be used for splitting
 #'             the data into smaller groups and calculting prevalence by group (e.g.
 #'             calculating prevalence for each location)
-#' @param TestResult The name of column with the result of each test on each pooled sample.
+#' @param result The name of column with the result of each test on each pooled sample.
 #'                   The result must be stored with 1 indicating a positive test result and
 #'                   0 indicating a negative test result.
-#' @param PoolSize The name of the column with number of specimens/isolates/insects in each pool
+#' @param poolSize The name of the column with number of specimens/isolates/insects in each pool
 #' @param ... Optional name(s) of columns with variables to group the data by.
 #'            If ommitted the complete dataset is used to estimate a single prevalence.
 #'            If included prevalence is estimated spearately for each group defined by these columns
@@ -38,11 +38,11 @@
 #' @example examples/Prevalence.R
 
 
-PoolPrev <- function(data,TestResult,PoolSize,...,
+PoolPrev <- function(data,result,poolSize,...,
                      prior.alpha = 0.5, prior.beta = 0.5, prior.absent = 0,
-                     alpha=0.05, verbose = F){
-  TestResult <- enquo(TestResult) #The name of column with the result of each test on each pooled sample
-  PoolSize <- enquo(PoolSize) #The name of the column with number of bugs in each pool
+                     alpha=0.05, verbose = F,cores = 1){
+  result <- enquo(result) #The name of column with the result of each test on each pooled sample
+  poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
   group_var <- enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
   if(length(group_var) == 0){ #if there are no grouping variables
@@ -61,8 +61,8 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
     #options(mc.cores = num_workers)
     sdata <- list(N = nrow(data),
                   #Result = array(data$Result), #PERHAPS TRY REMOVING COLUMN NAMES?
-                  Result = dplyr::select(data, !! TestResult)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
-                  PoolSize = dplyr::select(data, !! PoolSize)[,1] %>% as.matrix %>% array,
+                  Result = dplyr::select(data, !! result)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
+                  PoolSize = dplyr::select(data, !! poolSize)[,1] %>% as.matrix %>% array,
                   PriorAlpha = prior.alpha,
                   PriorBeta = prior.beta
                   )
@@ -73,11 +73,11 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
                      iter = 2000,
                      warmup = 1000,
                      refresh = ifelse(verbose,200,0),
-                     cores = 1)
+                     cores = cores)
     sfit <- as.matrix(sfit)[,"p"]
 
-    LogLikPrev = function(p,Result,PoolSize,goal=0){
-      sum(log(Result + (-1)^Result * (1-p)^PoolSize)) - goal
+    LogLikPrev = function(p,result,poolSize,goal=0){
+      sum(log(result + (-1)^result * (1-p)^poolSize)) - goal
     }
 
     # This is the log-likelihood difference used to calculate Likelihood ratio confidence intervals
@@ -104,15 +104,15 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
                                    c(0,out$PrevMLE),
                                    goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
                                    #goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - 2.51,
-                                   Result= sdata$Result,
-                                   PoolSize= sdata$PoolSize,
+                                   result= sdata$Result,
+                                   poolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
       out[,'CIHigh'] <- uniroot(LogLikPrev,
                                    c(out$PrevMLE,1),
                                    goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
                                    #goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - 2.51, #Poolscreen uses the 2.51 value for a 95% confidence interval, which is the value one would use for 97.5% confidence interval (perhpas they thought they needed to make an adjustment for a 'two-sided' test?) For consistency I have reproduced it here
-                                   Result= sdata$Result,
-                                   PoolSize= sdata$PoolSize,
+                                   result= sdata$Result,
+                                   poolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
     }else if(all(as.logical(sdata$Result))){ #If all tests are positive
       out <- data.frame(mean = mean(sfit))
@@ -124,8 +124,8 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
                                    c(0,1),
                                    goal = -LogLikDiff, # the version we would use if we let users supply confidence
                                    #goal = -1.92, # When all results are positive, the original Poolscreen uses this (more expected) value for the logliklihood difference (1.92) for a 95% confidence interval
-                                   Result= sdata$Result,
-                                   PoolSize= sdata$PoolSize,
+                                   result= sdata$Result,
+                                   poolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
       out[,'CIHigh'] <- 1
     }else{ #if all tests are negative
@@ -148,8 +148,8 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
                                    c(0,1),
                                    goal = -LogLikDiff, # the version we would use if we let users supply confidence
                                    #goal = -1.92, # When all results are negative, the original Poolscreen uses this (more expected) value for the logliklihood difference (1.92) for a 95% confidence interval
-                                   Result= sdata$Result,
-                                   PoolSize= sdata$PoolSize,
+                                   result= sdata$Result,
+                                   poolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
     }
     out[,'NumberOfPools'] <- sdata$N
@@ -169,11 +169,12 @@ PoolPrev <- function(data,TestResult,PoolSize,...,
     out <- data %>%
       group_by(!!! group_var) %>%
       group_modify(function(x,...){
-        PoolPrev(x,!! TestResult,!! PoolSize,
+        PoolPrev(x,!! result,!! poolSize,
                  alpha=alpha,verbose = verbose,
                  prior.absent = prior.absent,
                  prior.alpha = prior.alpha,
-                 prior.beta = prior.beta)}) %>%
+                 prior.beta = prior.beta,
+                 cores = cores)}) %>%
       as.data.frame()
     cat("\n")
   }

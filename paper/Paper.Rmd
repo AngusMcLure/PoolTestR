@@ -12,24 +12,66 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## The PoolTestR package [Angus]
-The `PoolTestR` package has been designed to be a simple, fast, and user-friendly way to work with data from pooled samples of insects or other specimens. The package has two primary functions. `PoolPrev` estimates the prevalence of a marker based on the outcome of tests on pooled samples, calculating prevalence for many subgroups of the dataset if desired. `PoolLogitReg` fits a logistic regression model modified to account for the size of pools, allowing users to identify temporal trends or variables (e.g. altitude, population density, interventions) associated with higher prevalence. 
-`PoolPrev` was designed to produce comparable results to the popular stand-alone application PoolScreen for familiarity to existing users of the software. However, PoolScreen requires many manual steps to import data, run analyses, and export results and lacks the flexibility of a general-purpose statistical environment like `R`. Using PoolPrev users can estimate the prevalence of a marker for their whole dataset or for many different subgroups of their data (e.g. by vector species, location, season, or the combination of all variables) with a few lines of `R` code and simple syntax. This is achieved by utilising non-standard evaluation and tools for working with grouped datasets provided in the `R` package, `dplyr`. `PoolLogitReg` builds on the generalized linear modelling function, `glm`, from the in the `stats` package for familiarity to `R` users and to leverage the diagnostics from `glm`.
+[Some one or two line sentence preamble with references to the literature? E.g. the papers associated with pool screen]
 
+We wish to estimate the prevalence, p, of a disease or molecular marker in a population from the results of tests on a pooled samples. For a pool combining N samples, if we assume that the probability of having the marker is independent across specimens with and between pools, that the sample size is much smaller than the population, and that the test has perfect sensitivity and specificity, the probability $q$ of returning a positive test result is $q=\ 1-\left(1-p\right)^N$. If $M$ such pools from a single location are tested and $m$ of these are positive the maximum likelihood estimate (MLE) of $q\ is \frac{m}{M}$ and the MLE of the prevalence, $p$, in the population is ${1-\left(1-\frac{m}{M}\right)}^\frac{1}{N}$. However, if the pools are of different sizes there is no convenient closed-form expression for the MLE, which must be approximated numerically from the likelihood function. With pools of size $N_1,N_2,\ldots$, and tests results $y_1,y_2,\ldots$ (where $y_i$ is zero if the test result is negative and one if positive) the likelihood function is
+
+$L\left(p\middle|y\right)=\prod_{i}{y_i+\left(-1\right)^{y_i}\ \left(1-p\right)^{N_i}}.$
+
+Similarly, Bayesian inference has to performed numerically in most cases. However, in the special case where all pool tests are negative and the prior on $p$ has a $Beta(\alpha,\beta)$ distribution, the posterior for $p$ is given by $Beta(\alpha,\beta+\sum_{i}\ N_i)$. In some locations there may be some reasonable prior probability that the disease is absent i.e. prevalence is exactly zero. Thus, we may wish to consider a prior such that $p$ has probability $\gamma$ of being exactly zero and $Beta(\alpha,\beta)$ distributed otherwise. If any test results are positive then the posterior probability of absence is zero and the posterior distribution of $p$ is the same as would be reached with an unmodified $Beta(\alpha,\beta)$ prior. However, in the case where all test results are negative
+
+$P\left(p=0|y=0,N\right)=\left(1+\frac{\left(1-\gamma\right)B\left(\alpha,\beta+\sum_{i}\ N_i\right)}{\gamma B\left(\alpha,\ \beta\right)}\right)^{-1}$,
+
+where $B(.,.)$ is the beta function. 
+
+Prevalence may vary over the different locations, times, and subpopulation from which the samples are taken, so we may wish to use regression analyses model the relationship between prevalence and a set of explanatory variables recorded for each pool. We use a logistic regression model adjusted for pool sizes which can be viewed as a kind of generalised linear model. Mathematically, our modified logisitic model is similar to Shaffer’s model of bird nesting success rates, which adjusts the logistic model to account for different durations of nest observations (Shaffer, T.  2004. Auk 121(2): 526-540).  Let $x_{ij}$ be the observed value of dependent variable $j$ for pool $i$ and $x_{i0}=1$. A standard unadjusted logistic regression model with intercept $\beta_0$ and parameters $\beta_j$ would model test results as 
+
+$y_i |\beta, x_{ij} \sim Bernoulli( logit^{-1} \sum_{j}{x_{ij} \beta_j} )$.
+
+However, with pooled samples we model the results of pooled tests as
+$y_i |\beta, x_{i.},N_i \sim Bernoulli\left( 1-\left(1-logit^{-1} \sum_{j}{x_{ij} \beta_j} \right)^{N_i}\right)$.
+
+When all pool sizes are one, this simplifies to the standard logistic model. Maximum likelihood estimation and Bayesian inference must be performed numerically from the likelihood function:
+
+$L\left(\beta\middle|y,x,N\right)=\prod_{i}{y_i+\left(-1\right)^{y_i}\ \left(1-logit^{-1}\sum_{j}{x_{ij}\beta_j}\right)^{N_i}}$.
+
+It is common to adopt a hierarchical sampling structure when collecting specimens. For instance, if one wishes to estimate the prevalence of a marker in mosquitos,  a common way to collect specimens is to set out mosquito traps. To estimate the typical prevalence in a region, one may place traps in a number of randomly or systemtically chosen sites. In such cases it would be best to attempt to account for any intra-site variation in prevalence using a hiearachical or mixed-effects modelling framework. In the general case let $z_{ik}$ define the design matrix and $u_k$ the group effects for a mixed-effects model. Then we model the outcomes as
+
+$y_{i} |u, z_{ik},\beta, x_{i.},N_i \sim Bernoulli\left( 1-\left(1-logit^{-1}\left(\sum_{k}{z_{ik} u_k} + \sum_{j}{x_{ij} \beta_j}\right) \right)^{N_i}\right)$
+
+$u \sim N(0, \Sigma)$.
+
+For the more specific case of a $K$-level hierarchical model where group membership only influences the intercept, let $y_{is}$ be the result of pool $i$ taken from site $s$, where $s_1, \dots, s_K$ give the group memberhsip at levels $1,\dots, K$ of the hierarchical sampling scheme. Let $u_g^k$ be the group effect for group $g$ from level $k$ of the sampling scheme. Then our model is 
+
+
+$y_{i s} |u_{s_k}^1,\dots,u_{s_k}^K, \beta, x_{i.},N_i \sim Bernoulli\left( 1-\left(1-logit^{-1}\left(\sum_k u^k_{s_k} + \sum_{j}{x_{ij} \beta_j}\right) \right)^{N_i}\right)$.
+
+$u^k_g \sim N(0,\sigma_k^2)$.
+
+
+
+ 
+
+## The PoolTestR package [Angus]
+The `PoolTestR` package has been designed to be a simple, fast, and user-friendly way to work with data from pooled samples of insects or other specimens. The package has four primary functions. `PoolPrev` estimates the prevalence of a marker based on the outcome of tests on pooled samples, calculating prevalence for many subgroups of the dataset if desired. `HierPoolPrev` is like `PoolPrev`  but allows users to adjust prevalence estimates for hierarchical structure in sampling frames. `PoolReg` and `PoolRegBayes` fit mixed or fixed effect logistic regression models modified to account for the size of pools in either a frquentist or a bayesian framework. These allow users to identify temporal trends or variables (e.g. altitude, population density, interventions) associated with higher prevalence and to account for hierarchical sampling designs when estimating prevalence[^1].
+
+`PoolPrev` was designed to produce comparable results to the popular stand-alone application PoolScreen [ref Katholi1996] for familiarity to existing users of the software. However, PoolScreen requires many manual steps to import data, run analyses, and export results and lacks the flexibility of a general-purpose statistical environment provided by `R`. Using `PoolPrev` users can estimate the prevalence of a marker for their whole dataset or for different subgroups of their data (e.g. splitting data by vector species, location, season, or the combination of all variables) with a few lines of `R` code and simple syntax. This is achieved by utilising non-standard evaluation and tools for working with grouped datasets provided in the `R` package, `dplyr`. `HierPoolPrev` uses the same syntax as `PoolPrev` and returns results in a similar format, but allows users to adjust estimates of prevalence to account for the hierarchical sampling frame often employed in xenomonitoring studies. 
+
+ `PoolReg` builds on the generalized linear modelling function, `glm`, from the in the `stats` package for fixed effects models and builds on the `glmer` function from the `lme4` package for mixed effect models. `PoolRegBayes` builds on the flexible non-linear modelling framework provided by the `brms` package to fit bayesian fixed and mixed effect regression models on data from pooled tests. By building on these existing packages, `PoolTestR` leverages the extensive suite of diagnostics tools available for working with models fitted with these functions and uses paradigms that will be familiar to existing users of R. 
+
+[^1]: example of people doing this - though it's not clear what model/software they used: Subramanian-2020-Molecular xenomonitoring as a post-MDA surveillance tool for global programme to eliminate lymphatic filariasis- Field validation in an evaluation unit in India
 
 ### PoolPrev
-Given a dataset containing the number of samples and the result of tests for each pool, `PoolPrev` returns Bayesian and maximum likelihood estimates of the prevalence together with uncertainty intervals. Efficient Bayesian inference is performed with Hamiltonian Markov Chain Monte Carlo using the Stan programming language and the `rstan` package. Users can specify their prior belief for the prevalence from the Beta distribution, or use the uninformative 'Jefferey's' prior i.e. Beta(0.5,0.5). Users can also optionally specify the prior probability that the marker of interested is entirely absent from the population, in which case `PoolPrev` also returns the probability of absence given the data. As we assume the test performed on the pooled samples does not produce false positive or negatives, the probability of absence is always zero if any of the pools test positive. In most cases the credible interval (CrI) for the prevalence are the 2.5% and 97.5% quantiles of the posterior distribution. However, if all tests are positive the upper bound of the CrI is 1 and the lower bound is the 5% quantile of the posterior. Similarly, if all tests are negative the lower bound of the CrI is 0 and the lower bound is the 95% quantile of the posterior.
+
+Given a dataset containing the number of samples and the result of tests for each pool, `PoolPrev` returns Bayesian and maximum likelihood estimates of the prevalence together with uncertainty intervals. Efficient Bayesian inference is performed with Hamiltonian Markov Chain Monte Carlo using the Stan programming language and the `rstan` package. Users can specify their prior belief for the prevalence from the Beta distribution, or use the uninformative 'Jefferey's' prior i.e. $Beta(0.5,0.5)$. Users can also optionally specify the prior probability that the marker of interested is entirely absent from the population, in which case `PoolPrev` also returns the probability of absence given the data. As we assume the test performed on the pooled samples does not produce false positive or negatives, the probability of absence is always zero if any of the pools test positive. In most cases the credible interval (CrI) for the prevalence are the 2.5% and 97.5% quantiles of the posterior distribution. However, if all tests are positive the upper bound of the CrI is 1 and the lower bound is the 5% quantile of the posterior. Similarly, if all tests are negative the lower bound of the CrI is 0 and the lower bound is the 95% quantile of the posterior.
 The maximum likelihood estimate is calculated using the `optimizing` function from the `rstan` package. The uncertainty interval for the maximum likelihood estimate is calculated using the likelihood ratio method (i.e. a Wilk’s confidence interval) using the `uniroot` function from the `stats` package. As with the Bayesian credible interval, the lower or upper bound of the confidence intervals are zero or one when all pools are negative or positive, respectively.
 
 The boxes below demonstrated the use of `PoolPrev` on a synthetic dataset. The synthetic dataset consists of 1000 pools from four different locations (A-D) over five years (0-4) of sampling. The ‘true’ prevalence in the initial year was 14% in locations A and D, 4% in location B and 1% in location C, and declined by approximately 18% each year. 
 
-```{r buildpackage, include=FALSE}
-pkgbuild::compile_dll()
-roxygen2::roxygenize()
-
-```
 
 ```{r GenerateDataset, include=FALSE}
+library(dplyr)
+library(tidyr)
 ### Create a synthetic dataset with 4 locations across 5 years,
 ### where prevalence is declining
 NumPools <- 1000
@@ -46,7 +88,6 @@ Data$TrueOdds <- with(Data,BaseOdds[Place] * OddsRatioYear^(Year-min(Year)))
 Data$TruePrev <- with(Data, TrueOdds/(1+TrueOdds))
 #Simulate test results on pools
 Data$Result <- with(Data,as.numeric(runif(NumPools) < 1-(1-TruePrev)^NumInPool))
-library(dplyr)
 Data <- Data %>% select(-TrueOdds,-TruePrev)
 ```
 
@@ -71,8 +112,7 @@ The boxes below apply `PoolLogitReg` to the same synthetic dataset used to demon
 ```{r PoolLogitRegExample}
 # Fit modified logistic regression model
 #The below two lines produce identical results and support all the same methods
-Reg <- PoolLogitReg(Data,
-                    Result ~ Place + Year,
+Reg <- PoolReg(Data,Result ~ Place + Year,
                     NumInPool)
 Reg.glm <- glm(Result ~ Place + Year,
                data = Data,
@@ -102,7 +142,7 @@ DataPredict$PredictTestProb <- with(DataPredict, 1 - (1-PredictPrev)^NumInPool)
 head(DataPredict)
 ```
 
-Figure 1 compares the prevalence estimates based on the modified logisitic model (`PoolPrevLogit`), estimates based on each time and place independently (`PoolPrev`) and the 'true' prevalence at each location. Note that while both methods produce good estimates with the true values falling within confidence intervals, the modified logistic regression model has tigher confidence intervals.
+Figure 1 compares the prevalence estimates based on the modified logisitic model (`PoolReg`), estimates based on each time and place independently (`PoolPrev`) and the 'true' prevalence at each location. Note that while both methods produce good estimates with the true values falling within confidence intervals, the modified logistic regression model has tigher confidence intervals.
 ```{r Comparison, echo=FALSE}
 library(ggplot2)
 PrevsYearPlace <- PoolPrev(Data, Result,NumInPool,Place,Year)
@@ -160,27 +200,30 @@ RegionPrevs <- c(A = 0.5, B = 2, C = 4)/100 #Prevalence in each region
 NumRegions <- length(RegionPrevs)
 NumVillages <- 10 #Villages per Region
 NumSites <- 15 #Sites per village
-MeanCatch <- 100; SDCatch <- 30 #Mean and SD of mosquito catch sizes
-DispersionCatch <- 1.5
-#expand.grid(1:NumSites,1:NumVillages,names(RegionPrevs))
-#Catches <- data.frame(Catch = rnorm(NumRegions * NumVillages * NumSites, MeanCatch,sd = SDCatch))
+MeanCatch <- 200; #Mean and dispersion of mosquito catch sizes (neg binomial distributed)
+DispersionCatch <- 5
+MaxPoolSize <- 25
+# Variability between villages and between sites in a given village.
+# We could probably increase these standard deviations to make the difference between the hierarchical and non-hierarchical models more stark
+VillageSD <- 1.0 
+SiteSD <- 0.5
+
 Data <- data.frame()
 for(R in names(RegionPrevs)){
   for(V in 1:NumVillages){
-    VillageTruePrev <- 0
-    while(VillageTruePrev<=0){
-      VillageTruePrev <- rnorm(1,mean = RegionPrevs[[R]],sd = RegionPrevs[[R]]/5)
-    }
+    #Difference of village prevalence from the region prevalence on log-odds scale
+    VillageDeviate <- rnorm(1,mean = 0, sd = VillageSD)
+    VillageTruePrev <- plogis(qlogis(RegionPrevs[[R]]) + VillageDeviate)
     for(S in 1:NumSites){
-      SiteTruePrev <- 0
-      while(SiteTruePrev<=0){
-        SiteTruePrev <- rnorm(1,mean = VillageTruePrev,sd = VillageTruePrev/5)
-      }
-      #Generate catch sizes from zero-truncated negative binomial distribution. 're-roll' sizes <= 0 to guarantee at least one mossie
+      #Difference of site prevalence from the village prevalence on log-odds scale
+      SiteDeviate <- rnorm(1,mean = 0, sd = SiteSD)
+      SiteTruePrev <- plogis(qlogis(RegionPrevs[[R]]) + VillageDeviate + SiteDeviate)
+      #Generate catch sizes from zero-truncated negative binomial distribution. 're-roll' sizes == 0 to guarantee at least one mossie
       Catch <- 0
       while(Catch<=0){
-        Catch <- rnbinom(1,mu = MeanCatch,DispersionCatch)
+        Catch <- rnbinom(1,mu = MeanCatch ,DispersionCatch)
       }
+      #Split pools into as many of size MaxPoolSize as possible and the remainder in another small pool
       NumBigPools <- Catch %/% MaxPoolSize
       if(NumBigPools){
         Data <- rbind(Data,
@@ -203,17 +246,115 @@ for(R in names(RegionPrevs)){
                                  PrevalenceVillage = VillageTruePrev,
                                  PrevalenceRegion = RegionPrevs[[R]]))
       }
-      
     }
   }
 }
-Data$Result <- with(Data,as.numeric(runif(nrow(Data)) < 1-(1-PrevalenceSite)^PoolSize))
+Data$Result <- with(Data,as.numeric(runif(nrow(Data)) < (1-(1-PrevalenceSite)^PoolSize)))
 
-
-PrevAll <- PoolPrev(Data,Result,PoolSize)
+# Calculating prevalences at different levels ignoring hierarchical sampling structure
 PrevRegion <- PoolPrev(Data,Result,PoolSize,Region)
 PrevVillage <- PoolPrev(Data,Result,PoolSize,Region,Village)
 PrevSite <- PoolPrev(Data,Result,PoolSize,Region,Village,Site)
 
+# Calulcating prevalences at different levels acknowledging hierarchical structure
+
+
+
+# Similar to above but in a regresison framework with Region as population
+# effect (aka fixed effect) and Village and Site as group effects (aka random
+# effect)
+
+HierPrevModel <- PoolRegBayes(Data, Result ~ Region + (1|Village/Site), PoolSize)
+HierPrevs <- getPrevalence(HierPrevModel) # Gett fitted prevalence at each level: Population Effects only (in this case this is region), Population Effects and Village, and population effects, village and site.
+
 ```
 
+```{r HierComparisonRegion, echo=FALSE}
+PlotDataRegion <- PrevRegion %>%
+  unique %>%
+  select(Region, PrevMLE, CILow, CIHigh) %>%
+  mutate(Method = 'Basic MLE') %>%
+  rename(Prev = PrevMLE) %>%
+  bind_rows(PrevRegion %>%
+              unique %>%
+              select(Region, PrevBayes, CrILow, CrIHigh) %>%
+              mutate(Method = 'Basic Bayes') %>%
+              rename(Prev = PrevBayes,
+                     CILow= CrILow,
+                     CIHigh = CrIHigh)) %>%
+  bind_rows(Data %>%
+              select(Region,PrevalenceRegion) %>%
+              unique %>%
+              mutate(Method = "True") %>%
+              rename(Prev = PrevalenceRegion)) %>%
+  bind_rows(HierPrevs$PopulationEffects %>%
+              mutate(Method = 'Heirarchical Bayes') %>%
+              rename(Prev = Estimate,
+                     CILow = CrILow,
+                     CIHigh = CrIHigh) %>%
+              select(Region, Prev, CILow, CIHigh, Method))
+
+
+PlotsRegion <- PlotDataRegion %>%
+  ggplot() +
+  geom_pointrange(aes(x = Method,
+                      color = Region,
+                      y = Prev,
+                      ymin = CILow,
+                      ymax = CIHigh,
+                      shape = Method)) +
+  facet_grid(~Region,scales = "free_x") +
+  #scale_y_continuous(labels=scales::percent) +
+  scale_y_log10(labels=scales::percent) +
+  scale_x_discrete(breaks = NULL)+
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Prevalence')
+PlotsRegion
+
+```
+```{r HierComparisonVillage, echo=FALSE}
+PlotDataVillage <- PrevVillage %>%
+  unique %>%
+  select(Region, Village, PrevMLE, CILow, CIHigh) %>%
+  mutate(Method = 'Basic MLE') %>%
+  rename(Prev = PrevMLE) %>%
+  bind_rows(PrevVillage %>%
+              unique %>%
+              select(Region, Village, PrevBayes, CrILow, CrIHigh) %>%
+              mutate(Method = 'Basic Bayes') %>%
+              rename(Prev = PrevBayes,
+                     CILow= CrILow,
+                     CIHigh = CrIHigh)) %>%
+  bind_rows(Data %>%
+              select(Region, Village,PrevalenceVillage) %>%
+              unique %>%
+              mutate(Method = "True") %>%
+              rename(Prev = PrevalenceVillage)) %>%
+  bind_rows(HierPrevs$Village %>%
+              mutate(Method = 'Heirarchical Bayes') %>%
+              rename(Prev = Estimate,
+                     CILow = CrILow,
+                     CIHigh = CrIHigh) %>%
+              select(Region, Village, Prev, CILow, CIHigh, Method)) %>%
+    mutate(VillageNum = (strsplit(as.character(Village),"-") %>% as.data.frame() %>% t)[,2] %>% as.integer) %>%
+  subset(VillageNum %in% 1:5)
+
+
+PlotsVillage <- PlotDataVillage%>%
+  ggplot() +
+  geom_pointrange(aes(x = Village,
+                      color = Region,
+                      y = Prev,
+                      ymin = CILow,
+                      ymax = CIHigh,
+                      shape = Method),
+                  position = position_dodge(width = 0.8)) +
+  facet_grid(~Region,scales = "free_x") +
+  #scale_y_continuous(labels=scales::percent) +
+  scale_y_log10(labels=scales::percent) +
+  scale_x_discrete(breaks = NULL)+
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab('Prevalence')
+PlotsVillage
+
+```

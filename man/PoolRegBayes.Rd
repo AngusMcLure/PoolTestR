@@ -2,29 +2,35 @@
 % Please edit documentation in R/PoolRegBayes.R
 \name{PoolRegBayes}
 \alias{PoolRegBayes}
-\title{Bayesian Mixed (or fixed) Effect Logistic Regression with Presence/Absence Tests on Pooled Samples}
+\title{Bayesian Mixed or Fixed Effect Logistic Regression with Presence/Absence
+Tests on Pooled Samples}
 \usage{
-PoolRegBayes(data, formula, PoolSize)
+PoolRegBayes(data, formula, poolSize, cores = 4, ...)
 }
 \arguments{
-\item{data}{A \code{data.frame} with one row for each pooled sampled and columns for
-the size of the pool (i.e. the number of specimens / isolates / insects
-pooled to make that particular pool), the result of the test of the pool
-and any number of columns to be used as the dependent variables in the
-logistic regression}
+\item{data}{A \code{data.frame} with one row for each pooled sampled and
+columns for the size of the pool (i.e. the number of specimens / isolates /
+insects pooled to make that particular pool), the result of the test of the
+pool and any number of columns to be used as the dependent variables in the
+logistic regression.}
 
-\item{formula}{A \code{formula} of the kind used to define models in \code{lme4} or \code{brms}.
-The left-hand side should be the name of column with the result of each test on
-each pooled sample. The result must be stored with 1 indicating a positive test
-result and 0 indicating a negative test result.}
+\item{formula}{A \code{formula} of the kind used to define models in
+\code{brms}, which are generalisation of the formulae used in \code{lm,glm}
+or \code{lme4}. The left-hand side of the formula should be the name of
+column in \code{data} with the result of the test on the pooled samples.
+The result must be stored with 1 indicating a positive test result and 0
+indicating a negative test result.}
 
-\item{PoolSize}{The name of the column with number of specimens/isolates/insects in each pool}
+\item{poolSize}{The name of the column with number of specimens / isolates /
+insects in each pool.}
+
+\item{...}{Arguments to be passed brms.}
 }
 \value{
-An object of class \code{brms} with the regression outputs
+An object of class \code{brms} with the regression outputs.
 }
 \description{
-It can be useful to do mixed effects logistic regression on the presence/absence results from
-pooled samples, however one must adjust for the size of each pool to correctly
-identify trends and associations.
+It can be useful to do mixed effects logistic regression on the
+presence/absence results from pooled samples, however one must adjust for the
+size of each pool to correctly identify trends and associations.
 }

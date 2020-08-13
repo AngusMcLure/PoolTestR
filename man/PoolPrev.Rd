@@ -6,14 +6,15 @@
 \usage{
 PoolPrev(
   data,
-  TestResult,
-  PoolSize,
+  result,
+  poolSize,
   ...,
   prior.alpha = 0.5,
   prior.beta = 0.5,
   prior.absent = 0,
   alpha = 0.05,
-  verbose = F
+  verbose = F,
+  cores = 1
 )
 }
 \arguments{
@@ -25,11 +26,11 @@ location where pool was taken) which can optionally be used for splitting
 the data into smaller groups and calculting prevalence by group (e.g.
 calculating prevalence for each location)}
 
-\item{TestResult}{The name of column with the result of each test on each pooled sample.
+\item{result}{The name of column with the result of each test on each pooled sample.
 The result must be stored with 1 indicating a positive test result and
 0 indicating a negative test result.}
 
-\item{PoolSize}{The name of the column with number of specimens/isolates/insects in each pool}
+\item{poolSize}{The name of the column with number of specimens/isolates/insects in each pool}
 
 \item{...}{Optional name(s) of columns with variables to group the data by.
 If ommitted the complete dataset is used to estimate a single prevalence.
