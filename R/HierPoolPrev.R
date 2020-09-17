@@ -30,11 +30,11 @@
 #'   these columns
 #' @param prior.alpha,prior.beta,prior.absent The prior on the prevalence in
 #'   each group takes the form of beta distribution (with parameters alpha and
-#'   beta) modified to have a point mass of zero i.e. allowing for some prior
-#'   proability that the true prevalence is exactly zero (prior.absent) The
-#'   default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0} i.e. the
+#'   beta). The default is \code{prior.alpha = prior.beta = 1/2} i.e. the
 #'   uninformative "Jeffrey's" prior. Another popular uninformative choice is
 #'   \code{prior.alpha = prior.beta = 1}, i.e. a uniform prior.
+#'   \code{prior.absent} is included for consistency with \code{PoolPrev}, but
+#'   is currently ignored
 #' @param alpha The confidence level to be used for the confidence and credible
 #'   intervals. Defaults to 0.5\% (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
@@ -55,7 +55,8 @@
 
 
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
-                         prior.alpha = 0.5, prior.beta = 0.5, prior.absent = 0,
+                         prior.alpha = 0.5, prior.beta = 0.5,
+                         prior.absent = 0,
                          alpha=0.05, verbose = F,cores = 1){
   result <- enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
@@ -76,7 +77,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     }
     sdata <- list(N = nrow(data), #number of datapoints (pools)
                   L = length(hierarchy), #number of levels of hierarchy
-                  NumGroups = NumGroups, #Number of groups at each level of hierarchy
+                  NumGroups = array(NumGroups), #Number of groups at each level of hierarchy
                   TotalGroups = sum(NumGroups),
                   #Result = array(data$Result), #PERHAPS TRY REMOVING COLUMN NAMES?
                   Result = dplyr::select(data, !! result)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling

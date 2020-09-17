@@ -26,7 +26,7 @@
 
 
 
-PoolRegBayes <- function (data, formula, poolSize, cores = 4, ...){
+PoolRegBayes <- function (formula, data, poolSize, prior = NULL, cores = 4, ...){
   poolSize <- enquo(poolSize)
   AllVars <- all.vars(formula)
 
@@ -56,15 +56,9 @@ PoolRegBayes <- function (data, formula, poolSize, cores = 4, ...){
 
   bform <- bf(f1,f2,nl = TRUE)
 
-  print(get_prior(bform,data = data))
-
-  prior <- set_prior("normal(0,100)", class = "b", nlpar = "eta") #+
-              #prior_string("nlp_eta ~ normal(-4,3)", check = FALSE)) ## Fairly informative prior on the prevalence at every site (rather than on the intercept). This might result in strange 'biases'.
-
-  print(make_stancode(bform,
-                      family = bernoulli("identity"),
-                      data = data,
-                      prior = prior))
+  if(is.null(prior)){
+    prior <- set_prior("normal(0,100)", class = "b", nlpar = "eta")
+  }
 
   model <- brm(bform,
                family = bernoulli("identity"),

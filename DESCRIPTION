@@ -1,5 +1,5 @@
 Package: PoolTestR
-Title: Tools for Working with Pooled Samples
+Title: Tools for Estimating Prevalence and Performing Regression Analyses from the Results of Tests on Pooled Specimens
 Version: 0.0.0.9000
 Authors@R: person(given = "Angus",
            family = "McLure",

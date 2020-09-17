@@ -33,7 +33,7 @@
 
 
 
-PoolReg <- function (data, formula, poolSize){
+PoolReg <- function (formula, data, poolSize){
   poolSize <- enquo(poolSize)
 
   AllVars <- all.vars(formula)
@@ -56,7 +56,7 @@ PoolReg <- function (data, formula, poolSize){
   # This method of determining whether a formula has any random/mixed effects
   # is pretty much lifted straight from lme4
   if(!length(findbars(formula[[length(formula)]]))){
-    print("Model has no group/random effects. Using a fixed effect (glm)")
+    print("Model has no group/random effects. Using a fixed effect model (glm)")
     out <- glm(formula,
                family = binomial(PoolLink(poolSize)),
                data = data)
