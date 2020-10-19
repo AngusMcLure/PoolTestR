@@ -11,7 +11,7 @@
 #' these are calculated automatically.
 #'
 #' @export
-#' @param model An object return by [PoolReg()] or [PoolRegBayes()]
+#' @param model An object returned by [PoolReg()] or [PoolRegBayes()]
 #' @param data The data for which prevalence needs to be estimated/predicted. If
 #'   not provided, defaults to using the data used to train the model (i.e.
 #'   returns the fitted values of the prevalence)
@@ -101,7 +101,7 @@ getPrevalence.glmerMod <- function(model, data = NULL){
   if(length(PopTerms)){
     predlist <- list(cbind(PredDataSub,Prev))
   }else{
-    predlist <- list(cbind(PredDataSub[,!names(PredDataSub) == "DummyVar"],Prev))
+    predlist <- list(cbind(PredDataSub[,!names(PredDataSub) == "DummyVar", drop = FALSE],Prev))
   }
 
   #Make predictions based on group effects
@@ -151,34 +151,36 @@ getPrevalence.brmsfit <- function(model, data = NULL){
   }else{
     PredDataSub <- data.frame(DummyVar = 1)
   }
-  PredDataSub[,PoolSizeName] = 1 #Setting PoolSize to 1 means that the response scale is the same as the prevalence scale
+  PredDataSub[,PoolSizeName] <- 1 #Setting PoolSize to 1 means that the response scale is the same as the prevalence scale
   rownames(PredDataSub) <- NULL
   Prev <- stats::fitted(model,
                  scale = 'response',
                  re_formula = NA,
                  newdata = PredDataSub) %>%
     as.data.frame %>%
-    dplyr::select(-dplyr::one_of(c("Est.Error","DummyVar",PoolSizeName))) %>%
+    dplyr::select(-dplyr::any_of(c("Est.Error","DummyVar"))) %>%
     stats::setNames(c("Estimate", "CrILow", "CrIHigh"))
 
-  predlist <- list(cbind(PredDataSub,Prev))
+  predlist <- list(cbind(dplyr::select(PredDataSub,-dplyr::any_of(PoolSizeName)),
+                         Prev))
 
   #Make predictions based on group effects
   if(NGroupTerms){
     for(n in 1:NGroupTerms){
       PredDataSub <-  PredData[,c(PopTerms,GroupTermNames[1:n]),drop =F] %>% unique
-      PredDataSub[,PoolSizeName] = 1 #Setting PoolSize to 1 means that the response scale is the same as the prevalence scale
+      PredDataSub[,PoolSizeName] <- 1 #Setting PoolSize to 1 means that the response scale is the same as the prevalence scale
       rownames(PredDataSub) <- NULL
-      GroupEffectForm <- paste("(1|",GroupTermNames[1:n] %>% paste(collapse = "/"),")",sep = "") %>% stats::reformulate()
+      GroupEffectForm <- paste0("(1|",paste(GroupTermNames[1:n],collapse = "/"),")") %>% stats::reformulate()
       Prev = stats::fitted(model,
                     scale = 'response',
                     re_formula = GroupEffectForm,
                     newdata = PredDataSub) %>%
         as.data.frame %>%
-        dplyr::select(-dplyr::one_of(c("Est.Error",PoolSizeName))) %>%
+        dplyr::select(-dplyr::any_of(c("Est.Error"))) %>%
         stats::setNames(c("Estimate", "CrILow", "CrIHigh"))
       predlist <- c(predlist,
-                    list(cbind(PredDataSub,Prev)))
+                    list(cbind(dplyr::select(PredDataSub,-dplyr::any_of(PoolSizeName)),
+                               Prev)))
     }
   }
   names(predlist) <- c("PopulationEffects", GroupTermNames)

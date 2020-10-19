@@ -8,7 +8,7 @@ Regression with Presence/Absence Tests on Pooled Samples}
 getPrevalence(model, data = NULL)
 }
 \arguments{
-\item{model}{An object return by [PoolReg()] or [PoolRegBayes()]}
+\item{model}{An object returned by [PoolReg()] or [PoolRegBayes()]}
 
 \item{data}{The data for which prevalence needs to be estimated/predicted. If
 not provided, defaults to using the data used to train the model (i.e.
