@@ -6,11 +6,17 @@ Authors@R: person(given = "Angus",
            role = c("aut", "cre"),
            email = "angus.mclure@anu.edu.au",
            comment = c(ORCID = "0000-0003-2551-3059"))
-Description: Tools for working with pooled samples inspired by PoolScreen.
-    The package is currently in early stages.
-    Currently the package only has core functionally, however more features are planned or in the works:
-    e.g. adjustments for imperfect test specificity/sensitivity;
-    functions for helping with optimal experimental design;
+Description: This is a package for working with presence/absence tests on pooled
+    samples. The primary application is for estimating prevalence of a marker in
+    a population based on the results of tests on pooled specimens. This sampling
+    method is often employed in surveillance of rare conditions in humans or
+    animals (e.g. livestock or xenomonitoring). The package was initially
+    concieved as an R-based alternative to the popular xenomonitoring software,
+    PoolScreen. However, it goes further, allowing for estimates of prevalence to
+    adjusted for hierarchy in sampling frames. The pacakge is currently in early
+    stages, however more features are planned or in the works: e.g. adjustments
+    for imperfect test specificity/sensitivity; functions for helping with
+    optimal experimental design; and functions for spatial modelling.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
@@ -24,8 +30,10 @@ Imports:
     Rcpp (>= 0.12.0),
     rstan (>= 2.18.1),
     rstantools (>= 2.0.0),
-    tidyr,
-    vcd
+    brms,
+    stats,
+    lme4,
+    stringr
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
@@ -33,4 +41,4 @@ LinkingTo:
     rstan (>= 2.18.1),
     StanHeaders (>= 2.18.0)
 SystemRequirements: GNU make
-RoxygenNote: 7.0.1
+RoxygenNote: 7.1.1

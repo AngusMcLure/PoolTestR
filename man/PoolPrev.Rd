@@ -18,64 +18,78 @@ PoolPrev(
 )
 }
 \arguments{
-\item{data}{A \code{data.frame} with one row for each pooled sampled and columns for
-the size of the pool (i.e. the number of specimens / isolates / insects
-pooled to make that particular pool), the result of the test of the pool.
-It may also contain additional columns with additional information (e.g.
-location where pool was taken) which can optionally be used for splitting
-the data into smaller groups and calculting prevalence by group (e.g.
-calculating prevalence for each location)}
+\item{data}{A \code{data.frame} with one row for each pooled sampled and
+columns for the size of the pool (i.e. the number of specimens / isolates /
+insects pooled to make that particular pool), the result of the test of the
+pool. It may also contain additional columns with additional information
+(e.g. location where pool was taken) which can optionally be used for
+splitting the data into smaller groups and calculting prevalence by group
+(e.g. calculating prevalence for each location)}
 
-\item{result}{The name of column with the result of each test on each pooled sample.
-The result must be stored with 1 indicating a positive test result and
-0 indicating a negative test result.}
+\item{result}{The name of column with the result of each test on each pooled
+sample. The result must be stored with 1 indicating a positive test result
+and 0 indicating a negative test result.}
 
-\item{poolSize}{The name of the column with number of specimens/isolates/insects in each pool}
+\item{poolSize}{The name of the column with number of
+specimens/isolates/insects in each pool}
 
 \item{...}{Optional name(s) of columns with variables to group the data by.
 If ommitted the complete dataset is used to estimate a single prevalence.
-If included prevalence is estimated spearately for each group defined by these columns}
+If included prevalence is estimated spearately for each group defined by
+these columns}
 
-\item{prior.alpha, prior.beta, prior.absent}{The prior on the prevalence in each group takes the
-form of beta distribution (with parameters alpha and beta) modified to have a point mass of zero
-i.e. allowing for some prior proability that the true prevalence is exactly zero (prior.absent)
-The default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0} i.e. the uninformative "Jeffrey's" prior
-Another popular uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e. a uniform prior.}
+\item{prior.alpha, prior.beta, prior.absent}{The prior on the prevalence in
+each group takes the form of beta distribution (with parameters alpha and
+beta) modified to have a point mass of zero i.e. allowing for some prior
+proability that the true prevalence is exactly zero (prior.absent). The
+default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0}, i.e.
+the uninformative "Jeffrey's" prior. Another popular uninformative choice
+is \code{prior.alpha = prior.beta = 1, prior.absent = 0}, i.e. a uniform
+prior.}
 
-\item{alpha}{The confidence level to be used for the confidence and credible intervals. Defaults to 0.5\% (i.e. 95\% intervals)}
+\item{alpha}{The confidence level to be used for the confidence and credible
+intervals. Defaults to 0.05 (i.e. 95\% intervals)}
 
-\item{verbose}{Logical indicating whether to print progress to screen. Defaults to false (no printing to screen)}
+\item{verbose}{Logical indicating whether to print progress to screen.
+Defaults to false (no printing to screen).}
+
+\item{cores}{The number of CPU cores to be used. For fastest results you can
+use all cores by setting \code{cores = parallel::detectCores()}}
 }
 \value{
 A \code{data.frame} with columns:
-\itemize{
- \item{\code{PrevMLE} (the Maximum Likleihood Estimate of prevelance)}
- \item{\code{CILow} and \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood Ratio method)}
- \item{\code{Bayesian Posterior Expectation}}
- \item{\code{CrILow} and \code{CrIHigh}}
- \item{\code{Number of Pools}}
- \item{\code{Number Positive}}
-}
-If grouping variables are provided in \code{...} there will be an additional column for each grouping variable.
-When there are no grouping variables (supplied in \code{...}) then the dataframe has only one row with the prevalence estimates for the whole dataset.
-When grouping variables are supplied, then there is a seperate row for each group.
+   \itemize{
+       \item{\code{PrevMLE} (the Maximum Likleihood Estimate of prevelance)}
+       \item{\code{CILow} and \code{CIHigh} (Lower and Upper Confidence
+             intervals using the Likelihood Ratio method)}
+       \item{\code{Bayesian Posterior Expectation}}
+       \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
+       \item{\code{Number Positive}} } If grouping variables are provided in
+             \code{...} there will be an additional column for each grouping
+             variable. When there are no grouping variables (supplied in
+             \code{...}) then the dataframe has only one row with the
+             prevalence estimates for the whole dataset. When grouping
+             variables are supplied, then there is a seperate row for each
+             group.
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples
 }
 \examples{
-#Build a synthetic dataset with 1000 pools taken from 4 different locations and 3 different times
-Data <- data.frame(Place = sample(c("A","B","C","D"),1000, replace = TRUE),
-                   Date = sample(as.Date(c("2000/1/1","2001/1/1","2002/1/1")),1000, replace = TRUE),
-                   NumInPool = sample(1:10,1000, replace = TRUE),
-                   Result = sample(0:1,1000,replace = TRUE)
-)
+#Try out on a synthetic dataset consisting of pools (sizes 1, 5, or 10) taken
+#from 4 different regions and 3 different years. Within eaach region specimens
+#are collected at 4 different villages, and within each village specimens are
+#collected at 8 different sites.
+
+\dontrun{
 #Prevalence across the whole (synthetic) dataset
-PoolPrev(Data, Result, NumInPool)
-#Prevalence at each location
-PoolPrev(Data, Result, NumInPool, Place)
-#Prevalence for each time period
-PoolPrev(Data, Result, NumInPool, Date)
-#Prevalence for each combination of location and time-period
-PoolPrev(Data, Result, NumInPool, Place, Date)
+PoolPrev(ExamplePoolData, Result, NumInPool)
+#Prevalence in each Region
+PoolPrev(ExamplePoolData, Result, NumInPool, Region)
+#Prevalence for each year
+PoolPrev(ExamplePoolData, Result, NumInPool, Year)
+#Prevalence for each combination of region and year
+PoolPrev(ExamplePoolData, Result, NumInPool, Region, Year)
+}
+
 }

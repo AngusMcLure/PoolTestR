@@ -39,6 +39,8 @@
 #'   intervals. Defaults to 0.5\% (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen)
+#' @param cores The number of CPU cores to be used. For fastest results you can
+#'   use all cores by setting \code{cores = parallel::detectCores()}
 #' @return A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
 #'   Maximum Likleihood Estimate of prevelance)} \item{\code{CILow} and
 #'   \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
@@ -58,17 +60,17 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                          prior.alpha = 0.5, prior.beta = 0.5,
                          prior.absent = 0,
                          alpha=0.05, verbose = F,cores = 1){
-  result <- enquo(result) #The name of column with the result of each test on each pooled sample
-  poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
-  group_var <- enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
+  result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
+  poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
+  group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
   if(length(group_var) == 0){ #if there are no grouping variables
 
     #Make the model matrix for the group effects - there might be a simpler way of doing this...
     G <- data[,hierarchy,drop = F] %>%
-      mutate_all(as.factor) %>%
+      dplyr::mutate_all(as.factor) %>%
       droplevels %>%
-      mutate_all(as.integer)
+      dplyr::mutate_all(as.integer)
     NumGroups <- G %>% sapply(max)
     G <- t(t(G) + cumsum(NumGroups) - NumGroups)
     Z <- matrix(0,nrow = nrow(data), ncol = sum(NumGroups))
@@ -88,26 +90,26 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                   PriorBeta = prior.beta
     )
     #return(sdata)
-    sfit <- sampling(stanmodels$HierBayesianPoolScreen,
-                     data = sdata,
-                     pars = c('p'),
-                     chains = 4,
-                     iter = 2000,
-                     warmup = 1000,
-                     refresh = ifelse(verbose,200,0),
-                     cores = cores)
+    sfit <- rstan::sampling(stanmodels$HierBayesianPoolScreen,
+                            data = sdata,
+                            pars = c('p'),
+                            chains = 4,
+                            iter = 2000,
+                            warmup = 1000,
+                            refresh = ifelse(verbose,200,0),
+                            cores = cores)
     #return(sfit)
     sfit <- as.matrix(sfit)[,"p"]
 
     out <- data.frame(mean = mean(sfit))
-    out[,'CrILow'] <- quantile(sfit,alpha/2)
-    out[,'CrIHigh'] <- quantile(sfit,1-alpha/2)
+    out[,'CrILow'] <- stats::quantile(sfit,alpha/2)
+    out[,'CrIHigh'] <- stats::quantile(sfit,1-alpha/2)
 
     out[,'NumberOfPools'] <- sdata$N
     out[,'NumberPositive'] <- sum(sdata$Result)
 
     out <- out %>%
-      rename('PrevBayes' = mean) %>%
+      dplyr::rename('PrevBayes' = mean) %>%
       dplyr::select('PrevBayes',
                     'CrILow','CrIHigh',
                     'NumberOfPools', 'NumberPositive')
@@ -115,8 +117,8 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     out
   }else{ #if there are grouping variables the function calls itself iteratively on each group
     out <- data %>%
-      group_by(!!! group_var) %>%
-      group_modify(function(x,...){
+      dplyr::group_by(!!! group_var) %>%
+      dplyr::group_modify(function(x,...){
         HierPoolPrev(x,!! result,!! poolSize,
                      hierarchy,
                      prior.alpha = prior.alpha,
@@ -128,6 +130,6 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
       as.data.frame()
     cat("\n")
   }
-  tibble(out)
+  dplyr::tibble(out)
 }
 

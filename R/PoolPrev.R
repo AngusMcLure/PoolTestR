@@ -1,49 +1,60 @@
 #' Estimation of prevalence based on presence/absence tests on pooled samples
 #'
 #' @export
-#' @param data A \code{data.frame} with one row for each pooled sampled and columns for
-#'             the size of the pool (i.e. the number of specimens / isolates / insects
-#'             pooled to make that particular pool), the result of the test of the pool.
-#'             It may also contain additional columns with additional information (e.g.
-#'             location where pool was taken) which can optionally be used for splitting
-#'             the data into smaller groups and calculting prevalence by group (e.g.
-#'             calculating prevalence for each location)
-#' @param result The name of column with the result of each test on each pooled sample.
-#'                   The result must be stored with 1 indicating a positive test result and
-#'                   0 indicating a negative test result.
-#' @param poolSize The name of the column with number of specimens/isolates/insects in each pool
+#' @param data A \code{data.frame} with one row for each pooled sampled and
+#'   columns for the size of the pool (i.e. the number of specimens / isolates /
+#'   insects pooled to make that particular pool), the result of the test of the
+#'   pool. It may also contain additional columns with additional information
+#'   (e.g. location where pool was taken) which can optionally be used for
+#'   splitting the data into smaller groups and calculting prevalence by group
+#'   (e.g. calculating prevalence for each location)
+#' @param result The name of column with the result of each test on each pooled
+#'   sample. The result must be stored with 1 indicating a positive test result
+#'   and 0 indicating a negative test result.
+#' @param poolSize The name of the column with number of
+#'   specimens/isolates/insects in each pool
 #' @param ... Optional name(s) of columns with variables to group the data by.
-#'            If ommitted the complete dataset is used to estimate a single prevalence.
-#'            If included prevalence is estimated spearately for each group defined by these columns
-#' @param prior.alpha,prior.beta,prior.absent The prior on the prevalence in each group takes the
-#'        form of beta distribution (with parameters alpha and beta) modified to have a point mass of zero
-#'        i.e. allowing for some prior proability that the true prevalence is exactly zero (prior.absent)
-#'        The default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0} i.e. the uninformative "Jeffrey's" prior
-#'        Another popular uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e. a uniform prior.
-#' @param alpha The confidence level to be used for the confidence and credible intervals. Defaults to 0.5\% (i.e. 95\% intervals)
-#' @param verbose Logical indicating whether to print progress to screen. Defaults to false (no printing to screen)
+#'   If ommitted the complete dataset is used to estimate a single prevalence.
+#'   If included prevalence is estimated spearately for each group defined by
+#'   these columns
+#' @param prior.alpha,prior.beta,prior.absent The prior on the prevalence in
+#'   each group takes the form of beta distribution (with parameters alpha and
+#'   beta) modified to have a point mass of zero i.e. allowing for some prior
+#'   proability that the true prevalence is exactly zero (prior.absent). The
+#'   default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0}, i.e.
+#'   the uninformative "Jeffrey's" prior. Another popular uninformative choice
+#'   is \code{prior.alpha = prior.beta = 1, prior.absent = 0}, i.e. a uniform
+#'   prior.
+#' @param alpha The confidence level to be used for the confidence and credible
+#'   intervals. Defaults to 0.05 (i.e. 95\% intervals)
+#' @param verbose Logical indicating whether to print progress to screen.
+#'   Defaults to false (no printing to screen).
+#' @param cores The number of CPU cores to be used. For fastest results you can
+#'   use all cores by setting \code{cores = parallel::detectCores()}
 #' @return A \code{data.frame} with columns:
-#' \itemize{
-#'  \item{\code{PrevMLE} (the Maximum Likleihood Estimate of prevelance)}
-#'  \item{\code{CILow} and \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood Ratio method)}
-#'  \item{\code{Bayesian Posterior Expectation}}
-#'  \item{\code{CrILow} and \code{CrIHigh}}
-#'  \item{\code{Number of Pools}}
-#'  \item{\code{Number Positive}}
-#' }
-#' If grouping variables are provided in \code{...} there will be an additional column for each grouping variable.
-#' When there are no grouping variables (supplied in \code{...}) then the dataframe has only one row with the prevalence estimates for the whole dataset.
-#' When grouping variables are supplied, then there is a seperate row for each group.
+#'    \itemize{
+#'        \item{\code{PrevMLE} (the Maximum Likleihood Estimate of prevelance)}
+#'        \item{\code{CILow} and \code{CIHigh} (Lower and Upper Confidence
+#'              intervals using the Likelihood Ratio method)}
+#'        \item{\code{Bayesian Posterior Expectation}}
+#'        \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
+#'        \item{\code{Number Positive}} } If grouping variables are provided in
+#'              \code{...} there will be an additional column for each grouping
+#'              variable. When there are no grouping variables (supplied in
+#'              \code{...}) then the dataframe has only one row with the
+#'              prevalence estimates for the whole dataset. When grouping
+#'              variables are supplied, then there is a seperate row for each
+#'              group.
 #'
 #' @example examples/Prevalence.R
 
 
 PoolPrev <- function(data,result,poolSize,...,
                      prior.alpha = 0.5, prior.beta = 0.5, prior.absent = 0,
-                     alpha=0.05, verbose = F,cores = 1){
-  result <- enquo(result) #The name of column with the result of each test on each pooled sample
-  poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
-  group_var <- enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
+                     alpha = 0.05, verbose = F,cores = 1){
+  result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
+  poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
+  group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
   if(length(group_var) == 0){ #if there are no grouping variables
 
@@ -65,15 +76,15 @@ PoolPrev <- function(data,result,poolSize,...,
                   PoolSize = dplyr::select(data, !! poolSize)[,1] %>% as.matrix %>% array,
                   PriorAlpha = prior.alpha,
                   PriorBeta = prior.beta
-                  )
-    sfit <- sampling(stanmodels$BayesianPoolScreen,
-                     data = sdata,
-                     pars = c('p'),
-                     chains = 4,
-                     iter = 2000,
-                     warmup = 1000,
-                     refresh = ifelse(verbose,200,0),
-                     cores = cores)
+    )
+    sfit <- rstan::sampling(stanmodels$BayesianPoolScreen,
+                            data = sdata,
+                            pars = c('p'),
+                            chains = 4,
+                            iter = 2000,
+                            warmup = 1000,
+                            refresh = ifelse(verbose,200,0),
+                            cores = cores)
     sfit <- as.matrix(sfit)[,"p"]
 
     LogLikPrev = function(p,result,poolSize,goal=0){
@@ -81,14 +92,14 @@ PoolPrev <- function(data,result,poolSize,...,
     }
 
     # This is the log-likelihood difference used to calculate Likelihood ratio confidence intervals
-    LogLikDiff <- qchisq(1-alpha, df = 1)/2
+    LogLikDiff <- stats::qchisq(1-alpha, df = 1)/2
 
 
     #Calculate the Maximum likelihood estimate -- this is exactly zero if all the pools are negative and exactly one if all are positive
     if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){ #if there is at least one positive and one negative result
       out <- data.frame(mean = mean(sfit))
-      out[,'CrILow'] <- quantile(sfit,alpha/2)
-      out[,'CrIHigh'] <- quantile(sfit,1-alpha/2)
+      out[,'CrILow'] <- stats::quantile(sfit,alpha/2)
+      out[,'CrIHigh'] <- stats::quantile(sfit,1-alpha/2)
       out$ProbAbsent <- ifelse(prior.absent,0,NA)
 
       # calculate maximum likelihood estimate
@@ -97,36 +108,36 @@ PoolPrev <- function(data,result,poolSize,...,
       MLEdata <- sdata
       MLEdata$PriorAlpha <- 1
       MLEdata$PriorBeta  <- 1
-      out$PrevMLE <- optimizing(stanmodels$BayesianPoolScreen,MLEdata)$par["p"]
+      out$PrevMLE <- rstan::optimizing(stanmodels$BayesianPoolScreen,MLEdata)$par["p"]
 
 
-      out[,'CILow'] <- uniroot(LogLikPrev,
-                                   c(0,out$PrevMLE),
-                                   goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
-                                   #goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - 2.51,
-                                   result= sdata$Result,
-                                   poolSize= sdata$PoolSize,
-                                   tol = 1e-10)$root
-      out[,'CIHigh'] <- uniroot(LogLikPrev,
-                                   c(out$PrevMLE,1),
-                                   goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
-                                   #goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - 2.51, #Poolscreen uses the 2.51 value for a 95% confidence interval, which is the value one would use for 97.5% confidence interval (perhpas they thought they needed to make an adjustment for a 'two-sided' test?) For consistency I have reproduced it here
-                                   result= sdata$Result,
-                                   poolSize= sdata$PoolSize,
-                                   tol = 1e-10)$root
+      out[,'CILow'] <- stats::uniroot(LogLikPrev,
+                                      c(0,out$PrevMLE),
+                                      goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
+                                      #goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - 2.51,
+                                      result= sdata$Result,
+                                      poolSize= sdata$PoolSize,
+                                      tol = 1e-10)$root
+      out[,'CIHigh'] <- stats::uniroot(LogLikPrev,
+                                       c(out$PrevMLE,1),
+                                       goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff, # the version we would use if we let users supply confidence
+                                       #goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - 2.51, #Poolscreen uses the 2.51 value for a 95% confidence interval, which is the value one would use for 97.5% confidence interval (perhpas they thought they needed to make an adjustment for a 'two-sided' test?) For consistency I have reproduced it here
+                                       result= sdata$Result,
+                                       poolSize= sdata$PoolSize,
+                                       tol = 1e-10)$root
     }else if(all(as.logical(sdata$Result))){ #If all tests are positive
       out <- data.frame(mean = mean(sfit))
-      out[,'CrILow'] <- quantile(sfit,alpha)
+      out[,'CrILow'] <- stats::quantile(sfit,alpha)
       out[,'CrIHigh'] <- 1
       out$ProbAbsent <- ifelse(prior.absent,0,NA)
       out$PrevMLE <- 1
-      out[,'CILow'] <- uniroot(LogLikPrev,
-                                   c(0,1),
-                                   goal = -LogLikDiff, # the version we would use if we let users supply confidence
-                                   #goal = -1.92, # When all results are positive, the original Poolscreen uses this (more expected) value for the logliklihood difference (1.92) for a 95% confidence interval
-                                   result= sdata$Result,
-                                   poolSize= sdata$PoolSize,
-                                   tol = 1e-10)$root
+      out[,'CILow'] <- stats::uniroot(LogLikPrev,
+                                      c(0,1),
+                                      goal = -LogLikDiff, # the version we would use if we let users supply confidence
+                                      #goal = -1.92, # When all results are positive, the original Poolscreen uses this (more expected) value for the logliklihood difference (1.92) for a 95% confidence interval
+                                      result= sdata$Result,
+                                      poolSize= sdata$PoolSize,
+                                      tol = 1e-10)$root
       out[,'CIHigh'] <- 1
     }else{ #if all tests are negative
       ProbAbsent <- 1/(1 + (1/prior.absent - 1) * beta(prior.alpha, prior.beta + sum(sdata$PoolSize))/beta(prior.alpha, prior.beta))
@@ -137,26 +148,26 @@ PoolPrev <- function(data,result,poolSize,...,
       out <- data.frame(mean = mean(sfit)*(1-ProbAbsent))
       out[,'CrILow'] <- 0
       out[,'CrIHigh'] <- ifelse(q<0, #i.e. if the probablity that the disease is absent exceeds the desired size of the credible interval
-                                          0,
-                                          quantile(sfit,q))
+                                0,
+                                stats::quantile(sfit,q))
       out$ProbAbsent <- ifelse(prior.absent,
                                ProbAbsent,
                                NA)
       out$PrevMLE <- 0
       out[,'CILow'] <- 0
-      out[,'CIHigh'] <- uniroot(LogLikPrev,
-                                   c(0,1),
-                                   goal = -LogLikDiff, # the version we would use if we let users supply confidence
-                                   #goal = -1.92, # When all results are negative, the original Poolscreen uses this (more expected) value for the logliklihood difference (1.92) for a 95% confidence interval
-                                   result= sdata$Result,
-                                   poolSize= sdata$PoolSize,
-                                   tol = 1e-10)$root
+      out[,'CIHigh'] <- stats::uniroot(LogLikPrev,
+                                       c(0,1),
+                                       goal = -LogLikDiff, # the version we would use if we let users supply confidence
+                                       #goal = -1.92, # When all results are negative, the original Poolscreen uses this (more expected) value for the logliklihood difference (1.92) for a 95% confidence interval
+                                       result= sdata$Result,
+                                       poolSize= sdata$PoolSize,
+                                       tol = 1e-10)$root
     }
     out[,'NumberOfPools'] <- sdata$N
     out[,'NumberPositive'] <- sum(sdata$Result)
 
     out <- out %>%
-      rename('PrevBayes' = mean) %>%
+      dplyr::rename('PrevBayes' = mean) %>%
       dplyr::select('PrevMLE',
                     'CILow', 'CIHigh',
                     'PrevBayes',
@@ -167,8 +178,8 @@ PoolPrev <- function(data,result,poolSize,...,
     out
   }else{ #if there are grouping variables the function calls itself iteratively on each group
     out <- data %>%
-      group_by(!!! group_var) %>%
-      group_modify(function(x,...){
+      dplyr::group_by(!!! group_var) %>%
+      dplyr::group_modify(function(x,...){
         PoolPrev(x,!! result,!! poolSize,
                  alpha=alpha,verbose = verbose,
                  prior.absent = prior.absent,
@@ -178,6 +189,6 @@ PoolPrev <- function(data,result,poolSize,...,
       as.data.frame()
     cat("\n")
   }
-  tibble(out)
+  dplyr::tibble(out)
 }
 

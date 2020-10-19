@@ -9,16 +9,17 @@
 #'
 #' @example examples/LogisticRegression.R
 
-#Turns out the pooled sampled regression is equivalent to the problem of monitering bird nests!
-#This is in fact THE EXAMPLE given in glm for adding a custom link function! HA!
+#Turns out the pooled sampled regression is very similar to the problem of
+#monitoring bird nests which is in fact THE EXAMPLE given in glm for adding a
+#custom link function!
 
 PoolLink <- function(PoolSize = 1)
 {
-  linkfun <- function(mu) qlogis(1-(1-mu)^(1/PoolSize))
-  linkinv <- function(eta) 1-(1-plogis(eta))^PoolSize
-  mu.eta  <- function(eta) PoolSize * (1-plogis(eta))^(PoolSize-1) * binomial()$mu.eta(eta)
+  linkfun <- function(mu) stats::qlogis(1-(1-mu)^(1/PoolSize))
+  linkinv <- function(eta) 1-(1-stats::plogis(eta))^PoolSize
+  mu.eta  <- function(eta) PoolSize * (1-stats::plogis(eta))^(PoolSize-1) * stats::binomial()$mu.eta(eta)
   valideta <- function(eta) TRUE
-  link <- "PooledTests"
+  link <- "PooledTestsLogistic"
   structure(list(linkfun = linkfun, linkinv = linkinv,
                  mu.eta = mu.eta, valideta = valideta, name = link),
             class = "link-glm")

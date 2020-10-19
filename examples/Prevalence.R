@@ -1,14 +1,16 @@
-#Build a synthetic dataset with 1000 pools taken from 4 different locations and 3 different times
-Data <- data.frame(Place = sample(c("A","B","C","D"),1000, replace = TRUE),
-                   Date = sample(as.Date(c("2000/1/1","2001/1/1","2002/1/1")),1000, replace = TRUE),
-                   NumInPool = sample(1:10,1000, replace = TRUE),
-                   Result = sample(0:1,1000,replace = TRUE)
-)
+#Try out on a synthetic dataset consisting of pools (sizes 1, 5, or 10) taken
+#from 4 different regions and 3 different years. Within eaach region specimens
+#are collected at 4 different villages, and within each village specimens are
+#collected at 8 different sites.
+
+\dontrun{
 #Prevalence across the whole (synthetic) dataset
-PoolPrev(Data, Result, NumInPool)
-#Prevalence at each location
-PoolPrev(Data, Result, NumInPool, Place)
-#Prevalence for each time period
-PoolPrev(Data, Result, NumInPool, Date)
-#Prevalence for each combination of location and time-period
-PoolPrev(Data, Result, NumInPool, Place, Date)
+PoolPrev(ExamplePoolData, Result, NumInPool)
+#Prevalence in each Region
+PoolPrev(ExamplePoolData, Result, NumInPool, Region)
+#Prevalence for each year
+PoolPrev(ExamplePoolData, Result, NumInPool, Year)
+#Prevalence for each combination of region and year
+PoolPrev(ExamplePoolData, Result, NumInPool, Region, Year)
+}
+

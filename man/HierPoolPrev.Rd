@@ -53,17 +53,20 @@ these columns}
 
 \item{prior.alpha, prior.beta, prior.absent}{The prior on the prevalence in
 each group takes the form of beta distribution (with parameters alpha and
-beta) modified to have a point mass of zero i.e. allowing for some prior
-proability that the true prevalence is exactly zero (prior.absent) The
-default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0} i.e. the
+beta). The default is \code{prior.alpha = prior.beta = 1/2} i.e. the
 uninformative "Jeffrey's" prior. Another popular uninformative choice is
-\code{prior.alpha = prior.beta = 1}, i.e. a uniform prior.}
+\code{prior.alpha = prior.beta = 1}, i.e. a uniform prior.
+\code{prior.absent} is included for consistency with \code{PoolPrev}, but
+is currently ignored}
 
 \item{alpha}{The confidence level to be used for the confidence and credible
 intervals. Defaults to 0.5\% (i.e. 95\% intervals)}
 
 \item{verbose}{Logical indicating whether to print progress to screen.
 Defaults to false (no printing to screen)}
+
+\item{cores}{The number of CPU cores to be used. For fastest results you can
+use all cores by setting \code{cores = parallel::detectCores()}}
 }
 \value{
 A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
@@ -81,4 +84,20 @@ A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples in
 a heirarchical sampling frame
+}
+\examples{
+# Calculate prevalence for a synthetic dataset consisting of pools (sizes 1, 5,
+# or 10) taken from 4 different regions and 3 different years. Within each
+# region specimens are collected at 4 different villages, and within each
+# village specimens are collected at 8 different sites.
+
+\dontrun{
+  #Prevalence for each combination of region and year:
+  #ignoring hierarchical sampling frame within each region
+  PoolPrev(ExamplePoolData, Result, NumInPool, Region, Year)
+  #accounting hierarchical sampling frame within each region
+  HierPoolPrev(ExamplePoolData, Result, NumInPool, c("Village","Site"), Region, Year)
+}
+
+
 }

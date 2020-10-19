@@ -13,17 +13,10 @@
 #' @name PoolTestR-package
 #' @aliases PoolTestR
 #' @useDynLib PoolTestR, .registration = TRUE
-#' @import dplyr
+#' @importFrom dplyr %>%
 #' @import methods
 #' @import Rcpp
 #' @import rstan
-#' @import lme4
-#' @import brms
-#' @importFrom stats qchisq uniroot quantile model.matrix quantile na.omit terms reformulate
-#' @importFrom parallel detectCores
-#' @importFrom tidyr unite
-#' @importFrom vcd structable
-#' @importFrom stringr str_match_all
 #'
 #' @references
 #' Stan Development Team (2019). RStan: the R interface to Stan. R package version 2.19.2. https://mc-stan.org

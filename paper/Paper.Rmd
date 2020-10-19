@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(cache.extra = R.version.string)
 knitr::opts_chunk$set(cache.extra = R.version)
 library(PoolTestR)
+library(dplyr)
 ```
 
 [Some one or two line sentence preamble with references to the literature? E.g. the papers associated with pool screen.[^2] ]
@@ -206,7 +207,7 @@ We illustrate both approaches with another synthetic dataset with a realistic hi
 [^4]: We could provide frequentist outputs too (MLE estimate and confidence intervals), but the confidence intervals get pretty tricky so I'd use bootstrapping which is just as slow as Bayesian analysis. I'm not sure there's much utility to this. `PoolPrev` has the frequentist options because that's what people who've used PoolScreen might expect (and it's easy). However, `HierPoolPrev` already departs from PoolScreen so people shouldn't have the same expectations. Besides, frequentist methods might be unstable or non-sensicle when all the pools from one of the sites are positive or negative
   
 ```{r GenerateMoreRealisticDataset, include=FALSE, cache=TRUE}
-RegionPrevs <- c(A = 0.5, B = 2, C = 4)/100 #Prevalence in each region
+RegionPrevs <- c(A = 0.5, B = 2, C = 4)/100 #Prevalence in each region 
 NumRegions <- length(RegionPrevs)
 NumVillages <- 10 #Villages per Region
 NumSites <- 15 #Sites per village
@@ -280,7 +281,6 @@ HierPrevModel <- PoolRegBayes(Result ~ Region + (1|Village/Site), Data, PoolSize
 #     Prevalence for each Village within each region
 #     Prevalence for each site within each village and region
 HierPrevs <- getPrevalence(HierPrevModel) 
-head(HierPrevs)
 
 # Should we do the same thing but in a frequentist framework? We could get confidence intervals using bootMer? This is slower even than Bayesian inference, so I would always use (and suggest people use) the Bayesian version anyway. I have not implemented getPrevalence for the frequentist model yet, but it shouldn't be too hard if want to provide it as an option
 HierPrevModelFreq <- PoolReg(Result ~ Region + (1|Village/Site), Data, PoolSize)
@@ -329,6 +329,11 @@ PlotsRegion <- PlotDataRegion %>%
 PlotsRegion
 
 ```
+
+```{r PrevByVillage, include=FALSE, cache=TRUE}
+PrevVillage <- PoolPrev(Data, Result, PoolSize, Region, Village)
+```
+
 ```{r HierComparisonVillage, echo=FALSE, warning = FALSE}
 PlotDataVillage <- PrevVillage %>%
   unique %>%

@@ -229,7 +229,7 @@ PredData <- memPool %>%
   unique
 pred <- PredData
 for(n in 1:NGroupTerms){
-  GroupEffectForm <- reformulate(paste0("(",as.character(GroupTerms[(NGroupTerms-n+1):NGroupTerms]),")"))
+  GroupEffectForm <- stats::reformulate(paste0("(",as.character(GroupTerms[(NGroupTerms-n+1):NGroupTerms]),")"))
 
   Prev = predict(memPool,
                  type = 'link',
