@@ -19,10 +19,14 @@
 #'   of column in \code{data} with the result of the test on the pooled samples.
 #'   The result must be stored with 1 indicating a positive test result and 0
 #'   indicating a negative test result.
+#' @param link Link function. There are two options `'logit'` (logistic
+#'   regression, the default) and `'cloglog'` (complementary log log
+#'   regression).
 #' @param prior The priors to be used for the regression parameters. Defaults to
 #'   a non-informative (normal(0,100)) prior on linear coefficients and a
 #'   zero-truncated student-t prior on the group effect standard deviations.
-#'   Custom priors must \code{brmsprior} objects produced by [brms::set_prior()].
+#'   Custom priors must \code{brmsprior} objects produced by
+#'   [brms::set_prior()].
 #' @param cores The number of CPU cores to be used. For fastest results you can
 #'   use all cores by setting \code{cores = parallel::detectCores()}
 #' @param ... Additional arguments to be passed to brms.
@@ -33,16 +37,17 @@
 
 
 
-PoolRegBayes <- function (formula, data, poolSize, prior = NULL, cores = 4, ...){
+PoolRegBayes <- function (formula, data, poolSize, link = 'logit', prior = NULL, cores = 4, ...){
   poolSize <- dplyr::enquo(poolSize)
   AllVars <- all.vars(formula)
+  PoolSizeName <- dplyr::as_label(poolSize)
 
   if(!all(AllVars %in% colnames(data))){
     stop("formula contains variables that aren't in the data: ",
          paste(AllVars[!(AllVars %in% colnames(data))], collapse = ", "))
   }
 
-  if(!(dplyr::as_label(poolSize) %in% colnames(data))){
+  if(!(PoolSizeName %in% colnames(data))){
     stop("poolSize does not match any of the variable names in the the data provided.")
   }
 
@@ -50,16 +55,22 @@ PoolRegBayes <- function (formula, data, poolSize, prior = NULL, cores = 4, ...)
     stop("formula contains a variable called eta which is needed internally. ",
          "Please rename this variable and try again")
   }
-  if(dplyr::as_label(poolSize) %in% AllVars){
-    stop("The size of the pools (",dplyr::as_label(poolSize),")",
+  if(PoolSizeName %in% AllVars){
+    stop("The size of the pools (",PoolSizeName,")",
          "is included as a variable in the regression formula. ",
          "Are you sure this is what you meant to do?")
   }
 
   #Set up formula for the format needed for brms
-  f1 <- stats::reformulate(paste0("1 - (1-inv_logit(eta))^",
-                                  dplyr::as_label(poolSize)),
-                           response = formula[[2]])
+  f1 <- switch(link,
+               logit = stats::reformulate(paste0("1 - (1-inv_logit(eta))^",
+                                                 PoolSizeName),
+                                          response = formula[[2]]),
+               cloglog = stats::reformulate(paste0("inv_cloglog(log(",
+                                                   PoolSizeName,
+                                                    ")+ eta)"),
+                                            response = formula[[2]]),
+               stop('Invalid link function. Options are logit or cloglog'))
   f2 <- formula
   f2[[2]] <- as.name("eta")
 
@@ -75,7 +86,8 @@ PoolRegBayes <- function (formula, data, poolSize, prior = NULL, cores = 4, ...)
                      cores = cores,
                      prior = prior,
                      ...)
-
+  model$link <- link
+  model$PoolSizeName <- PoolSizeName
   return(model)
 }
 

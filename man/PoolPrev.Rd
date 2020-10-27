@@ -14,7 +14,7 @@ PoolPrev(
   prior.absent = 0,
   alpha = 0.05,
   verbose = F,
-  cores = 1
+  cores = 4
 )
 }
 \arguments{
@@ -82,14 +82,14 @@ Estimation of prevalence based on presence/absence tests on pooled samples
 #collected at 8 different sites.
 
 \dontrun{
-#Prevalence across the whole (synthetic) dataset
-PoolPrev(ExamplePoolData, Result, NumInPool)
-#Prevalence in each Region
-PoolPrev(ExamplePoolData, Result, NumInPool, Region)
-#Prevalence for each year
-PoolPrev(ExamplePoolData, Result, NumInPool, Year)
-#Prevalence for each combination of region and year
-PoolPrev(ExamplePoolData, Result, NumInPool, Region, Year)
+  #Prevalence across the whole (synthetic) dataset
+  PoolPrev(SimpleExampleData, Result, NumInPool)
+  #Prevalence in each Region
+  PoolPrev(SimpleExampleData, Result, NumInPool, Region)
+  #Prevalence for each year
+  PoolPrev(SimpleExampleData, Result, NumInPool, Year)
+  #Prevalence for each combination of region and year
+  PoolPrev(SimpleExampleData, Result, NumInPool, Region, Year)
 }
 
 }

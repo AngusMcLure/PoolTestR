@@ -6,9 +6,9 @@
 \dontrun{
   #Prevalence for each combination of region and year:
   #ignoring hierarchical sampling frame within each region
-  PoolPrev(ExamplePoolData, Result, NumInPool, Region, Year)
+  PoolPrev(SimpleExampleData, Result, NumInPool, Region, Year)
   #accounting hierarchical sampling frame within each region
-  HierPoolPrev(ExamplePoolData, Result, NumInPool, c("Village","Site"), Region, Year)
+  HierPoolPrev(SimpleExampleData, Result, NumInPool, c("Village","Site"), Region, Year)
 }
 
 

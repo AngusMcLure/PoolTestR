@@ -7,13 +7,13 @@
 ### Models in a frequentist framework
 #ignoring hierarchical sampling frame within each region
 Mod <- PoolReg(Result ~ Region + Year,
-               data = ExamplePoolData,
+               data = SimpleExampleData,
                poolSize = NumInPool)
 summary(Mod)
 
 #accounting hierarchical sampling frame within each region
 HierMod <- PoolReg(Result ~ Region + Year + (1|Village/Site),
-                   data = ExamplePoolData,
+                   data = SimpleExampleData,
                    poolSize = NumInPool)
 summary(HierMod)
 #Extract fitted prevalence for each combination of region and year and then at
@@ -25,18 +25,18 @@ getPrevalence(HierMod)
 ### Models in a Bayesian framework with default (non-informative) priors
 #ignoring hierarchical sampling frame within each region
 \dontrun{
-BayesMod <- PoolRegBayes(Result ~ Region + Year,
-                         data = ExamplePoolData,
-                         poolSize = NumInPool)
-summary(BayesMod)
-getPrevalence(BayesMod) #Extract fitted prevalence for each combination of region and year
+  BayesMod <- PoolRegBayes(Result ~ Region + Year,
+                           data = SimpleExampleData,
+                           poolSize = NumInPool)
+  summary(BayesMod)
+  getPrevalence(BayesMod) #Extract fitted prevalence for each combination of region and year
 
-#accounting hierarchical sampling frame within each region
-BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village/Site),
-                             data = ExamplePoolData,
-                             poolSize = NumInPool)
-summary(BayesHierMod)
-getPrevalence(BayesHierMod)
+  #accounting hierarchical sampling frame within each region
+  BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village/Site),
+                               data = SimpleExampleData,
+                               poolSize = NumInPool)
+  summary(BayesHierMod)
+  getPrevalence(BayesHierMod)
 }
 
 ### Calculate adjusted estimates of prevalence
@@ -45,7 +45,7 @@ getPrevalence(BayesHierMod)
 # Extract fitted prevalence for each combination of region and year
 getPrevalence(Mod)
 \dontrun{
-getPrevalence(BayesMod)
+  getPrevalence(BayesMod)
 }
 
 #Extract fitted prevalence for each combination of region and year and then at
@@ -53,21 +53,21 @@ getPrevalence(BayesMod)
 #region and  each site in each village)
 getPrevalence(HierMod)
 \dontrun{
-getPrevalence(BayesHierMod)
+  getPrevalence(BayesHierMod)
 }
 
 # You can also use getPrevalence to predict at prevalence for other values of
 # the covariates (e.g. predict prevalence in year 4)
 
 #Making a data frame containing data make predict on
-ExamplePoolDataFuture <- unique(data.frame(Region = ExamplePoolData$Region,
-                                           Village = ExamplePoolData$Village,
-                                           Site = ExamplePoolData$Site,
-                                           Year = 4))
+DataFuture <- unique(data.frame(Region = SimpleExampleData$Region,
+                                Village = SimpleExampleData$Village,
+                                Site = SimpleExampleData$Site,
+                                Year = 4))
 
-getPrevalence(Mod, data = ExamplePoolDataFuture)
-getPrevalence(HierMod, data = ExamplePoolDataFuture)
+getPrevalence(Mod, newdata = DataFuture)
+getPrevalence(HierMod, newdata = DataFuture)
 \dontrun{
-getPrevalence(BayesMod, data = ExamplePoolDataFuture)
-getPrevalence(BayesHierMod, data = ExamplePoolDataFuture)
+  getPrevalence(BayesMod, newdata = DataFuture)
+  getPrevalence(BayesHierMod, newdata = DataFuture)
 }

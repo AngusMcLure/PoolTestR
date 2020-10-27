@@ -23,6 +23,9 @@
 #'   formula should be the name of column in \code{data} with the result of the
 #'   test on the pooled samples. The result must be encoded with 1 indicating a
 #'   positive test result and 0 indicating a negative test result.
+#' @param link Link function. There are two options `'logit'` (logistic
+#'   regression, the default) and `'cloglog'` (complementary log log
+#'   regression).
 #' @return An object of class \code{glmerMod} (or \code{glm} if there are no
 #'   random/group effects)
 #'
@@ -30,39 +33,54 @@
 
 
 
-PoolReg <- function (formula, data, poolSize){
-  poolSize <- dplyr::enquo(poolSize)
+PoolReg <- function (formula, data, poolSize, link = 'logit'){
+  poolSize <- deparse(substitute(poolSize))
 
   AllVars <- all.vars(formula)
 
-  if(!(dplyr::as_label(poolSize) %in% colnames(data))){
+  if(!(poolSize %in% colnames(data))){
     stop("poolSize does not match any of the variable names in the the data provided.")
   }
-  poolSize <- dplyr::select(data,!! poolSize)[,1]
-
   if(!all(AllVars %in% colnames(data))){
     stop("formula contains variables that aren't in the data: ",
          paste(AllVars[!(AllVars %in% colnames(data))], collapse = ", "))
   }
-  if(dplyr::as_label(poolSize) %in% AllVars){
-    stop("The size of the pools (",dplyr::as_label(poolSize),")",
+  if(poolSize %in% AllVars){
+    stop("The size of the pools (",poolSize,")",
          "is included as a variable in the regression formula. ",
          "Are you sure this is what you meant to do?")
+  }
+
+  if(link == "cloglog"){
+    formula <- stats::update(formula, formula(paste0("~. + offset(log(",poolSize,"))")))
   }
 
   # This method of determining whether a formula has any random/mixed effects
   # is pretty much lifted straight from lme4
   if(!length(lme4::findbars(formula[[length(formula)]]))){
     print("Model has no group/random effects. Using a fixed effect model (glm)")
-    out <- stats::glm(formula,
-                      family = stats::binomial(PoolLink(poolSize)),
-                      data = data)
+    out <- switch(link,
+                  logit = stats::glm(formula,
+                                     family = stats::binomial(PoolLink(data[[poolSize]])),
+                                     data = data),
+                  cloglog = stats::glm(formula,
+                                       family = stats::binomial("cloglog"),
+                                       data = data),
+                  stop('Invalid link function. Options are logit or cloglog'))
+
   }else{
     print("Detected group/random effects. Using a mixed effect model (glmer)")
-    out <- lme4::glmer(formula,
-                       family = stats::binomial(PoolLink(poolSize)),
-                       data = data)
+    out <- switch(link,
+                  logit =  lme4::glmer(formula,
+                                       family = stats::binomial(PoolLink(data[[poolSize]])),
+                                       data = data),
+                  cloglog = lme4::glmer(formula,
+                                        family = stats::binomial("cloglog"),
+                                        data = data),
+                  stop('Invalid link function. Options are logit or cloglog'))
   }
+  attr(out, 'link') <- link
+  attr(out,'PoolSizeName') <- poolSize
   return(out)
 }
 

@@ -51,7 +51,7 @@
 
 PoolPrev <- function(data,result,poolSize,...,
                      prior.alpha = 0.5, prior.beta = 0.5, prior.absent = 0,
-                     alpha = 0.05, verbose = F,cores = 1){
+                     alpha = 0.05, verbose = F,cores = 4){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
   group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
@@ -177,17 +177,21 @@ PoolPrev <- function(data,result,poolSize,...,
 
     out
   }else{ #if there are grouping variables the function calls itself iteratively on each group
-    out <- data %>%
-      dplyr::group_by(!!! group_var) %>%
-      dplyr::group_modify(function(x,...){
-        PoolPrev(x,!! result,!! poolSize,
-                 alpha=alpha,verbose = verbose,
-                 prior.absent = prior.absent,
-                 prior.alpha = prior.alpha,
-                 prior.beta = prior.beta,
-                 cores = cores)}) %>%
+    data <- data %>%
+      dplyr::group_by(!!! group_var)
+    nGroups <- dplyr::n_groups(data)
+    ProgBar <- progress::progress_bar$new(format = "[:bar] :current/:total (:percent)", total = nGroups)
+    ProgBar$tick(-1)
+    out <- data %>% dplyr::group_modify(function(x,...){
+      ProgBar$tick(1)
+      PoolPrev(x,!! result,!! poolSize,
+               alpha=alpha,verbose = verbose,
+               prior.absent = prior.absent,
+               prior.alpha = prior.alpha,
+               prior.beta = prior.beta,
+               cores = cores)}) %>%
       as.data.frame()
-    cat("\n")
+    ProgBar$tick(1)
   }
   dplyr::tibble(out)
 }

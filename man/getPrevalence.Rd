@@ -2,17 +2,28 @@
 % Please edit documentation in R/getPrevalence.R
 \name{getPrevalence}
 \alias{getPrevalence}
-\title{Predicting Prevalence from a Mixed or Fixed Effect Logistic
-Regression with Presence/Absence Tests on Pooled Samples}
+\title{Predicting Prevalence from a Mixed or Fixed Effect Logistic Regression with
+Presence/Absence Tests on Pooled Samples}
 \usage{
-getPrevalence(model, data = NULL)
+getPrevalence(model, newdata = NULL, re.form = NULL)
 }
 \arguments{
 \item{model}{An object returned by [PoolReg()] or [PoolRegBayes()]}
 
-\item{data}{The data for which prevalence needs to be estimated/predicted. If
-not provided, defaults to using the data used to train the model (i.e.
+\item{newdata}{The data for which prevalence needs to be estimated/predicted.
+If not provided, defaults to using the data used to train the model (i.e.
 returns the fitted values of the prevalence)}
+
+\item{re.form}{A description of which random effects to inlcude in the
+prediction. If omitted, getPrevalence automatically tests to see if there
+are any random effect terms. If not, it just returns the estimates based on
+population effects. If there are random effects, it tests to see if the
+random effect variables form a nested hierarchical structure. If so, in
+addition to the estimates based on population effects only, it will
+estimate at different levels of the nested hierarhical structure in order
+of increasing granularity. For manual control you can set to NA for
+population effects only, or a onesided formula specifying the form of the
+random effects to include in estimates, or a list of such objects.}
 }
 \value{
 A \code{list} with at least one field \code{PopulationEffects} and an
@@ -20,7 +31,15 @@ A \code{list} with at least one field \code{PopulationEffects} and an
   \code{PopulationEffects} contains a \code{data.frame} with the prevalence
   estimated based only the fixed/population effects. When the intercept is
   the only fixed/popultion effect, this is just the population mean (possibly
-  adjusted for random/group effects). When there are group effects
+  adjusted for random/group effects). When there are group effects terms,
+  \code{getPrevalence} attempts to order these with respect to 'granularity'
+  and extract the prevalence estimates for these random effects; e.g. if the
+  random/group effects included are there to account for a hierarhical
+  sampling frame with levels 'Village' and 'Site' with a formula like
+  \code{Result ~ Cov1 + Cov2 + (1|Village/Site)}, then getPrevalence will be
+  a list of three data frames: estimates for every combination of covariates,
+  estimates for every combination of covariates and village, and estimates
+  for every combination of covariates, village, and site.
 }
 \description{
 This function works somewhat like a \code{predict} or \code{fitted} generic
@@ -42,13 +61,13 @@ these are calculated automatically.
 ### Models in a frequentist framework
 #ignoring hierarchical sampling frame within each region
 Mod <- PoolReg(Result ~ Region + Year,
-               data = ExamplePoolData,
+               data = SimpleExampleData,
                poolSize = NumInPool)
 summary(Mod)
 
 #accounting hierarchical sampling frame within each region
 HierMod <- PoolReg(Result ~ Region + Year + (1|Village/Site),
-                   data = ExamplePoolData,
+                   data = SimpleExampleData,
                    poolSize = NumInPool)
 summary(HierMod)
 #Extract fitted prevalence for each combination of region and year and then at
@@ -60,18 +79,18 @@ getPrevalence(HierMod)
 ### Models in a Bayesian framework with default (non-informative) priors
 #ignoring hierarchical sampling frame within each region
 \dontrun{
-BayesMod <- PoolRegBayes(Result ~ Region + Year,
-                         data = ExamplePoolData,
-                         poolSize = NumInPool)
-summary(BayesMod)
-getPrevalence(BayesMod) #Extract fitted prevalence for each combination of region and year
+  BayesMod <- PoolRegBayes(Result ~ Region + Year,
+                           data = SimpleExampleData,
+                           poolSize = NumInPool)
+  summary(BayesMod)
+  getPrevalence(BayesMod) #Extract fitted prevalence for each combination of region and year
 
-#accounting hierarchical sampling frame within each region
-BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village/Site),
-                             data = ExamplePoolData,
-                             poolSize = NumInPool)
-summary(BayesHierMod)
-getPrevalence(BayesHierMod)
+  #accounting hierarchical sampling frame within each region
+  BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village/Site),
+                               data = SimpleExampleData,
+                               poolSize = NumInPool)
+  summary(BayesHierMod)
+  getPrevalence(BayesHierMod)
 }
 
 ### Calculate adjusted estimates of prevalence
@@ -80,7 +99,7 @@ getPrevalence(BayesHierMod)
 # Extract fitted prevalence for each combination of region and year
 getPrevalence(Mod)
 \dontrun{
-getPrevalence(BayesMod)
+  getPrevalence(BayesMod)
 }
 
 #Extract fitted prevalence for each combination of region and year and then at
@@ -88,23 +107,23 @@ getPrevalence(BayesMod)
 #region and  each site in each village)
 getPrevalence(HierMod)
 \dontrun{
-getPrevalence(BayesHierMod)
+  getPrevalence(BayesHierMod)
 }
 
 # You can also use getPrevalence to predict at prevalence for other values of
 # the covariates (e.g. predict prevalence in year 4)
 
 #Making a data frame containing data make predict on
-ExamplePoolDataFuture <- unique(data.frame(Region = ExamplePoolData$Region,
-                                           Village = ExamplePoolData$Village,
-                                           Site = ExamplePoolData$Site,
-                                           Year = 4))
+DataFuture <- unique(data.frame(Region = SimpleExampleData$Region,
+                                Village = SimpleExampleData$Village,
+                                Site = SimpleExampleData$Site,
+                                Year = 4))
 
-getPrevalence(Mod, data = ExamplePoolDataFuture)
-getPrevalence(HierMod, data = ExamplePoolDataFuture)
+getPrevalence(Mod, newdata = DataFuture)
+getPrevalence(HierMod, newdata = DataFuture)
 \dontrun{
-getPrevalence(BayesMod, data = ExamplePoolDataFuture)
-getPrevalence(BayesHierMod, data = ExamplePoolDataFuture)
+  getPrevalence(BayesMod, newdata = DataFuture)
+  getPrevalence(BayesHierMod, newdata = DataFuture)
 }
 }
 \seealso{
