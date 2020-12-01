@@ -6,3 +6,5 @@ include/stan/PooledLogisticRegressionBinom\.stan
 ^paper*
 ^examples*
 ^data-raw$
+cran-comments\.md
+\.travis\.yml

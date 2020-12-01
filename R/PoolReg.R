@@ -26,6 +26,7 @@
 #' @param link Link function. There are two options `'logit'` (logistic
 #'   regression, the default) and `'cloglog'` (complementary log log
 #'   regression).
+#' @param ... Arguments to be passed on to \code{stats::glm} or \code{lme4::glmer}
 #' @return An object of class \code{glmerMod} (or \code{glm} if there are no
 #'   random/group effects)
 #'
@@ -33,7 +34,7 @@
 
 
 
-PoolReg <- function (formula, data, poolSize, link = 'logit'){
+PoolReg <- function (formula, data, poolSize, link = 'logit',...){
   poolSize <- deparse(substitute(poolSize))
 
   AllVars <- all.vars(formula)
@@ -62,21 +63,29 @@ PoolReg <- function (formula, data, poolSize, link = 'logit'){
     out <- switch(link,
                   logit = stats::glm(formula,
                                      family = stats::binomial(PoolLink(data[[poolSize]])),
-                                     data = data),
+                                     data = data,
+                                     ...),
                   cloglog = stats::glm(formula,
                                        family = stats::binomial("cloglog"),
-                                       data = data),
+                                       data = data,
+                                       ...),
                   stop('Invalid link function. Options are logit or cloglog'))
 
   }else{
     print("Detected group/random effects. Using a mixed effect model (glmer)")
+    #control <- lme4::glmerControl(optCtrl=list(maxfun=1e5),
+    #                              check.conv.grad = lme4::.makeCC("warning", tol = 2e-3, relTol = NULL))
     out <- switch(link,
                   logit =  lme4::glmer(formula,
                                        family = stats::binomial(PoolLink(data[[poolSize]])),
-                                       data = data),
+                                       data = data,
+                                       #control = control,
+                                       ...),
                   cloglog = lme4::glmer(formula,
                                         family = stats::binomial("cloglog"),
-                                        data = data),
+                                        data = data,
+                                        #control = control,
+                                        ...),
                   stop('Invalid link function. Options are logit or cloglog'))
   }
   attr(out, 'link') <- link

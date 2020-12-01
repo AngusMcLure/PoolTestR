@@ -5,7 +5,7 @@
 \title{Frequentist Mixed or Fixed Effect Logistic Regression with Presence/Absence
 Tests on Pooled Samples}
 \usage{
-PoolReg(formula, data, poolSize, link = "logit")
+PoolReg(formula, data, poolSize, link = "logit", ...)
 }
 \arguments{
 \item{formula}{A \code{formula} of the kind used to define models in
@@ -27,6 +27,8 @@ specimens/isolates/insects in each pool}
 \item{link}{Link function. There are two options `'logit'` (logistic
 regression, the default) and `'cloglog'` (complementary log log
 regression).}
+
+\item{...}{Arguments to be passed on to \code{stats::glm} or \code{lme4::glmer}}
 }
 \value{
 An object of class \code{glmerMod} (or \code{glm} if there are no

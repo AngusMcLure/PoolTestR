@@ -6,16 +6,16 @@
 #'   insects pooled to make that particular pool), the result of the test of the
 #'   pool. It may also contain additional columns with additional information
 #'   (e.g. location where pool was taken) which can optionally be used for
-#'   splitting the data into smaller groups and calculting prevalence by group
+#'   stratifying the data into smaller groups and calculting prevalence by group
 #'   (e.g. calculating prevalence for each location)
 #' @param result The name of column with the result of each test on each pooled
 #'   sample. The result must be stored with 1 indicating a positive test result
 #'   and 0 indicating a negative test result.
 #' @param poolSize The name of the column with number of
 #'   specimens/isolates/insects in each pool
-#' @param ... Optional name(s) of columns with variables to group the data by.
+#' @param ... Optional name(s) of columns with variables to stratify the data by.
 #'   If ommitted the complete dataset is used to estimate a single prevalence.
-#'   If included prevalence is estimated spearately for each group defined by
+#'   If included, prevalence is estimated spearately for each group defined by
 #'   these columns
 #' @param prior.alpha,prior.beta,prior.absent The prior on the prevalence in
 #'   each group takes the form of beta distribution (with parameters alpha and
@@ -29,8 +29,7 @@
 #'   intervals. Defaults to 0.05 (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen).
-#' @param cores The number of CPU cores to be used. For fastest results you can
-#'   use all cores by setting \code{cores = parallel::detectCores()}
+#' @param cores The number of CPU cores to be used. By default all cores are used
 #' @return A \code{data.frame} with columns:
 #'    \itemize{
 #'        \item{\code{PrevMLE} (the Maximum Likleihood Estimate of prevelance)}
@@ -51,7 +50,7 @@
 
 PoolPrev <- function(data,result,poolSize,...,
                      prior.alpha = 0.5, prior.beta = 0.5, prior.absent = 0,
-                     alpha = 0.05, verbose = F,cores = 4){
+                     alpha = 0.05, verbose = F,cores = NULL){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
   group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
@@ -60,16 +59,17 @@ PoolPrev <- function(data,result,poolSize,...,
 
     #Set number of cores to use (use all the cores! BUT when checking R packages they limit you to two cores)
 
-    # chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
-    #
-    # if (nzchar(chk) && chk == "TRUE") {
-    #   # use 2 cores in CRAN/Travis/AppVeyor
-    #   num_workers <- 2L
-    # } else {
-    #   # use all cores in devtools::test()
-    #   num_workers <- parallel::detectCores()
-    # }
-    #options(mc.cores = num_workers)
+    if(is.null(cores)){
+      chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
+      if (nzchar(chk) && chk == "TRUE") {
+        # use 2 cores in CRAN/Travis/AppVeyor
+        cores <- 2L
+      } else {
+        cores <- parallel::detectCores()
+      }
+    }
+    if(!is.integer(cores)){stop("Number of cores must be numeric")}
+
     sdata <- list(N = nrow(data),
                   #Result = array(data$Result), #PERHAPS TRY REMOVING COLUMN NAMES?
                   Result = dplyr::select(data, !! result)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
@@ -176,7 +176,7 @@ PoolPrev <- function(data,result,poolSize,...,
                     'NumberOfPools', 'NumberPositive')
 
     out
-  }else{ #if there are grouping variables the function calls itself iteratively on each group
+  }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
     data <- data %>%
       dplyr::group_by(!!! group_var)
     nGroups <- dplyr::n_groups(data)

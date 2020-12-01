@@ -16,7 +16,7 @@ HierPoolPrev(
   prior.absent = 0,
   alpha = 0.05,
   verbose = F,
-  cores = 4
+  cores = NULL
 )
 }
 \arguments{
@@ -46,7 +46,7 @@ combined with the site number to create unqiue identifiers for each site
 (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in
 village B etc.)}
 
-\item{...}{Optional name(s) of columns with variables to group the data by.
+\item{...}{Optional name(s) of columns with variables to stratify the data by.
 If ommitted the complete dataset is used to estimate a single prevalence.
 If included prevalence is estimated spearately for each group defined by
 these columns}
@@ -65,8 +65,7 @@ intervals. Defaults to 0.5\% (i.e. 95\% intervals)}
 \item{verbose}{Logical indicating whether to print progress to screen.
 Defaults to false (no printing to screen)}
 
-\item{cores}{The number of CPU cores to be used. For fastest results you can
-use all cores by setting \code{cores = parallel::detectCores()}}
+\item{cores}{The number of CPU cores to be used. By default all cores are used}
 }
 \value{
 A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
@@ -75,10 +74,10 @@ A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
   Ratio method)} \item{\code{Bayesian Posterior Expectation}}
   \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
   \item{\code{Number Positive}} } If grouping variables are provided in
-  \code{...} there will be an additional column for each grouping variable.
-  When there are no grouping variables (supplied in \code{...}) then the
+  \code{...} there will be an additional column for each stratifying variable.
+  When there are no stratifying variables (supplied in \code{...}) then the
   dataframe has only one row with the prevalence estimates for the whole
-  dataset. When grouping variables are supplied, then there is a seperate row
+  dataset. When stratifying variables are supplied, then there is a seperate row
   for each group.
 }
 \description{

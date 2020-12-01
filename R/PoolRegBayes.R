@@ -27,9 +27,8 @@
 #'   zero-truncated student-t prior on the group effect standard deviations.
 #'   Custom priors must \code{brmsprior} objects produced by
 #'   [brms::set_prior()].
-#' @param cores The number of CPU cores to be used. For fastest results you can
-#'   use all cores by setting \code{cores = parallel::detectCores()}
-#' @param ... Additional arguments to be passed to brms.
+#' @param cores The number of CPU cores to be used. By default all cores are used
+#' @param ... Additional arguments to be passed to \code{brms::brms}.
 #' @return An object of class \code{brms} with the regression outputs.
 #'
 #' @seealso [PoolTestR::PoolReg()], [PoolTestR::getPrevalence()]
@@ -37,10 +36,22 @@
 
 
 
-PoolRegBayes <- function (formula, data, poolSize, link = 'logit', prior = NULL, cores = 4, ...){
+PoolRegBayes <- function (formula, data, poolSize,
+                          link = 'logit', prior = NULL, cores = NULL, ...){
   poolSize <- dplyr::enquo(poolSize)
   AllVars <- all.vars(formula)
   PoolSizeName <- dplyr::as_label(poolSize)
+
+  if(is.null(cores)){
+    chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
+    if (nzchar(chk) && chk == "TRUE") {
+      # use 2 cores in CRAN/Travis/AppVeyor
+      cores <- 2L
+    } else {
+      cores <- parallel::detectCores()
+    }
+  }
+  if(!is.integer(cores)){stop("Number of cores must be numeric")}
 
   if(!all(AllVars %in% colnames(data))){
     stop("formula contains variables that aren't in the data: ",

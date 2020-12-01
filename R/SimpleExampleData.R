@@ -2,7 +2,7 @@
 #'
 #'
 #' The simple synthetic dataset consisting of pools (sizes 1, 5, or 10) taken from 4 different
-#' regions and 3 different years. Within eaach region specimens are collected
+#' regions and 3 different years. Within each region specimens are collected
 #' at 4 different villages, and within each village specimens are collected at 8
 #' different sites.
 #'

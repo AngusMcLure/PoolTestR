@@ -24,7 +24,7 @@
 #'   combined with the site number to create unqiue identifiers for each site
 #'   (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in
 #'   village B etc.)
-#' @param ... Optional name(s) of columns with variables to group the data by.
+#' @param ... Optional name(s) of columns with variables to stratify the data by.
 #'   If ommitted the complete dataset is used to estimate a single prevalence.
 #'   If included prevalence is estimated spearately for each group defined by
 #'   these columns
@@ -39,18 +39,17 @@
 #'   intervals. Defaults to 0.5\% (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen)
-#' @param cores The number of CPU cores to be used. For fastest results you can
-#'   use all cores by setting \code{cores = parallel::detectCores()}
+#' @param cores The number of CPU cores to be used. By default all cores are used
 #' @return A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
 #'   Maximum Likleihood Estimate of prevelance)} \item{\code{CILow} and
 #'   \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
 #'   Ratio method)} \item{\code{Bayesian Posterior Expectation}}
 #'   \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
 #'   \item{\code{Number Positive}} } If grouping variables are provided in
-#'   \code{...} there will be an additional column for each grouping variable.
-#'   When there are no grouping variables (supplied in \code{...}) then the
+#'   \code{...} there will be an additional column for each stratifying variable.
+#'   When there are no stratifying variables (supplied in \code{...}) then the
 #'   dataframe has only one row with the prevalence estimates for the whole
-#'   dataset. When grouping variables are supplied, then there is a seperate row
+#'   dataset. When stratifying variables are supplied, then there is a seperate row
 #'   for each group.
 #'
 #' @example examples/HierPrevalence.R
@@ -59,10 +58,21 @@
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                          prior.alpha = 0.5, prior.beta = 0.5,
                          prior.absent = 0,
-                         alpha=0.05, verbose = F,cores = 4){
+                         alpha=0.05, verbose = F,cores = NULL){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
   group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
+
+  if(is.null(cores)){
+    chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
+    if (nzchar(chk) && chk == "TRUE") {
+      # use 2 cores in CRAN/Travis/AppVeyor
+      cores <- 2L
+    } else {
+      cores <- parallel::detectCores()
+    }
+  }
+  if(!is.integer(cores)){stop("Number of cores must be numeric")}
 
   if(length(group_var) == 0){ #if there are no grouping variables
 
@@ -115,7 +125,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                     'NumberOfPools', 'NumberPositive')
 
     out
-  }else{ #if there are grouping variables the function calls itself iteratively on each group
+  }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
     data <- data %>%
       dplyr::group_by(!!! group_var)
     nGroups <- dplyr::n_groups(data)

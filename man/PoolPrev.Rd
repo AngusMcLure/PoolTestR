@@ -14,7 +14,7 @@ PoolPrev(
   prior.absent = 0,
   alpha = 0.05,
   verbose = F,
-  cores = 4
+  cores = NULL
 )
 }
 \arguments{
@@ -23,7 +23,7 @@ columns for the size of the pool (i.e. the number of specimens / isolates /
 insects pooled to make that particular pool), the result of the test of the
 pool. It may also contain additional columns with additional information
 (e.g. location where pool was taken) which can optionally be used for
-splitting the data into smaller groups and calculting prevalence by group
+stratifying the data into smaller groups and calculting prevalence by group
 (e.g. calculating prevalence for each location)}
 
 \item{result}{The name of column with the result of each test on each pooled
@@ -33,9 +33,9 @@ and 0 indicating a negative test result.}
 \item{poolSize}{The name of the column with number of
 specimens/isolates/insects in each pool}
 
-\item{...}{Optional name(s) of columns with variables to group the data by.
+\item{...}{Optional name(s) of columns with variables to stratify the data by.
 If ommitted the complete dataset is used to estimate a single prevalence.
-If included prevalence is estimated spearately for each group defined by
+If included, prevalence is estimated spearately for each group defined by
 these columns}
 
 \item{prior.alpha, prior.beta, prior.absent}{The prior on the prevalence in
@@ -53,8 +53,7 @@ intervals. Defaults to 0.05 (i.e. 95\% intervals)}
 \item{verbose}{Logical indicating whether to print progress to screen.
 Defaults to false (no printing to screen).}
 
-\item{cores}{The number of CPU cores to be used. For fastest results you can
-use all cores by setting \code{cores = parallel::detectCores()}}
+\item{cores}{The number of CPU cores to be used. By default all cores are used}
 }
 \value{
 A \code{data.frame} with columns:

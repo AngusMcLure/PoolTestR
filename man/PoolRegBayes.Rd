@@ -11,7 +11,7 @@ PoolRegBayes(
   poolSize,
   link = "logit",
   prior = NULL,
-  cores = 4,
+  cores = NULL,
   ...
 )
 }
@@ -42,10 +42,9 @@ zero-truncated student-t prior on the group effect standard deviations.
 Custom priors must \code{brmsprior} objects produced by
 [brms::set_prior()].}
 
-\item{cores}{The number of CPU cores to be used. For fastest results you can
-use all cores by setting \code{cores = parallel::detectCores()}}
+\item{cores}{The number of CPU cores to be used. By default all cores are used}
 
-\item{...}{Additional arguments to be passed to brms.}
+\item{...}{Additional arguments to be passed to \code{brms::brms}.}
 }
 \value{
 An object of class \code{brms} with the regression outputs.
