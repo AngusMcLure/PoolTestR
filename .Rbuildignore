@@ -8,3 +8,4 @@ include/stan/PooledLogisticRegressionBinom\.stan
 ^data-raw$
 cran-comments\.md
 \.travis\.yml
+\.DS_Store

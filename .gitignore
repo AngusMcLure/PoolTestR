@@ -1,9 +1,10 @@
 .Rproj.user
 .Rhistory
+paper
 paper/Paper.docx
 paper/Paper.html
 paper/Paper.pdf
 paper/Paper_cache
 paper/Paper_files
 paper/ObjectsForPlotting.RData
-
+.DS_Store
