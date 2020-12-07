@@ -17,7 +17,7 @@ A data frame with 6 variables: \describe{
 ExampleData
 }
 \description{
-A synthetic dataset mimimicing a realistic hierarachical sampling frame.
+A synthetic dataset mimicking a realistic hierarchical sampling frame.
 Simulated samples are taken from across three regions (A, B, and C) in which
 the vectors have a low (0.5\%), medium (2\%), and high (4\%) prevalence of
 the marker of interest. Ten villages are chosen within each region, and traps

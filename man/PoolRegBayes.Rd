@@ -74,7 +74,7 @@ HierMod <- PoolReg(Result ~ Region + Year + (1|Village/Site),
                    poolSize = NumInPool)
 summary(HierMod)
 #Extract fitted prevalence for each combination of region and year and then at
-#each level of the heirarchical sampling frame (i.e. for each village in each
+#each level of the hierarchical sampling frame (i.e. for each village in each
 #region and  each site in each village)
 getPrevalence(HierMod)
 
@@ -106,7 +106,7 @@ getPrevalence(Mod)
 }
 
 #Extract fitted prevalence for each combination of region and year and then at
-#each level of the heirarchical sampling frame (i.e. for each village in each
+#each level of the hierarchical sampling frame (i.e. for each village in each
 #region and  each site in each village)
 getPrevalence(HierMod)
 \dontrun{

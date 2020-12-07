@@ -6,7 +6,7 @@
 #'   insects pooled to make that particular pool), the result of the test of the
 #'   pool. It may also contain additional columns with additional information
 #'   (e.g. location where pool was taken) which can optionally be used for
-#'   stratifying the data into smaller groups and calculting prevalence by group
+#'   stratifying the data into smaller groups and calculating prevalence by group
 #'   (e.g. calculating prevalence for each location)
 #' @param result The name of column with the result of each test on each pooled
 #'   sample. The result must be stored with 1 indicating a positive test result
@@ -14,13 +14,13 @@
 #' @param poolSize The name of the column with number of
 #'   specimens/isolates/insects in each pool
 #' @param ... Optional name(s) of columns with variables to stratify the data by.
-#'   If ommitted the complete dataset is used to estimate a single prevalence.
-#'   If included, prevalence is estimated spearately for each group defined by
+#'   If omitted the complete dataset is used to estimate a single prevalence.
+#'   If included, prevalence is estimated separately for each group defined by
 #'   these columns
 #' @param prior.alpha,prior.beta,prior.absent The prior on the prevalence in
 #'   each group takes the form of beta distribution (with parameters alpha and
 #'   beta) modified to have a point mass of zero i.e. allowing for some prior
-#'   proability that the true prevalence is exactly zero (prior.absent). The
+#'   probability that the true prevalence is exactly zero (prior.absent). The
 #'   default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0}, i.e.
 #'   the uninformative "Jeffrey's" prior. Another popular uninformative choice
 #'   is \code{prior.alpha = prior.beta = 1, prior.absent = 0}, i.e. a uniform
@@ -32,7 +32,7 @@
 #' @param cores The number of CPU cores to be used. By default all cores are used
 #' @return A \code{data.frame} with columns:
 #'    \itemize{
-#'        \item{\code{PrevMLE} (the Maximum Likleihood Estimate of prevelance)}
+#'        \item{\code{PrevMLE} (the Maximum Likelihood Estimate of prevalence)}
 #'        \item{\code{CILow} and \code{CIHigh} (Lower and Upper Confidence
 #'              intervals using the Likelihood Ratio method)}
 #'        \item{\code{Bayesian Posterior Expectation}}
@@ -42,7 +42,7 @@
 #'              variable. When there are no grouping variables (supplied in
 #'              \code{...}) then the dataframe has only one row with the
 #'              prevalence estimates for the whole dataset. When grouping
-#'              variables are supplied, then there is a seperate row for each
+#'              variables are supplied, then there is a separate row for each
 #'              group.
 #'
 #' @example examples/Prevalence.R
@@ -53,7 +53,7 @@ PoolPrev <- function(data,result,poolSize,...,
                      alpha = 0.05, verbose = F,cores = NULL){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
-  group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
+  group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
   if(length(group_var) == 0){ #if there are no grouping variables
 

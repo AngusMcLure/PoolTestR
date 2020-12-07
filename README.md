@@ -1,5 +1,5 @@
 # PoolTestR
-This is an R package with tools for working with pooled samples, initially inspired by the stand-alone software, PoolScreen. The package is currently in early stages. The package can be used to perform the same analyses as PoolScreen i.e. estimate the prevalence of a marker in the population based on tests performed on pooled samples. In our pacakge, the estimates of prevalence can also be adjusted to account for the hierarchical sampling designs that are often used for xenomonitoring studies. Taking this a step further, our package enable users to perform to mixed effect regression to identify covariates associated with the outcome of interest, estimate odds ratios, and predict prevalence. Analyses are available in both frequentist and Bayesian frameworks. 
+This is an R package with tools for working with pooled samples, initially inspired by the stand-alone software, PoolScreen. The package is currently in early stages. The package can be used to perform the same analyses as PoolScreen i.e. estimate the prevalence of a marker in the population based on tests performed on pooled samples. In our package, the estimates of prevalence can also be adjusted to account for the hierarchical sampling designs that are often used for xenomonitoring studies. Taking this a step further, our package enable users to perform to mixed effect regression to identify covariates associated with the outcome of interest, estimate odds ratios, and predict prevalence. Analyses are available in both frequentist and Bayesian frameworks. 
 
 More features are planned or in the works: spatial mapping; models for combining and comparing results from human-based and vector-based surveillance, adjustments for imperfect test specificity/sensitivity; functions for helping with optimal experimental design; functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time. Suggestions are welcome.
 
@@ -37,16 +37,16 @@ Instead of working with real data, for this example we'll be using a simulated d
 head(SimpleExampleData)
 ```
 
-We begin by using the function ```PoolPrev``` to estimate the prevalence across the whole dataset i.e. a single prevalence for all locations and years. The first argument to ```PoolPrev``` is the data (in our case ```SimpleExampleData```). The second argument is the name of the column in the data containing the result of the test (in our case ```Result```): the entries in this column must be 0 for negative pool tests and 1 for a positive pool tests and cannot be missing. The third argument is the name of the column with the number of specimiens/isolates/insects in each pool (in our case ```NumInPool```)
+We begin by using the function ```PoolPrev``` to estimate the prevalence across the whole dataset i.e. a single prevalence for all locations and years. The first argument to ```PoolPrev``` is the data (in our case ```SimpleExampleData```). The second argument is the name of the column in the data containing the result of the test (in our case ```Result```): the entries in this column must be 0 for negative pool tests and 1 for a positive pool tests and cannot be missing. The third argument is the name of the column with the number of specimens/isolates/insects in each pool (in our case ```NumInPool```)
 
 ```R
 PrevWholeDataset <- PoolPrev(SimpleExampleData,Result,NumInPool)
 
 PrevWholeDataset 
 ```
-The output contains a maximum likelihood estimate of the prevalece with 95% confidence intervals and a Bayesian estimate (Jeffrey's prior) with 95% credible intervals. It also contains the total number of pools and the number of these that were positive.
+The output contains a maximum likelihood estimate of the prevalence with 95% confidence intervals and a Bayesian estimate (Jeffrey's prior) with 95% credible intervals. It also contains the total number of pools and the number of these that were positive.
 
-If we want to estimate prevalence seperately for each region we simply include ```Region``` as an additional argument
+If we want to estimate prevalence separately for each region we simply include ```Region``` as an additional argument
 ```R
 PrevByRegion <- PoolPrev(SimpleExampleData, Result, NumInPool, Region)
 PrevByRegion
@@ -56,18 +56,18 @@ If we want to estimate prevalence at the level of villages:
 PrevByVillage <- PoolPrev(SimpleExampleData, Result, NumInPool, Village)
 PrevByVillage
 ```
-Similarly if we want to estimate prevalence seperately for each year (but ignoring differences between places):
+Similarly if we want to estimate prevalence separately for each year (but ignoring differences between places):
 ```R
 PrevByYear <- PoolPrev(SimpleExampleData, Result, NumInPool, Year)
 PrevByYear
 ```
-If we want to estimate prevalence seperately for each combination of region AND year:
+If we want to estimate prevalence separately for each combination of region AND year:
 ```R
 PrevByRegionYear <- PoolPrev(SimpleExampleData, Result, NumInPool, Region, Year)
 PrevByRegionYear
 ```
 
-If we had more varaibles we wanted to group the data by (e.g. climate, season, sex, age...) we could keep on adding the appropriate column names to the function call. But remember that the more groups you split your data into, the fewer samples in each group which will usually lead to wider confidence/credible intervals.
+If we had more variables we wanted to group the data by (e.g. climate, season, sex, age...) we could keep on adding the appropriate column names to the function call. But remember that the more groups you split your data into, the fewer samples in each group which will usually lead to wider confidence/credible intervals.
 
 In some cases it may be appropriate to use a regression framework to estimate prevalence and adjust for variables (such as year) instead of stratifying. The following fits a logistic-type regression model treating region as a categorical variable and Year as an ordinal (with linear trend on the logit scale). The inputs follow the same pattern as the ```glm``` function, with an additional argument for the the pool sizes.
 

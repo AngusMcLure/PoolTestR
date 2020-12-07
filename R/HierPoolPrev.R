@@ -1,5 +1,5 @@
 #' Estimation of prevalence based on presence/absence tests on pooled samples in
-#' a heirarchical sampling frame
+#' a hierarchical sampling frame
 #'
 #' @export
 #' @param data A \code{data.frame} with one row for each pooled sampled and
@@ -7,7 +7,7 @@
 #'   insects pooled to make that particular pool), the result of the test of the
 #'   pool. It may also contain additional columns with additional information
 #'   (e.g. location where pool was taken) which can optionally be used for
-#'   splitting the data into smaller groups and calculting prevalence by group
+#'   splitting the data into smaller groups and calculating prevalence by group
 #'   (e.g. calculating prevalence for each location)
 #' @param result The name of column with the result of each test on each pooled
 #'   sample. The result must be stored with 1 indicating a positive test result
@@ -21,12 +21,12 @@
 #'   across 10 villages (20 site per village), then there should be 200 unique
 #'   names for the sites. If, for instance, the sites are instead numbered 1 to
 #'   20 within each village, the village identifier (e.g. A, B, C...) should be
-#'   combined with the site number to create unqiue identifiers for each site
+#'   combined with the site number to create unique identifiers for each site
 #'   (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in
 #'   village B etc.)
 #' @param ... Optional name(s) of columns with variables to stratify the data by.
-#'   If ommitted the complete dataset is used to estimate a single prevalence.
-#'   If included prevalence is estimated spearately for each group defined by
+#'   If omitted the complete dataset is used to estimate a single prevalence.
+#'   If included prevalence is estimated separately for each group defined by
 #'   these columns
 #' @param prior.alpha,prior.beta,prior.absent The prior on the prevalence in
 #'   each group takes the form of beta distribution (with parameters alpha and
@@ -41,7 +41,7 @@
 #'   Defaults to false (no printing to screen)
 #' @param cores The number of CPU cores to be used. By default all cores are used
 #' @return A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
-#'   Maximum Likleihood Estimate of prevelance)} \item{\code{CILow} and
+#'   Maximum Likelihood Estimate of prevalence)} \item{\code{CILow} and
 #'   \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
 #'   Ratio method)} \item{\code{Bayesian Posterior Expectation}}
 #'   \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
@@ -49,7 +49,7 @@
 #'   \code{...} there will be an additional column for each stratifying variable.
 #'   When there are no stratifying variables (supplied in \code{...}) then the
 #'   dataframe has only one row with the prevalence estimates for the whole
-#'   dataset. When stratifying variables are supplied, then there is a seperate row
+#'   dataset. When stratifying variables are supplied, then there is a separate row
 #'   for each group.
 #'
 #' @example examples/HierPrevalence.R
@@ -61,7 +61,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                          alpha=0.05, verbose = F,cores = NULL){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
-  group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If ommitted uses the complete dataset of pooled sample results to calculate a single prevalence
+  group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
   if(is.null(cores)){
     chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")

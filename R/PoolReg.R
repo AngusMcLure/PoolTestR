@@ -5,7 +5,7 @@
 #' presence/absence results from pooled samples, however one must adjust for the
 #' size of each pool to correctly identify trends and associations. This can
 #' done by using a custom link function [PoolTestR::PoolLink()], defined in this
-#' package, in conjuctions with using \code{glm} from the \code{stats} package
+#' package, in conjunction with using \code{glm} from the \code{stats} package
 #' (fixed effect models) or \code{glmer} from the \code{lme4} package (mixed
 #' effect models).
 #'

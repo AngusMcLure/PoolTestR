@@ -14,15 +14,15 @@ getPrevalence(model, newdata = NULL, re.form = NULL)
 If not provided, defaults to using the data used to train the model (i.e.
 returns the fitted values of the prevalence)}
 
-\item{re.form}{A description of which random effects to inlcude in the
+\item{re.form}{A description of which random effects to include in the
 prediction. If omitted, getPrevalence automatically tests to see if there
 are any random effect terms. If not, it just returns the estimates based on
 population effects. If there are random effects, it tests to see if the
 random effect variables form a nested hierarchical structure. If so, in
 addition to the estimates based on population effects only, it will
-estimate at different levels of the nested hierarhical structure in order
+estimate at different levels of the nested hierarchical structure in order
 of increasing granularity. For manual control you can set to NA for
-population effects only, or a onesided formula specifying the form of the
+population effects only, or a one-sided formula specifying the form of the
 random effects to include in estimates, or a list of such objects.}
 }
 \value{
@@ -30,11 +30,11 @@ A \code{list} with at least one field \code{PopulationEffects} and an
   additional field for every random/group effect variable. The field
   \code{PopulationEffects} contains a \code{data.frame} with the prevalence
   estimated based only the fixed/population effects. When the intercept is
-  the only fixed/popultion effect, this is just the population mean (possibly
+  the only fixed/population effect, this is just the population mean (possibly
   adjusted for random/group effects). When there are group effects terms,
   \code{getPrevalence} attempts to order these with respect to 'granularity'
   and extract the prevalence estimates for these random effects; e.g. if the
-  random/group effects included are there to account for a hierarhical
+  random/group effects included are there to account for a hierarchical
   sampling frame with levels 'Village' and 'Site' with a formula like
   \code{Result ~ Cov1 + Cov2 + (1|Village/Site)}, then getPrevalence will be
   a list of three data frames: estimates for every combination of covariates,
@@ -46,7 +46,7 @@ This function works somewhat like a \code{predict} or \code{fitted} generic
 function returning the model predicted prevalence for a given set of data;
 however, as the quantity of interest (prevalence) is neither on the response
 or link scale we do not use either of these generic functions. Further, when
-the model accounts for the heirarchical structure of the sampling frame (e.g.
+the model accounts for the hierarchical structure of the sampling frame (e.g.
 Region/Village/Site), it is common to want to know the predicted values at
 each level of sampling (e.g. Prevalence at each region, village or site) so
 these are calculated automatically.
@@ -71,7 +71,7 @@ HierMod <- PoolReg(Result ~ Region + Year + (1|Village/Site),
                    poolSize = NumInPool)
 summary(HierMod)
 #Extract fitted prevalence for each combination of region and year and then at
-#each level of the heirarchical sampling frame (i.e. for each village in each
+#each level of the hierarchical sampling frame (i.e. for each village in each
 #region and  each site in each village)
 getPrevalence(HierMod)
 
@@ -103,7 +103,7 @@ getPrevalence(Mod)
 }
 
 #Extract fitted prevalence for each combination of region and year and then at
-#each level of the heirarchical sampling frame (i.e. for each village in each
+#each level of the hierarchical sampling frame (i.e. for each village in each
 #region and  each site in each village)
 getPrevalence(HierMod)
 \dontrun{

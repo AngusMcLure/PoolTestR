@@ -3,7 +3,7 @@
 \name{HierPoolPrev}
 \alias{HierPoolPrev}
 \title{Estimation of prevalence based on presence/absence tests on pooled samples in
-a heirarchical sampling frame}
+a hierarchical sampling frame}
 \usage{
 HierPoolPrev(
   data,
@@ -25,7 +25,7 @@ columns for the size of the pool (i.e. the number of specimens / isolates /
 insects pooled to make that particular pool), the result of the test of the
 pool. It may also contain additional columns with additional information
 (e.g. location where pool was taken) which can optionally be used for
-splitting the data into smaller groups and calculting prevalence by group
+splitting the data into smaller groups and calculating prevalence by group
 (e.g. calculating prevalence for each location)}
 
 \item{result}{The name of column with the result of each test on each pooled
@@ -42,13 +42,13 @@ groups at the same level. E.g. If sampling was performed at 200 sites
 across 10 villages (20 site per village), then there should be 200 unique
 names for the sites. If, for instance, the sites are instead numbered 1 to
 20 within each village, the village identifier (e.g. A, B, C...) should be
-combined with the site number to create unqiue identifiers for each site
+combined with the site number to create unique identifiers for each site
 (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in
 village B etc.)}
 
 \item{...}{Optional name(s) of columns with variables to stratify the data by.
-If ommitted the complete dataset is used to estimate a single prevalence.
-If included prevalence is estimated spearately for each group defined by
+If omitted the complete dataset is used to estimate a single prevalence.
+If included prevalence is estimated separately for each group defined by
 these columns}
 
 \item{prior.alpha, prior.beta, prior.absent}{The prior on the prevalence in
@@ -69,7 +69,7 @@ Defaults to false (no printing to screen)}
 }
 \value{
 A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
-  Maximum Likleihood Estimate of prevelance)} \item{\code{CILow} and
+  Maximum Likelihood Estimate of prevalence)} \item{\code{CILow} and
   \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
   Ratio method)} \item{\code{Bayesian Posterior Expectation}}
   \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
@@ -77,12 +77,12 @@ A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
   \code{...} there will be an additional column for each stratifying variable.
   When there are no stratifying variables (supplied in \code{...}) then the
   dataframe has only one row with the prevalence estimates for the whole
-  dataset. When stratifying variables are supplied, then there is a seperate row
+  dataset. When stratifying variables are supplied, then there is a separate row
   for each group.
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples in
-a heirarchical sampling frame
+a hierarchical sampling frame
 }
 \examples{
 # Calculate prevalence for a synthetic dataset consisting of pools (sizes 1, 5,

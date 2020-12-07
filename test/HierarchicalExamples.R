@@ -304,7 +304,7 @@ pa.alt <- cbind(PredData,pa.alt)
 
 
 
-### Plots and comparison with estimates unadjusted for heirarchical sampling frame
+### Plots and comparison with estimates unadjusted for hierarchical sampling frame
 
 PrevRegion <- PoolPrev(Data,Result,PoolSize,Species,Region)
 PrevVillage <- PoolPrev(Data,Result,PoolSize,Species,Region,Village)
@@ -339,7 +339,7 @@ PlotDataRegion <- PrevRegion %>%
                            values_to = "Prev")) %>%
   bind_rows(paY$PopulationEffects %>%
               mutate(Species = "Y") %>%
-              mutate(Method = 'Heirarchical Bayes \n Region/Village/Site') %>%
+              mutate(Method = 'hierarchical Bayes \n Region/Village/Site') %>%
               rename(Prev = Estimate,
                      CILow = CrILow,
                      CIHigh = CrIHigh) %>%
@@ -364,12 +364,12 @@ PlotDataVillage <- PrevVillage %>%
               rename(Prev = PrevalenceVillageLogitMean)) %>%
   bind_rows(paY$Village %>%
               mutate(Species = "Y") %>%
-              mutate(Method = 'Heirarchical Bayes \n Village/Site') %>%
+              mutate(Method = 'hierarchical Bayes \n Village/Site') %>%
               rename(Prev = Estimate,
                      CILow= CrILow,
                      CIHigh = CrIHigh)) %>%
   # bind_rows(pc$PopulationEffects %>%
-  #             mutate(Method = 'Heirarchical Bayes \n Site') %>%
+  #             mutate(Method = 'hierarchical Bayes \n Site') %>%
   #             mutate(Region = substr(Village,1,1)) %>%
   #             rename(Prev = Estimate,
   #                    CILow= CrILow,
@@ -399,7 +399,7 @@ PlotDataSite <- PrevSite.Village1 %>%
               rename(Prev = PrevalenceSite)) %>%
   bind_rows(p$Site %>%
               subset(Village %in% c("A-1","B-1","C-1")) %>%
-              mutate(Method = 'HeirarchicalBayes') %>%
+              mutate(Method = 'hierarchicalBayes') %>%
               rename(Prev = Estimate,
                      CILow= CrILow,
                      CIHigh = CrIHigh)) %>%

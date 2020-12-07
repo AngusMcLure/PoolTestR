@@ -39,7 +39,7 @@ It can be useful to do mixed effects logistic regression on the
 presence/absence results from pooled samples, however one must adjust for the
 size of each pool to correctly identify trends and associations. This can
 done by using a custom link function [PoolTestR::PoolLink()], defined in this
-package, in conjuctions with using \code{glm} from the \code{stats} package
+package, in conjunction with using \code{glm} from the \code{stats} package
 (fixed effect models) or \code{glmer} from the \code{lme4} package (mixed
 effect models).
 }
@@ -63,7 +63,7 @@ HierMod <- PoolReg(Result ~ Region + Year + (1|Village/Site),
                    poolSize = NumInPool)
 summary(HierMod)
 #Extract fitted prevalence for each combination of region and year and then at
-#each level of the heirarchical sampling frame (i.e. for each village in each
+#each level of the hierarchical sampling frame (i.e. for each village in each
 #region and  each site in each village)
 getPrevalence(HierMod)
 
@@ -95,7 +95,7 @@ getPrevalence(Mod)
 }
 
 #Extract fitted prevalence for each combination of region and year and then at
-#each level of the heirarchical sampling frame (i.e. for each village in each
+#each level of the hierarchical sampling frame (i.e. for each village in each
 #region and  each site in each village)
 getPrevalence(HierMod)
 \dontrun{
