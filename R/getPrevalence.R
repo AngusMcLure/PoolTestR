@@ -127,7 +127,7 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
   for(n in 1:length(re.form)){
     re <- re.form[[n]]
     if(inherits(re, 'formula')){
-      SubGroupVarNames <- getGroupVarNames(re)
+      SubGroupVarNames <- all.vars(re)
     }else{
       if(is.na(re)){
         SubGroupVarNames <- NULL
@@ -196,7 +196,7 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL){
   for(n in 1:length(re.form)){
     re <- re.form[[n]]
     if(inherits(re, 'formula')){
-      SubGroupVarNames <- getGroupVarNames(re)
+      SubGroupVarNames <- all.vars(re)
     }else{
       if(is.na(re)){
         SubGroupVarNames <- NULL
