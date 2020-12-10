@@ -6,54 +6,64 @@
 #'   insects pooled to make that particular pool), the result of the test of the
 #'   pool. It may also contain additional columns with additional information
 #'   (e.g. location where pool was taken) which can optionally be used for
-#'   stratifying the data into smaller groups and calculating prevalence by group
-#'   (e.g. calculating prevalence for each location)
+#'   stratifying the data into smaller groups and calculating prevalence by
+#'   group (e.g. calculating prevalence for each location)
 #' @param result The name of column with the result of each test on each pooled
 #'   sample. The result must be stored with 1 indicating a positive test result
 #'   and 0 indicating a negative test result.
 #' @param poolSize The name of the column with number of
 #'   specimens/isolates/insects in each pool
-#' @param ... Optional name(s) of columns with variables to stratify the data by.
-#'   If omitted the complete dataset is used to estimate a single prevalence.
-#'   If included, prevalence is estimated separately for each group defined by
-#'   these columns
-#' @param prior.alpha,prior.beta,prior.absent The prior on the prevalence in
-#'   each group takes the form of beta distribution (with parameters alpha and
-#'   beta) modified to have a point mass of zero i.e. allowing for some prior
-#'   probability that the true prevalence is exactly zero (prior.absent). The
-#'   default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0}, i.e.
-#'   the uninformative "Jeffrey's" prior. Another popular uninformative choice
-#'   is \code{prior.alpha = prior.beta = 1, prior.absent = 0}, i.e. a uniform
+#' @param ... Optional name(s) of columns with variables to stratify the data
+#'   by. If omitted the complete dataset is used to estimate a single
+#'   prevalence. If included, prevalence is estimated separately for each group
+#'   defined by these columns
+#' @param prior.alpha,prior.beta,prior.absent The default prior for the
+#'   prevalence is the uninformative Jeffrey's prior, however you can also
+#'   specify a custom prior with a beta distribution (with parameters
+#'   prior.alpha and prior.beta) modified to have a point mass of zero i.e.
+#'   allowing for some prior probability that the true prevalence is exactly
+#'   zero (prior.absent). Another popular uninformative choice is
+#'   \code{prior.alpha = 1, prior.beta = 1, prior.absent = 0}, i.e. a uniform
 #'   prior.
-#' @param alpha The confidence level to be used for the confidence and credible
-#'   intervals. Defaults to 0.05 (i.e. 95\% intervals)
+#' @param alpha Defines the confidence level to be used for the confidence and
+#'   credible intervals. Defaults to 0.05 (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen).
-#' @param cores The number of CPU cores to be used. By default all cores are used
-#' @return A \code{data.frame} with columns:
-#'    \itemize{
-#'        \item{\code{PrevMLE} (the Maximum Likelihood Estimate of prevalence)}
-#'        \item{\code{CILow} and \code{CIHigh} (Lower and Upper Confidence
-#'              intervals using the Likelihood Ratio method)}
-#'        \item{\code{Bayesian Posterior Expectation}}
-#'        \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
-#'        \item{\code{Number Positive}} } If grouping variables are provided in
-#'              \code{...} there will be an additional column for each grouping
-#'              variable. When there are no grouping variables (supplied in
-#'              \code{...}) then the dataframe has only one row with the
-#'              prevalence estimates for the whole dataset. When grouping
-#'              variables are supplied, then there is a separate row for each
-#'              group.
+#' @param cores The number of CPU cores to be used. By default all cores are
+#'   used
+#' @return A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
+#'   Maximum Likelihood Estimate of prevalence)} \item{\code{CILow} and
+#'   \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
+#'   Ratio method)} \item{\code{Bayesian Posterior Expectation}}
+#'   \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
+#'   \item{\code{Number Positive}} } If grouping variables are provided in
+#'   \code{...} there will be an additional column for each grouping variable.
+#'   When there are no grouping variables (supplied in \code{...}) then the
+#'   dataframe has only one row with the prevalence estimates for the whole
+#'   dataset. When grouping variables are supplied, then there is a separate row
+#'   for each group.
 #'
 #' @example examples/Prevalence.R
 
 
 PoolPrev <- function(data,result,poolSize,...,
-                     prior.alpha = 0.5, prior.beta = 0.5, prior.absent = 0,
+                     prior.alpha = NULL, prior.beta = NULL, prior.absent = 0,
                      alpha = 0.05, verbose = F,cores = NULL){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
   group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
+
+  useJefferysPrior <- is.null(prior.alpha) & is.null(prior.beta)
+  if(is.null(prior.alpha) != is.null(prior.beta)){
+    stop("prior.alpha and prior.beta must either both be specified or both left blank")
+  }
+
+  # log-likelihood difference used to calculate Likelihood ratio confidence intervals
+  LogLikDiff <- stats::qchisq(1-alpha, df = 1)/2
+  # log-likelihood function
+  LogLikPrev = function(p,result,poolSize,goal=0){
+    sum(log(result + (-1)^result * (1-p)^poolSize)) - goal
+  }
 
   if(length(group_var) == 0){ #if there are no grouping variables
 
@@ -73,37 +83,41 @@ PoolPrev <- function(data,result,poolSize,...,
     sdata <- list(N = nrow(data),
                   #Result = array(data$Result), #PERHAPS TRY REMOVING COLUMN NAMES?
                   Result = dplyr::select(data, !! result)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
-                  PoolSize = dplyr::select(data, !! poolSize)[,1] %>% as.matrix %>% array,
-                  PriorAlpha = prior.alpha,
-                  PriorBeta = prior.beta
+                  PoolSize = dplyr::select(data, !! poolSize)[,1] %>% as.matrix %>% array
     )
-    sfit <- rstan::sampling(stanmodels$BayesianPoolScreen,
-                            data = sdata,
-                            pars = c('p'),
-                            chains = 4,
-                            iter = 2000,
-                            warmup = 1000,
-                            refresh = ifelse(verbose,200,0),
-                            cores = cores)
+
+
+    if(useJefferysPrior){
+      sfit <- rstan::sampling(stanmodels$BayesianPoolScreenJeffreys,
+                              data = sdata,
+                              pars = c('p'),
+                              chains = 4,
+                              iter = 2000,
+                              warmup = 1000,
+                              refresh = ifelse(verbose,200,0),
+                              cores = cores)
+    }else if(sum(sdata$PoolSize)){#When prior is beta and all tests are negative we needn't bother with Bayesian inference
+      sdata$PriorAlpha = prior.alpha
+      sdata$PriorBeta = prior.beta
+      sfit <- rstan::sampling(stanmodels$BayesianPoolScreen,
+                              data = sdata,
+                              pars = c('p'),
+                              chains = 4,
+                              iter = 2000,
+                              warmup = 1000,
+                              refresh = ifelse(verbose,200,0),
+                              cores = cores)
+    }
     sfit <- as.matrix(sfit)[,"p"]
 
-    LogLikPrev = function(p,result,poolSize,goal=0){
-      sum(log(result + (-1)^result * (1-p)^poolSize)) - goal
-    }
-
-    # This is the log-likelihood difference used to calculate Likelihood ratio confidence intervals
-    LogLikDiff <- stats::qchisq(1-alpha, df = 1)/2
-
-
-    #Calculate the Maximum likelihood estimate -- this is exactly zero if all the pools are negative and exactly one if all are positive
     if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){ #if there is at least one positive and one negative result
       out <- data.frame(mean = mean(sfit))
       out[,'CrILow'] <- stats::quantile(sfit,alpha/2)
       out[,'CrIHigh'] <- stats::quantile(sfit,1-alpha/2)
-      out$ProbAbsent <- ifelse(prior.absent,0,NA)
+      out$ProbAbsent <- ifelse(prior.absent & !useJefferysPrior,0,NA)
 
       # calculate maximum likelihood estimate
-      # 'optimizing' from stan actaully maximizes the joint posterior, not the likelihood,
+      # 'optimizing' from stan actually maximizes the joint posterior, not the likelihood,
       # but if we use a uniform prior they are equivalent
       MLEdata <- sdata
       MLEdata$PriorAlpha <- 1
@@ -129,7 +143,7 @@ PoolPrev <- function(data,result,poolSize,...,
       out <- data.frame(mean = mean(sfit))
       out[,'CrILow'] <- stats::quantile(sfit,alpha)
       out[,'CrIHigh'] <- 1
-      out$ProbAbsent <- ifelse(prior.absent,0,NA)
+      out$ProbAbsent <- ifelse(prior.absent & !useJefferysPrior ,0,NA)
       out$PrevMLE <- 1
       out[,'CILow'] <- stats::uniroot(LogLikPrev,
                                       c(0,1),
@@ -140,19 +154,26 @@ PoolPrev <- function(data,result,poolSize,...,
                                       tol = 1e-10)$root
       out[,'CIHigh'] <- 1
     }else{ #if all tests are negative
-      ProbAbsent <- 1/(1 + (1/prior.absent - 1) * beta(prior.alpha, prior.beta + sum(sdata$PoolSize))/beta(prior.alpha, prior.beta))
+      if(useJefferysPrior){
+        out <- data.frame(mean = mean(sfit))
+        out[,'CrILow'] <- 0
+        out[,'CrIHigh'] <- stats::quantile(sfit,1-alpha)
+        out[,'ProbAbsent'] <- NA
+      } else{ #for beta priors
+        ProbAbsent <- 1/(1 + (1/prior.absent - 1) * beta(prior.alpha, prior.beta + sum(sdata$PoolSize))/beta(prior.alpha, prior.beta))
 
-      #This is the quantile we need to extract from the posterior from sfit to get the 1-alpha credible interval
-      q <- (1 - alpha - ProbAbsent)/(1 - ProbAbsent)
+        #This is the quantile we need to extract from the posterior of the beta-binomial posterior dist to get the 1-alpha credible interval
+        q <- (1 - alpha - ProbAbsent)/(1 - ProbAbsent)
 
-      out <- data.frame(mean = mean(sfit)*(1-ProbAbsent))
-      out[,'CrILow'] <- 0
-      out[,'CrIHigh'] <- ifelse(q<0, #i.e. if the probablity that the disease is absent exceeds the desired size of the credible interval
-                                0,
-                                stats::quantile(sfit,q))
-      out$ProbAbsent <- ifelse(prior.absent,
-                               ProbAbsent,
-                               NA)
+        out <- data.frame(mean = mean(sfit)*(1-ProbAbsent))
+        out[,'CrILow'] <- 0
+        out[,'CrIHigh'] <- ifelse(q<0, #i.e. if the probability that the disease is absent exceeds the desired size of the credible interval
+                                  0,
+                                  stats::qbeta(q,prior.alpha, prior.beta + sum(sdata$PoolSize)))
+        out$ProbAbsent <- ifelse(prior.absent,
+                                 ProbAbsent,
+                                 NA)
+      }
       out$PrevMLE <- 0
       out[,'CILow'] <- 0
       out[,'CIHigh'] <- stats::uniroot(LogLikPrev,

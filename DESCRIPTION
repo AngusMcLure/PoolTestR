@@ -1,5 +1,5 @@
 Package: PoolTestR
-Title: Tools for Estimating Prevalence and Regression with Specimens Tested in Pools (or Groups)
+Title: Estimating Prevalence and Regression with Specimens Tested in Pools (or Groups)
 Version: 0.1.0
 Authors@R: person(given = "Angus",
            family = "McLure",
@@ -8,13 +8,13 @@ Authors@R: person(given = "Angus",
            comment = c(ORCID = "0000-0003-2551-3059"))
 URL: https://github.com/AngusMcLure/PoolTestR
 BugReports: https://github.com/AngusMcLure/PoolTestR
-Description: This is a package for working with presence/absence tests on pooled
+Description: An easy-to-use tool for working with presence/absence tests on pooled
     or grouped samples. The primary application is for estimating prevalence of 
     a marker in a population based on the results of tests on pooled specimens.
     This sampling method is often employed in surveillance of rare conditions in
     humans or animals (e.g. livestock or xenomonitoring). The package was initially
     conceived as an R-based alternative to the xenomonitoring software,
-    PoolScreen. However, it goes further, allowing for estimates of prevalence to
+    'PoolScreen'. However, it goes further, allowing for estimates of prevalence to
     adjusted for hierarchy in sampling frames, and perform flexible (mixed effect)
     regression analyses. The package is currently in early stages, however more 
     features are planned or in the works: e.g. adjustments for imperfect test 

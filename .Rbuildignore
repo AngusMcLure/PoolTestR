@@ -9,3 +9,4 @@ include/stan/PooledLogisticRegressionBinom\.stan
 cran-comments\.md
 \.travis\.yml
 \.DS_Store
+^CRAN-RELEASE$

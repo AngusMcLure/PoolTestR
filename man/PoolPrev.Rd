@@ -9,8 +9,8 @@ PoolPrev(
   result,
   poolSize,
   ...,
-  prior.alpha = 0.5,
-  prior.beta = 0.5,
+  prior.alpha = NULL,
+  prior.beta = NULL,
   prior.absent = 0,
   alpha = 0.05,
   verbose = F,
@@ -23,8 +23,8 @@ columns for the size of the pool (i.e. the number of specimens / isolates /
 insects pooled to make that particular pool), the result of the test of the
 pool. It may also contain additional columns with additional information
 (e.g. location where pool was taken) which can optionally be used for
-stratifying the data into smaller groups and calculating prevalence by group
-(e.g. calculating prevalence for each location)}
+stratifying the data into smaller groups and calculating prevalence by
+group (e.g. calculating prevalence for each location)}
 
 \item{result}{The name of column with the result of each test on each pooled
 sample. The result must be stored with 1 indicating a positive test result
@@ -33,43 +33,41 @@ and 0 indicating a negative test result.}
 \item{poolSize}{The name of the column with number of
 specimens/isolates/insects in each pool}
 
-\item{...}{Optional name(s) of columns with variables to stratify the data by.
-If omitted the complete dataset is used to estimate a single prevalence.
-If included, prevalence is estimated separately for each group defined by
-these columns}
+\item{...}{Optional name(s) of columns with variables to stratify the data
+by. If omitted the complete dataset is used to estimate a single
+prevalence. If included, prevalence is estimated separately for each group
+defined by these columns}
 
-\item{prior.alpha, prior.beta, prior.absent}{The prior on the prevalence in
-each group takes the form of beta distribution (with parameters alpha and
-beta) modified to have a point mass of zero i.e. allowing for some prior
-probability that the true prevalence is exactly zero (prior.absent). The
-default is \code{prior.alpha = prior.beta = 1/2, prior.absent = 0}, i.e.
-the uninformative "Jeffrey's" prior. Another popular uninformative choice
-is \code{prior.alpha = prior.beta = 1, prior.absent = 0}, i.e. a uniform
+\item{prior.alpha, prior.beta, prior.absent}{The default prior for the
+prevalence is the uninformative Jeffrey's prior, however you can also
+specify a custom prior with a beta distribution (with parameters
+prior.alpha and prior.beta) modified to have a point mass of zero i.e.
+allowing for some prior probability that the true prevalence is exactly
+zero (prior.absent). Another popular uninformative choice is
+\code{prior.alpha = 1, prior.beta = 1, prior.absent = 0}, i.e. a uniform
 prior.}
 
-\item{alpha}{The confidence level to be used for the confidence and credible
-intervals. Defaults to 0.05 (i.e. 95\% intervals)}
+\item{alpha}{Defines the confidence level to be used for the confidence and
+credible intervals. Defaults to 0.05 (i.e. 95\% intervals)}
 
 \item{verbose}{Logical indicating whether to print progress to screen.
 Defaults to false (no printing to screen).}
 
-\item{cores}{The number of CPU cores to be used. By default all cores are used}
+\item{cores}{The number of CPU cores to be used. By default all cores are
+used}
 }
 \value{
-A \code{data.frame} with columns:
-   \itemize{
-       \item{\code{PrevMLE} (the Maximum Likelihood Estimate of prevalence)}
-       \item{\code{CILow} and \code{CIHigh} (Lower and Upper Confidence
-             intervals using the Likelihood Ratio method)}
-       \item{\code{Bayesian Posterior Expectation}}
-       \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
-       \item{\code{Number Positive}} } If grouping variables are provided in
-             \code{...} there will be an additional column for each grouping
-             variable. When there are no grouping variables (supplied in
-             \code{...}) then the dataframe has only one row with the
-             prevalence estimates for the whole dataset. When grouping
-             variables are supplied, then there is a separate row for each
-             group.
+A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
+  Maximum Likelihood Estimate of prevalence)} \item{\code{CILow} and
+  \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
+  Ratio method)} \item{\code{Bayesian Posterior Expectation}}
+  \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
+  \item{\code{Number Positive}} } If grouping variables are provided in
+  \code{...} there will be an additional column for each grouping variable.
+  When there are no grouping variables (supplied in \code{...}) then the
+  dataframe has only one row with the prevalence estimates for the whole
+  dataset. When grouping variables are supplied, then there is a separate row
+  for each group.
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples
