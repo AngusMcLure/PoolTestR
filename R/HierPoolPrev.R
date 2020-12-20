@@ -61,7 +61,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                          alpha=0.05, verbose = F,cores = NULL){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
-  group_var <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
+  groupVar <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
   if(is.null(cores)){
     chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
@@ -74,7 +74,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
   }
   if(!is.integer(cores)){stop("Number of cores must be numeric")}
 
-  if(length(group_var) == 0){ #if there are no grouping variables
+  if(length(groupVar) == 0){ #if there are no grouping variables
 
     #Make the model matrix for the group effects - there might be a simpler way of doing this...
     G <- data[,hierarchy,drop = F] %>%
@@ -127,7 +127,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     out
   }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
     data <- data %>%
-      dplyr::group_by(!!! group_var)
+      dplyr::group_by(!!! groupVar)
     nGroups <- dplyr::n_groups(data)
     ProgBar <- progress::progress_bar$new(format = "[:bar] :current/:total (:percent)", total = nGroups)
     ProgBar$tick(-1)
