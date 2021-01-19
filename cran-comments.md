@@ -24,8 +24,8 @@ There should be 2 NOTEs depending on platform:
 * checking for GNU extensions in Makefiles ... NOTE
   GNU make is a SystemRequirements.
   
-  My understanding is that requirement is an issue for Solaris installations. However I believe stan, which is a major dependancy of PoolTestR, unfortunately does not support Solaris well, so I don't think there's a workaround that I can implement 
+  My understanding is that requirement is an issue for Solaris installations. However I believe stan, which is a major dependency of PoolTestR, unfortunately does not support Solaris well, so I don't think there's a workaround that I can implement 
   
 
 ## Downstream dependencies
-As a new package, PoolTestR has no downstream dependancies
+As a new package, PoolTestR has no downstream dependencies
