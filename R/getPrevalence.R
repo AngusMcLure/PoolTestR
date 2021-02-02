@@ -108,7 +108,7 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
            if(isNested(newdata,GroupVarNames)){
              GroupTerms <- lme4::findbars(formula)
              re.form <- c(list(PopulationEffects = NA),
-                          orderedGroupTerms(formula,orderByGranularity(newdata, GroupVarNames)))
+                          orderedGroupTerms(formula,GroupVarNames))
            }else{
              re.form <- list(PopulationEffects = NA)
            }
@@ -137,7 +137,7 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
     }
 
     #We just want to predict for unique combinations of the relevant variables
-    PredDataSub <-  newdata[,unique(c(PopTerms,SubGroupVarNames)),drop = F] %>%
+    PredDataSub <-  newdata[,unique(c(PopTerms,SubGroupVarNames)),drop = FALSE] %>%
       dplyr::mutate(DummyVar = 1) %>% #guarantees that the PredDataSub is non-empty
       unique
     rownames(PredDataSub) <- NULL
@@ -149,7 +149,7 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
       invlink() %>%
       as.data.frame
     colnames(Prev) <- "Estimate"
-    predlist[[n]] <- cbind(PredDataSub[,!names(PredDataSub) %in% c("DummyVar", PoolSizeName), drop = F],
+    predlist[[n]] <- cbind(PredDataSub[,!names(PredDataSub) %in% c("DummyVar", PoolSizeName), drop = FALSE],
                            Prev)
   }
 
@@ -168,8 +168,10 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL){
   #Get the the random/group effect terms names
   GroupVarNames <- getGroupVarNames(formula)
   #Order group terms in order of the number of unique values (i.e. coarsest first)
-  GroupVarNames <- orderByGranularity(newdata,GroupVarNames)
   NGroupVars <- length(GroupVarNames)
+  if(NGroupVars >0){
+    GroupVarNames <- orderByGranularity(newdata,GroupVarNames)
+  }
 
   #set up default re.form list - and if an NA or a single formula wrap in a list
   switch(class(re.form),
@@ -177,7 +179,7 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL){
            if(isNested(newdata,GroupVarNames)){
              GroupTerms <- lme4::findbars(formula)
              re.form <- c(list(PopulationEffects = NA),
-                          orderedGroupTerms(formula,orderByGranularity(newdata, GroupVarNames)))
+                          orderedGroupTerms(formula,GroupVarNames))
            }else{
              re.form <- list(PopulationEffects = NA)
            }
@@ -206,7 +208,7 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL){
     }
 
     #We just want to predict for unique combinations of the relevant variables
-    PredDataSub <-  newdata[,unique(c(PopTerms,SubGroupVarNames)),drop = F] %>%
+    PredDataSub <-  newdata[,unique(c(PopTerms,SubGroupVarNames)),drop = FALSE] %>%
       dplyr::mutate(DummyVar = 1) %>% #guarantees that the PredDataSub is non-empty
       unique
     rownames(PredDataSub) <- NULL
@@ -218,7 +220,7 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL){
       as.data.frame %>%
       dplyr::select(-dplyr::any_of(c("Est.Error"))) %>%
       stats::setNames(c("Estimate", "CrILow", "CrIHigh"))
-    predlist[[n]] <- cbind(PredDataSub[,!names(PredDataSub) %in% c("DummyVar", PoolSizeName), drop = F],
+    predlist[[n]] <- cbind(PredDataSub[,!names(PredDataSub) %in% c("DummyVar", PoolSizeName), drop = FALSE],
                            Prev)
   }
 
@@ -229,6 +231,7 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL){
 
 orderByGranularity <- function(df,Names = NULL){
   if(is.null(Names)) Names <- colnames(df)
+  else if(is.character((Names)) & length(Names) == 0) return(Names)
   N <- length(Names)
   Levels <- rep(0,N)
   for(n in 1:N){
@@ -237,12 +240,13 @@ orderByGranularity <- function(df,Names = NULL){
   Names[order(Levels)]
 }
 
-isNested <- function(df, Names = NULL){
-  Names <- rev(orderByGranularity(df,Names))
+isNested <- function(df, Names){
   N <- length(Names)
-  if(N ==1){
+  if(N %in% c(0,1)){
     return(TRUE)
   }
+  Names <- rev(orderByGranularity(df,Names))
+
   for(n in 1:(N-1)){
     Levels <- unique(df[,Names[n]])
     for(level in Levels){
@@ -264,6 +268,7 @@ getGroupVarNames <- function(formula){
 }
 
 orderedGroupTerms <- function(formula,vars){
+  if(length(vars) == 0 ) return(NULL)
   GroupTerms <- lme4::findbars(formula)
   if(is.null(GroupTerms)) return(NULL)
   NumTerms <- length(GroupTerms)

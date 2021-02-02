@@ -3,7 +3,17 @@
 * win-builder (release, development)
 
 ## Resubmission
-This is a resubmission. In this version I have:
+This is a second resubmission.
+
+In the current (second) resubmission I:
+
+* Reduced the length of the title to be 61 characters (including spaces)
+* Changed default behaviour of all functions to use only a single CPU core (and removed dependency on the package parallel). Consequently all examples now also run on just a single CPU core.
+* Changed all \dontrun examples to \donttest. The examples were wrapped in \dontrun purely to avoid long computation times (about 15 minutes total on my machine).
+* Changed all T to TRUE and F to FALSE
+* I also fixed a bug where getPrevalence.brmsfit was hitting an error for models without group effect terms
+
+In the previous (first) resubmission I:
 
 * Addressed comments regarding DESCRIPTION file: Removed redundant words in title and description; quoted the name of the existing software 'PoolScreen' in single quotes
 * Provided, as requested, a reference to a (pre-print) article describing underlying methodology in the package (reference will be updated to a doi once published)

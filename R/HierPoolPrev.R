@@ -39,7 +39,7 @@
 #'   intervals. Defaults to 0.5\% (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen)
-#' @param cores The number of CPU cores to be used. By default all cores are used
+#' @param cores The number of CPU cores to be used. By default one core is used
 #' @return A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
 #'   Maximum Likelihood Estimate of prevalence)} \item{\code{CILow} and
 #'   \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
@@ -58,26 +58,33 @@
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                          prior.alpha = 0.5, prior.beta = 0.5,
                          prior.absent = 0,
-                         alpha=0.05, verbose = F,cores = NULL){
+                         alpha=0.05, verbose = FALSE,cores = NULL){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
   groupVar <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
+
+  # Ideally I would like to:
+  # Set number of cores to use (use all the cores! BUT when checking R
+  # packages they limit you to two cores)
+  # However, there appear to be some issues where running in parallel is a
+  # lot slower sometimes. So I am setting 1 core as default, but keeping this
+  # code here so I change later if I iron out parallel issues
 
   if(is.null(cores)){
     chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
     if (nzchar(chk) && chk == "TRUE") {
       # use 2 cores in CRAN/Travis/AppVeyor
-      cores <- 2L
+      cores <- 1L
     } else {
-      cores <- parallel::detectCores()
+      cores <- 1L
     }
   }
-  if(!is.integer(cores)){stop("Number of cores must be numeric")}
+  #if(!is.integer(cores)){stop("Number of cores must be numeric")}
 
   if(length(groupVar) == 0){ #if there are no grouping variables
 
     #Make the model matrix for the group effects - there might be a simpler way of doing this...
-    G <- data[,hierarchy,drop = F] %>%
+    G <- data[,hierarchy,drop = FALSE] %>%
       dplyr::mutate_all(as.factor) %>%
       droplevels %>%
       dplyr::mutate_all(as.integer)

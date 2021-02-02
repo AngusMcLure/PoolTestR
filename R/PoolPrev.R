@@ -29,8 +29,7 @@
 #'   credible intervals. Defaults to 0.05 (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen).
-#' @param cores The number of CPU cores to be used. By default all cores are
-#'   used
+#' @param cores The number of CPU cores to be used. By default one core is used
 #' @return A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
 #'   Maximum Likelihood Estimate of prevalence)} \item{\code{CILow} and
 #'   \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
@@ -48,7 +47,7 @@
 
 PoolPrev <- function(data,result,poolSize,...,
                      prior.alpha = NULL, prior.beta = NULL, prior.absent = 0,
-                     alpha = 0.05, verbose = F,cores = NULL){
+                     alpha = 0.05, verbose = FALSE,cores = NULL){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
   groupVar <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
@@ -67,18 +66,23 @@ PoolPrev <- function(data,result,poolSize,...,
 
   if(length(groupVar) == 0){ #if there are no grouping variables
 
-    #Set number of cores to use (use all the cores! BUT when checking R packages they limit you to two cores)
+    # Ideally I would like to:
+    # Set number of cores to use (use all the cores! BUT when checking R
+    # packages they limit you to two cores)
+    # However, there appear to be some issues where running in parallel is a
+    # lot slower sometimes. So I am setting 1 core as default, but keeping this
+    # code here so I change later if I iron out parallel issues
 
     if(is.null(cores)){
       chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
       if (nzchar(chk) && chk == "TRUE") {
         # use 2 cores in CRAN/Travis/AppVeyor
-        cores <- 2L
+        cores <- 1L
       } else {
-        cores <- parallel::detectCores()
+        cores <- 1L
       }
     }
-    if(!is.integer(cores)){stop("Number of cores must be numeric")}
+    #if(!is.integer(cores)){stop("Number of cores must be numeric")}
 
     sdata <- list(N = nrow(data),
                   #Result = array(data$Result), #PERHAPS TRY REMOVING COLUMN NAMES?
@@ -96,7 +100,7 @@ PoolPrev <- function(data,result,poolSize,...,
                               warmup = 1000,
                               refresh = ifelse(verbose,200,0),
                               cores = cores)
-    }else if(sum(sdata$PoolSize)){#When prior is beta and all tests are negative we needn't bother with Bayesian inference
+    }else if(sum(sdata$PoolSize)){#When prior is beta and all tests are negative Bayesian inference has an analytic solution. Otherwise we do MCMC
       sdata$PriorAlpha = prior.alpha
       sdata$PriorBeta = prior.beta
       sfit <- rstan::sampling(stanmodels$BayesianPoolScreen,

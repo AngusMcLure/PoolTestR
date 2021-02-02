@@ -40,7 +40,7 @@
 #' Reg <- BayesPoolLogitReg(DataTrend,"NumInPool",Result ~ Year + Place)
 #' Reg$OR
 
-BayesPoolLogitReg <- function(data, PoolSize, formula, alpha=0.05,verbose = F){
+BayesPoolLogitReg <- function(data, PoolSize, formula, alpha=0.05,verbose = FALSE){
 
   if(!attr(terms(formula),"response")){
     stop("formula needs left hand side")
@@ -90,7 +90,7 @@ BayesPoolLogitReg <- function(data, PoolSize, formula, alpha=0.05,verbose = F){
                    cores = 1,
                    init = 0)
 
-  OR <- summary(sfit,probs = c(alpha/2,1-alpha/2))$summary[2:(NumParams+1),,drop=F]  %>%
+  OR <- summary(sfit,probs = c(alpha/2,1-alpha/2))$summary[2:(NumParams+1),,drop=FALSE]  %>%
     as.data.frame() %>%
     select_at(c("mean",paste0(as.character(sort(c(alpha/2,1-alpha/2)*100)),'%'))) %>%
     rename(OR = 'mean') %>%

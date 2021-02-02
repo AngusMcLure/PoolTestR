@@ -18,7 +18,7 @@
 #' @return TBC
 #'
 
-PooledRegressionBinom <- function(data, PoolSize, formula, alpha=0.05,verbose = F){
+PooledRegressionBinom <- function(data, PoolSize, formula, alpha=0.05,verbose = FALSE){
 
   if(!attr(terms(formula),"response")){
     stop("formula needs left hand side")
@@ -34,7 +34,7 @@ PooledRegressionBinom <- function(data, PoolSize, formula, alpha=0.05,verbose = 
   }
 
   #Drop irrelevant columns and rows with missing values
-  data <- data[,c(PoolSize,GroupingVars,Result),drop = F] %>% na.omit
+  data <- data[,c(PoolSize,GroupingVars,Result),drop = FALSE] %>% na.omit
 
 
   dataCount <- table(data[,c(PoolSize,GroupingVars,Result)]) %>%
@@ -53,7 +53,7 @@ PooledRegressionBinom <- function(data, PoolSize, formula, alpha=0.05,verbose = 
     ModelFormula <- formula
     ModelFormula[[2]] <- as.name('n')
     MM <- model.matrix(ModelFormula, Counts)
-    rownames(MM) <-  unite(Counts[,labels(terms(formula)),drop=F],name,sep=".")$name
+    rownames(MM) <-  unite(Counts[,labels(terms(formula)),drop=FALSE],name,sep=".")$name
     return(MM)
   }
 

@@ -27,7 +27,7 @@
 #'   zero-truncated student-t prior on the group effect standard deviations.
 #'   Custom priors must \code{brmsprior} objects produced by
 #'   [brms::set_prior()].
-#' @param cores The number of CPU cores to be used. By default all cores are used
+#' @param cores The number of CPU cores to be used. By default one cores is used
 #' @param ... Additional arguments to be passed to \code{brms::brms}.
 #' @return An object of class \code{brms} with the regression outputs.
 #'
@@ -42,16 +42,23 @@ PoolRegBayes <- function (formula, data, poolSize,
   AllVars <- all.vars(formula)
   PoolSizeName <- dplyr::as_label(poolSize)
 
+  # Ideally I would like to:
+  # Set number of cores to use (use all the cores! BUT when checking R
+  # packages they limit you to two cores)
+  # However, there appear to be some issues where running in parallel is a
+  # lot slower sometimes. So I am setting 1 core as default, but keeping this
+  # code here so I change later if I iron out parallel issues
+
   if(is.null(cores)){
     chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
     if (nzchar(chk) && chk == "TRUE") {
       # use 2 cores in CRAN/Travis/AppVeyor
-      cores <- 2L
+      cores <- 1L
     } else {
-      cores <- parallel::detectCores()
+      cores <- 1L
     }
   }
-  if(!is.integer(cores)){stop("Number of cores must be numeric")}
+  #if(!is.integer(cores)){stop("Number of cores must be numeric")}
 
   if(!all(AllVars %in% colnames(data))){
     stop("formula contains variables that aren't in the data: ",

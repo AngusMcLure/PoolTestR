@@ -3,7 +3,7 @@
 # region specimens are collected at 4 different villages, and within each
 # village specimens are collected at 8 different sites.
 
-\dontrun{
+\donttest{
   #Prevalence for each combination of region and year:
   #ignoring hierarchical sampling frame within each region
   PoolPrev(SimpleExampleData, Result, NumInPool, Region, Year)

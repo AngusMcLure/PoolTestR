@@ -3,7 +3,7 @@
 #are collected at 4 different villages, and within each village specimens are
 #collected at 8 different sites.
 
-\dontrun{
+\donttest{
   #Prevalence across the whole (synthetic) dataset
   PoolPrev(SimpleExampleData, Result, NumInPool)
   #Prevalence in each Region

@@ -24,7 +24,7 @@ getPrevalence(HierMod)
 
 ### Models in a Bayesian framework with default (non-informative) priors
 #ignoring hierarchical sampling frame within each region
-\dontrun{
+\donttest{
   BayesMod <- PoolRegBayes(Result ~ Region + Year,
                            data = SimpleExampleData,
                            poolSize = NumInPool)
@@ -44,7 +44,7 @@ getPrevalence(HierMod)
 
 # Extract fitted prevalence for each combination of region and year
 getPrevalence(Mod)
-\dontrun{
+\donttest{
   getPrevalence(BayesMod)
 }
 
@@ -52,7 +52,7 @@ getPrevalence(Mod)
 #each level of the hierarchical sampling frame (i.e. for each village in each
 #region and  each site in each village)
 getPrevalence(HierMod)
-\dontrun{
+\donttest{
   getPrevalence(BayesHierMod)
 }
 
@@ -67,7 +67,7 @@ DataFuture <- unique(data.frame(Region = SimpleExampleData$Region,
 
 getPrevalence(Mod, newdata = DataFuture)
 getPrevalence(HierMod, newdata = DataFuture)
-\dontrun{
+\donttest{
   getPrevalence(BayesMod, newdata = DataFuture)
   getPrevalence(BayesHierMod, newdata = DataFuture)
 }

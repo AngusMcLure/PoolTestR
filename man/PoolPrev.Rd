@@ -13,7 +13,7 @@ PoolPrev(
   prior.beta = NULL,
   prior.absent = 0,
   alpha = 0.05,
-  verbose = F,
+  verbose = FALSE,
   cores = NULL
 )
 }
@@ -53,8 +53,7 @@ credible intervals. Defaults to 0.05 (i.e. 95\% intervals)}
 \item{verbose}{Logical indicating whether to print progress to screen.
 Defaults to false (no printing to screen).}
 
-\item{cores}{The number of CPU cores to be used. By default all cores are
-used}
+\item{cores}{The number of CPU cores to be used. By default one core is used}
 }
 \value{
 A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
@@ -78,7 +77,7 @@ Estimation of prevalence based on presence/absence tests on pooled samples
 #are collected at 4 different villages, and within each village specimens are
 #collected at 8 different sites.
 
-\dontrun{
+\donttest{
   #Prevalence across the whole (synthetic) dataset
   PoolPrev(SimpleExampleData, Result, NumInPool)
   #Prevalence in each Region
