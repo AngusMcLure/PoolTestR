@@ -1,5 +1,5 @@
 Package: PoolTestR
-Title: Prevalence and Regression for Pool-tested (Group-tested) Data
+Title: Prevalence and Regression for Pool-Tested (Group-Tested) Data
 Version: 0.1.0
 Authors@R: person(given = "Angus",
            family = "McLure",

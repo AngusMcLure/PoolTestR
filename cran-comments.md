@@ -3,9 +3,13 @@
 * win-builder (release, development)
 
 ## Resubmission
-This is a second resubmission.
+This is a third resubmission.
 
-In the current (second) resubmission I:
+In the current (third) resubmission I:
+
+* Capitalised letters after hyphens in package title to match R style guide for sentence case. The title is now 'Prevalence and Regression for Pool-Tested (Group-Tested) Data'
+
+In the previous (second) resubmission I:
 
 * Reduced the length of the title to be 61 characters (including spaces)
 * Changed default behaviour of all functions to use only a single CPU core (and removed dependency on the package parallel). Consequently all examples now also run on just a single CPU core.
