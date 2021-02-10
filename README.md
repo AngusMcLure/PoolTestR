@@ -7,14 +7,20 @@ If you find this package helpful, please [let us know](mailto:angus.mclure@anu.e
 
 ## Installation
 
-PoolTestR is not currently available from CRAN (but will be soon!). For now you can install it from github. Thankfully this can be done easily from within R.
+PoolTestR is now available on CRAN, so the easiest method of installation is
 
-The following commands in R should now install the package: (This will probably produce a lot of warning messages in your R console - these are related to the compilation of stan source code and can be safely ignored)
+```R
+install.packages("PoolTestR")
+```
+
+You can also install the most up-to-date version from github:
 
 ```R
 install.packages("devtools") #you can skip this if you already have devtools installed
 devtools::install_github("AngusMcLure/PoolTestR")
 ```
+
+If installing from source (the only option if installing from github, and currently the only option from CRAN) this will probably produce a lot of warning messages in your R console - these are related to the compilation of stan source code and can be safely ignored!
 
 Note: In the past, some windows users needed to adjust some settings (in the Makevars file) to install the package correctly, because of issues in other packages on which PoolTestR relies. These other packages have addressed these issues in most cases, so manual adjustments *shouldn't* be needed. However, future updates may break this. Please [let us know](mailto:angus.mclure@anu.edu.au) if you have issues with installation. 
 
