@@ -42,7 +42,7 @@ class model_BayesianPoolScreen
 private:
         int N;
         std::vector<int> Result;
-        std::vector<int> PoolSize;
+        vector_d PoolSize;
         double PriorAlpha;
         double PriorBeta;
 public:
@@ -99,18 +99,15 @@ public:
             }
             current_statement_begin__ = 4;
             validate_non_negative_index("PoolSize", "N", N);
-            context__.validate_dims("data initialization", "PoolSize", "int", context__.to_vec(N));
-            PoolSize = std::vector<int>(N, int(0));
-            vals_i__ = context__.vals_i("PoolSize");
+            context__.validate_dims("data initialization", "PoolSize", "vector_d", context__.to_vec(N));
+            PoolSize = Eigen::Matrix<double, Eigen::Dynamic, 1>(N);
+            vals_r__ = context__.vals_r("PoolSize");
             pos__ = 0;
-            size_t PoolSize_k_0_max__ = N;
-            for (size_t k_0__ = 0; k_0__ < PoolSize_k_0_max__; ++k_0__) {
-                PoolSize[k_0__] = vals_i__[pos__++];
+            size_t PoolSize_j_1_max__ = N;
+            for (size_t j_1__ = 0; j_1__ < PoolSize_j_1_max__; ++j_1__) {
+                PoolSize(j_1__) = vals_r__[pos__++];
             }
-            size_t PoolSize_i_0_max__ = N;
-            for (size_t i_0__ = 0; i_0__ < PoolSize_i_0_max__; ++i_0__) {
-                check_greater_or_equal(function__, "PoolSize[i_0__]", PoolSize[i_0__], 0);
-            }
+            check_greater_or_equal(function__, "PoolSize", PoolSize, 0);
             current_statement_begin__ = 5;
             context__.validate_dims("data initialization", "PriorAlpha", "double", context__.to_vec());
             PriorAlpha = double(0);

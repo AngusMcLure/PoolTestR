@@ -42,7 +42,7 @@ class model_BayesianPoolScreenJeffreys
 private:
         int N;
         std::vector<int> Result;
-        std::vector<int> PoolSize;
+        vector_d PoolSize;
 public:
     model_BayesianPoolScreenJeffreys(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
@@ -97,18 +97,15 @@ public:
             }
             current_statement_begin__ = 4;
             validate_non_negative_index("PoolSize", "N", N);
-            context__.validate_dims("data initialization", "PoolSize", "int", context__.to_vec(N));
-            PoolSize = std::vector<int>(N, int(0));
-            vals_i__ = context__.vals_i("PoolSize");
+            context__.validate_dims("data initialization", "PoolSize", "vector_d", context__.to_vec(N));
+            PoolSize = Eigen::Matrix<double, Eigen::Dynamic, 1>(N);
+            vals_r__ = context__.vals_r("PoolSize");
             pos__ = 0;
-            size_t PoolSize_k_0_max__ = N;
-            for (size_t k_0__ = 0; k_0__ < PoolSize_k_0_max__; ++k_0__) {
-                PoolSize[k_0__] = vals_i__[pos__++];
+            size_t PoolSize_j_1_max__ = N;
+            for (size_t j_1__ = 0; j_1__ < PoolSize_j_1_max__; ++j_1__) {
+                PoolSize(j_1__) = vals_r__[pos__++];
             }
-            size_t PoolSize_i_0_max__ = N;
-            for (size_t i_0__ = 0; i_0__ < PoolSize_i_0_max__; ++i_0__) {
-                check_greater_or_equal(function__, "PoolSize[i_0__]", PoolSize[i_0__], 0);
-            }
+            check_greater_or_equal(function__, "PoolSize", PoolSize, 0);
             // initialize transformed data variables
             // execute transformed data statements
             // validate transformed data
@@ -204,9 +201,10 @@ public:
             for (int n = 1; n <= N; ++n) {
                 {
                 current_statement_begin__ = 16;
-                int PS(0);
+                local_scalar_t__ PS(DUMMY_VAR__);
                 (void) PS;  // dummy to suppress unused var warning
-                stan::math::fill(PS, std::numeric_limits<int>::min());
+                stan::math::initialize(PS, DUMMY_VAR__);
+                stan::math::fill(PS, DUMMY_VAR__);
                 stan::math::assign(PS,get_base1(PoolSize, n, "PoolSize", 1));
                 current_statement_begin__ = 17;
                 stan::model::assign(ps, 
@@ -214,7 +212,7 @@ public:
                             (1 - pow(q, PS)), 
                             "assigning variable ps");
                 current_statement_begin__ = 18;
-                stan::math::assign(s, (s + ((pow(PS, 2) * pow(q, (PS - 2))) / (1 - pow(q, PS)))));
+                stan::math::assign(s, (s + ((pow(PS, 2.0) * pow(q, (PS - 2))) / (1 - pow(q, PS)))));
                 }
             }
             // validate transformed parameters
@@ -337,9 +335,10 @@ public:
             for (int n = 1; n <= N; ++n) {
                 {
                 current_statement_begin__ = 16;
-                int PS(0);
+                local_scalar_t__ PS(DUMMY_VAR__);
                 (void) PS;  // dummy to suppress unused var warning
-                stan::math::fill(PS, std::numeric_limits<int>::min());
+                stan::math::initialize(PS, DUMMY_VAR__);
+                stan::math::fill(PS, DUMMY_VAR__);
                 stan::math::assign(PS,get_base1(PoolSize, n, "PoolSize", 1));
                 current_statement_begin__ = 17;
                 stan::model::assign(ps, 
@@ -347,7 +346,7 @@ public:
                             (1 - pow(q, PS)), 
                             "assigning variable ps");
                 current_statement_begin__ = 18;
-                stan::math::assign(s, (s + ((pow(PS, 2) * pow(q, (PS - 2))) / (1 - pow(q, PS)))));
+                stan::math::assign(s, (s + ((pow(PS, 2.0) * pow(q, (PS - 2))) / (1 - pow(q, PS)))));
                 }
             }
             if (!include_gqs__ && !include_tparams__) return;

@@ -1,7 +1,7 @@
 data {
   int<lower=1> N;
   int<lower=0, upper=1> Result[N];
-  int<lower=0> PoolSize[N];
+  vector<lower=0>[N] PoolSize;
   real<lower=0> PriorAlpha;
   real<lower=0> PriorBeta;
 }

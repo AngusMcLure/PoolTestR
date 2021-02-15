@@ -1,7 +1,7 @@
 data {
   int<lower=1> N;
   int<lower=0, upper=1> Result[N];
-  int<lower=0> PoolSize[N];
+  vector<lower=0>[N] PoolSize;
 }
 parameters {
   real<lower=0, upper=1> p;
@@ -13,9 +13,9 @@ transformed parameters{
   q = 1-p;
   s = 0;
   for(n in 1:N){
-    int PS = PoolSize[n];
+    real PS = PoolSize[n];
     ps[n] = 1 - q ^ PS;
-    s += PS ^ 2 * q ^ (PS - 2) / (1 - q ^ PS);
+    s += PS ^ 2.0 * q ^ (PS - 2) / (1 - q ^ PS);
   }
 }
 model{
