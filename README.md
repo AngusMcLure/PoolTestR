@@ -3,11 +3,11 @@ This is an R package with tools for working with pooled samples, initially inspi
 
 More features are planned or in the works: spatial mapping; models for combining and comparing results from human-based and vector-based surveillance, adjustments for imperfect test specificity/sensitivity; functions for helping with optimal experimental design; functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time. Suggestions are welcome.
 
-If you find this package helpful, please [let us know](mailto:angus.mclure@anu.edu.au) -- we'd love to hear how it's being used. The details of our package are soon to be published as an academic journal article. Once available, please cite this paper if you use this package in your work.
+If you find this package helpful, please [let us know](mailto:angus.mclure@anu.edu.au) -- we'd love to hear how it's being used. The details of our package are soon to be published as an academic journal article, but currently available as a [preprint](https://arxiv.org/abs/2012.05405).
 
 ## Installation
 
-PoolTestR is now available on CRAN, so the easiest method of installation is
+PoolTestR is now available on the offical repository of R packages, CRAN, so can now be installed like any standard package; i.e. using the package manager in RStudio or the command:
 
 ```R
 install.packages("PoolTestR")
@@ -20,7 +20,7 @@ install.packages("devtools") #you can skip this if you already have devtools ins
 devtools::install_github("AngusMcLure/PoolTestR")
 ```
 
-If installing from source (the only option if installing from github, and currently the only option from CRAN) this will probably produce a lot of warning messages in your R console - these are related to the compilation of stan source code and can be safely ignored!
+If installing from source (the only option if installing from github) this will probably produce a lot of warning messages in your R console - these are related to the compilation of stan source code and can be safely ignored! If installing from CRAN this shoudn't be an issue.
 
 Note: In the past, some windows users needed to adjust some settings (in the Makevars file) to install the package correctly, because of issues in other packages on which PoolTestR relies. These other packages have addressed these issues in most cases, so manual adjustments *shouldn't* be needed. However, future updates may break this. Please [let us know](mailto:angus.mclure@anu.edu.au) if you have issues with installation. 
 
