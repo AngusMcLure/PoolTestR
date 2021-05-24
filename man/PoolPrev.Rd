@@ -14,7 +14,11 @@ PoolPrev(
   prior.absent = 0,
   alpha = 0.05,
   verbose = FALSE,
-  cores = NULL
+  cores = NULL,
+  iter = 2000,
+  warmup = iter/2,
+  chains = 4,
+  control = list(adapt_delta = 0.9)
 )
 }
 \arguments{
@@ -54,6 +58,14 @@ credible intervals. Defaults to 0.05 (i.e. 95\% intervals)}
 Defaults to false (no printing to screen).}
 
 \item{cores}{The number of CPU cores to be used. By default one core is used}
+
+\item{iter, warmup, chains}{MCMC options for passing onto the sampling
+routine. See \link[rstan]{stan} for details.}
+
+\item{control}{A named list of parameters to control the sampler's behaviour.
+Defaults to default values as defined in \link[rstan]{stan}, except for
+\code{adapt_delta} which is set to the more conservative value of 0.9. See
+\link[rstan]{stan} for details.}
 }
 \value{
 A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the

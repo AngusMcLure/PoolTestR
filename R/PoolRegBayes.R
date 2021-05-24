@@ -27,7 +27,7 @@
 #'   zero-truncated student-t prior on the group effect standard deviations.
 #'   Custom priors must \code{brmsprior} objects produced by
 #'   [brms::set_prior()].
-#' @param cores The number of CPU cores to be used. By default one cores is used
+#' @param cores The number of CPU cores to be used. By default one core is used
 #' @param ... Additional arguments to be passed to \code{brms::brms}.
 #' @return An object of class \code{brms} with the regression outputs.
 #'
@@ -74,38 +74,104 @@ PoolRegBayes <- function (formula, data, poolSize,
          "Please rename this variable and try again")
   }
   if(PoolSizeName %in% AllVars){
-    stop("The size of the pools (",PoolSizeName,")",
-         "is included as a variable in the regression formula. ",
-         "Are you sure this is what you meant to do?")
+    warning("The size of the pools (",PoolSizeName,")",
+            "is included as a variable in the regression formula. ",
+            "Are you sure this is what you meant to do?")
   }
 
   #Set up formula for the format needed for brms
-  f1 <- switch(link,
-               logit = stats::reformulate(paste0("1 - (1-inv_logit(eta))^",
-                                                 PoolSizeName),
-                                          response = formula[[2]]),
-               cloglog = stats::reformulate(paste0("inv_cloglog(log(",
-                                                   PoolSizeName,
-                                                    ")+ eta)"),
-                                            response = formula[[2]]),
-               stop('Invalid link function. Options are logit or cloglog'))
-  f2 <- formula
-  f2[[2]] <- as.name("eta")
+  if(link == 'logit'){
+    PoolLogitResponse <- "
+    real pool_bernoulli_logit_lpmf(int y, real alpha, int N) {
+      return bernoulli_lpmf(1-y | exp(log1m_inv_logit(alpha) * N));
+    }
+    int pool_bernoulli_logit_rng(real alpha, int N) {
+      return 1-bernoulli_rng(exp(log1m_inv_logit(alpha) * N));
+    }
+    "
+    stanvars <- brms::stanvar(scode = PoolLogitResponse, block = "functions")
 
-  bform <- brms::bf(f1,f2,nl = TRUE)
+    pool_bernoulli_logit <- brms::custom_family(
+      "pool_bernoulli_logit", dpars = c("mu"),
+      links = c("identity"),
+      type = "int", vars = "vint1[n]"
+    )
+    f <- formula
+    f[[2]] <- str2lang(paste0(formula[[2]], " | vint(",PoolSizeName,")" ))
+    family <- pool_bernoulli_logit
+    bform <- brms::bf(f)
 
-  if(is.null(prior)){
-    prior <- brms::set_prior("normal(0,100)", class = "b", nlpar = "eta")
+  }else if(link == "cloglog"){ ## FIX THIS SINCE IT CAN DONE MORE ELEGANTLY WITH  OFFSETS OR A CUSTOM FAMILY
+    stanvars <- NULL
+    family <- brms::bernoulli("identity")
+
+    f1 <- stats::reformulate(paste0("inv_cloglog(log(",
+                                        PoolSizeName,
+                                        ")+ eta)"),
+                                 response = formula[[2]])
+    f2 <- formula
+    f2[[2]] <- as.name("eta")
+    bform <- brms::bf(f1,f2,nl = TRUE)
+  } else{
+    stop('Invalid link function. Options are logit or cloglog')
   }
 
+  if(is.null(prior)){
+    prior <- brms::set_prior("normal(0,100)", class = "b",
+                             nlpar = switch(link,cloglog="eta",logit= ""))
+  }
+
+  code <- brms::make_stancode(bform,
+                              family = family,
+                              data = data,
+                              cores = cores,
+                              prior = prior,
+                              stanvars = stanvars,
+                              ...)
   model <- brms::brm(bform,
-                     family = brms::bernoulli("identity"),
+                     family = family,
                      data = data,
                      cores = cores,
                      prior = prior,
+                     stanvars = stanvars,
                      ...)
   model$link <- link
   model$PoolSizeName <- PoolSizeName
+  #model$stancode <- code
   return(model)
 }
+
+pool_bernoulli_logit_lpmf <- function(y, alpha, N){
+  out <- y
+  out[y==0] <- log1p(exp(alpha[y == 0])) * -N[y == 0]
+  out[y==1] <- log1p(-(1+exp(alpha[y == 1]))^-N[y == 1])
+  out
+}
+
+pool_bernoulli_logit_rng <- function(alpha, N){
+  as.integer(stats::runif(length(alpha)) > exp(log1p(-plogis(alpha)) * N))
+}
+
+
+log_lik_pool_bernoulli_logit <- function(i, prep) {
+  alpha <- prep$dpars$mu[, i]
+  N <- prep$data$vint1[i]
+  y <- prep$data$Y[i]
+  pool_bernoulli_logit_lpmf(y, alpha, N)
+}
+
+posterior_predict_pool_bernoulli_logit <- function(i, prep, ...) {
+  alpha <- prep$dpars$mu[, i]
+  N <- prep$data$vint1[i]
+  y <- prep$data$Y[i]
+  pool_bernoulli_logit_rng(alpha, N)
+}
+
+posterior_epred_pool_bernoulli_logit <- function(prep) {
+  alpha <- prep$dpars$mu
+  N <- prep$data$vint1
+  N <- matrix(N, nrow = nrow(alpha), ncol = ncol(alpha), byrow = TRUE)
+  1 - exp(log1p(-plogis(alpha)) * N)
+}
+
 

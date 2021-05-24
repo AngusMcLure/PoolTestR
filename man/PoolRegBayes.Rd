@@ -42,7 +42,7 @@ zero-truncated student-t prior on the group effect standard deviations.
 Custom priors must \code{brmsprior} objects produced by
 [brms::set_prior()].}
 
-\item{cores}{The number of CPU cores to be used. By default one cores is used}
+\item{cores}{The number of CPU cores to be used. By default one core is used}
 
 \item{...}{Additional arguments to be passed to \code{brms::brms}.}
 }

@@ -11,6 +11,7 @@ data {
   real<lower=0> PriorBeta;
 }
 transformed data{
+  int<lower=0, upper=1> FlippedResult[N];
   //Get a sparse version of the model matrix for group effects (Z)
   vector[L*N] Zw;
   int Zv[L*N];
@@ -18,6 +19,10 @@ transformed data{
   Zw = csr_extract_w(Z);
   Zv = csr_extract_v(Z);
   Zu = csr_extract_u(Z);
+
+  for(n in 1:N){
+    FlippedResult[n] = 1 - Result[n];
+  }
 }
 parameters {
   real<lower=0, upper=1> p;
@@ -26,7 +31,7 @@ parameters {
 }
 model{
   int k;
-  vector[N] ps; //prevalence at the pool level (adjusted for pool size)
+  vector[N] ps; //1 - prevalence at the pool level (adjusted for pool size)
   vector[TotalGroups] au; //actual group effects
   k = 1;
   for(l in 1:L){
@@ -36,11 +41,12 @@ model{
 
   //vector[N] los; //log odds at the individual level at that site
   //los = logit(p) + Z * au;
-  //ps = 1 - exp(-log1p_exp(logit(p) + Z * au) .* PoolSize);
-  ps = 1 - exp(-log1p_exp(logit(p) + csr_matrix_times_vector(N,TotalGroups,Zw,Zv,Zu,au)) .* PoolSize);
+  //ps = exp(-log1p_exp(logit(p) + Z * au) .* PoolSize);
+  //ps = exp(log1m_inv_logit(logit(p) + Z * au) .* PoolSize);
+  ps = exp(log1m_inv_logit(logit(p) + csr_matrix_times_vector(N,TotalGroups,Zw,Zv,Zu,au)) .* PoolSize);
 
   u ~ normal(0, 1);
   group_sd ~ cauchy(0,25);
   p ~ beta(PriorAlpha,PriorBeta);
-  Result ~ bernoulli(ps);
+  FlippedResult ~ bernoulli(ps);
 }

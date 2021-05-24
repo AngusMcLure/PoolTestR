@@ -119,7 +119,7 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
          stop('re.form must be a list of random effect formulas, NA (for no random effect terms)')
   )
 
-  AllTerms <- setdiff(all.vars(formula), as.character(formula[[2]]))
+  AllTerms <- setdiff(all.vars(formula), all.vars(formula[[2]]))
   PopTerms <- setdiff(AllTerms,GroupVarNames)
 
   predlist <- list()
@@ -162,7 +162,13 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL){
   if(is.null(newdata)){
     newdata <- model$data
   }
-  formula <- model$formula$pforms$eta
+
+  if(model$link == "logit"){
+    formula <- model$formula$formula
+  }
+  else{
+    formula <- model$formula$pforms$eta
+  }
   PoolSizeName <- model$PoolSizeName
 
   #Get the the random/group effect terms names
@@ -190,7 +196,7 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL){
          stop('re.form must be a list of random effect formulas, NA (for no random effect terms)')
   )
 
-  AllTerms <- setdiff(all.vars(formula), as.character(formula[[2]]))
+  AllTerms <- setdiff(all.vars(formula), all.vars(formula[[2]]))
   PopTerms <- setdiff(AllTerms,GroupVarNames)
 
   predlist <- list()

@@ -33,7 +33,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_HierBayesianPoolScreen");
-    reader.add_event(48, 46, "end", "model_HierBayesianPoolScreen");
+    reader.add_event(54, 52, "end", "model_HierBayesianPoolScreen");
     return reader;
 }
 #include <stan_meta_header.hpp>
@@ -49,6 +49,7 @@ private:
         matrix_d Z;
         double PriorAlpha;
         double PriorBeta;
+        std::vector<int> FlippedResult;
         vector_d Zw;
         std::vector<int> Zv;
         std::vector<int> Zu;
@@ -174,35 +175,53 @@ public:
             PriorBeta = vals_r__[pos__++];
             check_greater_or_equal(function__, "PriorBeta", PriorBeta, 0);
             // initialize transformed data variables
-            current_statement_begin__ = 15;
+            current_statement_begin__ = 14;
+            validate_non_negative_index("FlippedResult", "N", N);
+            FlippedResult = std::vector<int>(N, int(0));
+            stan::math::fill(FlippedResult, std::numeric_limits<int>::min());
+            current_statement_begin__ = 16;
             validate_non_negative_index("Zw", "(L * N)", (L * N));
             Zw = Eigen::Matrix<double, Eigen::Dynamic, 1>((L * N));
             stan::math::fill(Zw, DUMMY_VAR__);
-            current_statement_begin__ = 16;
+            current_statement_begin__ = 17;
             validate_non_negative_index("Zv", "(L * N)", (L * N));
             Zv = std::vector<int>((L * N), int(0));
             stan::math::fill(Zv, std::numeric_limits<int>::min());
-            current_statement_begin__ = 17;
+            current_statement_begin__ = 18;
             validate_non_negative_index("Zu", "(N + 1)", (N + 1));
             Zu = std::vector<int>((N + 1), int(0));
             stan::math::fill(Zu, std::numeric_limits<int>::min());
             // execute transformed data statements
-            current_statement_begin__ = 18;
-            stan::math::assign(Zw, csr_extract_w(Z));
             current_statement_begin__ = 19;
-            stan::math::assign(Zv, csr_extract_v(Z));
+            stan::math::assign(Zw, csr_extract_w(Z));
             current_statement_begin__ = 20;
+            stan::math::assign(Zv, csr_extract_v(Z));
+            current_statement_begin__ = 21;
             stan::math::assign(Zu, csr_extract_u(Z));
+            current_statement_begin__ = 23;
+            for (int n = 1; n <= N; ++n) {
+                current_statement_begin__ = 24;
+                stan::model::assign(FlippedResult, 
+                            stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list()), 
+                            (1 - get_base1(Result, n, "Result", 1)), 
+                            "assigning variable FlippedResult");
+            }
             // validate transformed data
+            current_statement_begin__ = 14;
+            size_t FlippedResult_i_0_max__ = N;
+            for (size_t i_0__ = 0; i_0__ < FlippedResult_i_0_max__; ++i_0__) {
+                check_greater_or_equal(function__, "FlippedResult[i_0__]", FlippedResult[i_0__], 0);
+                check_less_or_equal(function__, "FlippedResult[i_0__]", FlippedResult[i_0__], 1);
+            }
             // validate, set parameter ranges
             num_params_r__ = 0U;
             param_ranges_i__.clear();
-            current_statement_begin__ = 23;
+            current_statement_begin__ = 28;
             num_params_r__ += 1;
-            current_statement_begin__ = 24;
+            current_statement_begin__ = 29;
             validate_non_negative_index("u", "TotalGroups", TotalGroups);
             num_params_r__ += TotalGroups;
-            current_statement_begin__ = 25;
+            current_statement_begin__ = 30;
             validate_non_negative_index("group_sd", "L", L);
             num_params_r__ += L;
         } catch (const std::exception& e) {
@@ -222,7 +241,7 @@ public:
         (void) pos__; // dummy call to supress warning
         std::vector<double> vals_r__;
         std::vector<int> vals_i__;
-        current_statement_begin__ = 23;
+        current_statement_begin__ = 28;
         if (!(context__.contains_r("p")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable p missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("p");
@@ -235,7 +254,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable p: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 24;
+        current_statement_begin__ = 29;
         if (!(context__.contains_r("u")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable u missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("u");
@@ -252,7 +271,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable u: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 25;
+        current_statement_begin__ = 30;
         if (!(context__.contains_r("group_sd")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable group_sd missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("group_sd");
@@ -294,21 +313,21 @@ public:
         try {
             stan::io::reader<local_scalar_t__> in__(params_r__, params_i__);
             // model parameters
-            current_statement_begin__ = 23;
+            current_statement_begin__ = 28;
             local_scalar_t__ p;
             (void) p;  // dummy to suppress unused var warning
             if (jacobian__)
                 p = in__.scalar_lub_constrain(0, 1, lp__);
             else
                 p = in__.scalar_lub_constrain(0, 1);
-            current_statement_begin__ = 24;
+            current_statement_begin__ = 29;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> u;
             (void) u;  // dummy to suppress unused var warning
             if (jacobian__)
                 u = in__.vector_constrain(TotalGroups, lp__);
             else
                 u = in__.vector_constrain(TotalGroups);
-            current_statement_begin__ = 25;
+            current_statement_begin__ = 30;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> group_sd;
             (void) group_sd;  // dummy to suppress unused var warning
             if (jacobian__)
@@ -317,42 +336,42 @@ public:
                 group_sd = in__.vector_lb_constrain(0, L);
             // model body
             {
-            current_statement_begin__ = 28;
+            current_statement_begin__ = 33;
             int k(0);
             (void) k;  // dummy to suppress unused var warning
             stan::math::fill(k, std::numeric_limits<int>::min());
-            current_statement_begin__ = 29;
+            current_statement_begin__ = 34;
             validate_non_negative_index("ps", "N", N);
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> ps(N);
             stan::math::initialize(ps, DUMMY_VAR__);
             stan::math::fill(ps, DUMMY_VAR__);
-            current_statement_begin__ = 30;
+            current_statement_begin__ = 35;
             validate_non_negative_index("au", "TotalGroups", TotalGroups);
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> au(TotalGroups);
             stan::math::initialize(au, DUMMY_VAR__);
             stan::math::fill(au, DUMMY_VAR__);
-            current_statement_begin__ = 31;
+            current_statement_begin__ = 36;
             stan::math::assign(k, 1);
-            current_statement_begin__ = 32;
+            current_statement_begin__ = 37;
             for (int l = 1; l <= L; ++l) {
-                current_statement_begin__ = 33;
+                current_statement_begin__ = 38;
                 stan::model::assign(au, 
                             stan::model::cons_list(stan::model::index_min_max(k, ((k + get_base1(NumGroups, l, "NumGroups", 1)) - 1)), stan::model::nil_index_list()), 
                             multiply(stan::model::rvalue(u, stan::model::cons_list(stan::model::index_min_max(k, ((k + get_base1(NumGroups, l, "NumGroups", 1)) - 1)), stan::model::nil_index_list()), "u"), get_base1(group_sd, l, "group_sd", 1)), 
                             "assigning variable au");
-                current_statement_begin__ = 34;
+                current_statement_begin__ = 39;
                 stan::math::assign(k, (k + get_base1(NumGroups, l, "NumGroups", 1)));
             }
-            current_statement_begin__ = 40;
-            stan::math::assign(ps, subtract(1, stan::math::exp(elt_multiply(minus(log1p_exp(add(logit(p), csr_matrix_times_vector(N, TotalGroups, Zw, Zv, Zu, au)))), PoolSize))));
-            current_statement_begin__ = 42;
+            current_statement_begin__ = 46;
+            stan::math::assign(ps, stan::math::exp(elt_multiply(log1m_inv_logit(add(logit(p), csr_matrix_times_vector(N, TotalGroups, Zw, Zv, Zu, au))), PoolSize)));
+            current_statement_begin__ = 48;
             lp_accum__.add(normal_log<propto__>(u, 0, 1));
-            current_statement_begin__ = 43;
+            current_statement_begin__ = 49;
             lp_accum__.add(cauchy_log<propto__>(group_sd, 0, 25));
-            current_statement_begin__ = 44;
+            current_statement_begin__ = 50;
             lp_accum__.add(beta_log<propto__>(p, PriorAlpha, PriorBeta));
-            current_statement_begin__ = 45;
-            lp_accum__.add(bernoulli_log<propto__>(Result, ps));
+            current_statement_begin__ = 51;
+            lp_accum__.add(bernoulli_log<propto__>(FlippedResult, ps));
             }
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());

@@ -4,18 +4,32 @@ data {
   vector<lower=0>[N] PoolSize;
   real<lower=0> PriorAlpha;
   real<lower=0> PriorBeta;
+  int<lower=0, upper=1> JeffreysPrior;
 }
 parameters {
   real<lower=0, upper=1> p;
 }
 transformed parameters{
   real<lower=0, upper=1> ps[N];
+  real q;
+  q = 1-p;
   for(n in 1:N){
-    ps[n] = 1-(1-p)^PoolSize[n];
+    real PS = PoolSize[n];
+    ps[n] = 1-q^PS;
   }
 }
 model{
-  p ~ beta(PriorAlpha,PriorBeta);
+  if(JeffreysPrior){
+    real s;
+    s = 0;
+    for(n in 1:N){
+        real PS = PoolSize[n];
+        s += PS ^ 2.0 * q ^ (PS - 2) / (1 - q ^ PS);
+    }
+    target += log(s)/2;
+  }else{
+    p ~ beta(PriorAlpha,PriorBeta);
+  }
   Result ~ bernoulli(ps);
 }
 

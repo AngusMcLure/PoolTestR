@@ -29,7 +29,13 @@
 #'   credible intervals. Defaults to 0.05 (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen).
+#' @param iter,warmup,chains MCMC options for passing onto the sampling
+#'   routine. See \link[rstan]{stan} for details.
 #' @param cores The number of CPU cores to be used. By default one core is used
+#' @param control A named list of parameters to control the sampler's behaviour.
+#'   Defaults to default values as defined in \link[rstan]{stan}, except for
+#'   \code{adapt_delta} which is set to the more conservative value of 0.9. See
+#'   \link[rstan]{stan} for details.
 #' @return A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
 #'   Maximum Likelihood Estimate of prevalence)} \item{\code{CILow} and
 #'   \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
@@ -47,14 +53,16 @@
 
 PoolPrev <- function(data,result,poolSize,...,
                      prior.alpha = NULL, prior.beta = NULL, prior.absent = 0,
-                     alpha = 0.05, verbose = FALSE,cores = NULL){
+                     alpha = 0.05, verbose = FALSE,cores = NULL,
+                     iter = 2000, warmup = iter/2,
+                     chains = 4, control = list(adapt_delta = 0.9)){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
   groupVar <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
   useJefferysPrior <- is.null(prior.alpha) & is.null(prior.beta)
   if(is.null(prior.alpha) != is.null(prior.beta)){
-    stop("prior.alpha and prior.beta must either both be specified or both left blank")
+    stop("prior.alpha and prior.beta must either both be specified or both left blank. The latter uses the default Jeffrey's prior")
   }
 
   # log-likelihood difference used to calculate Likelihood ratio confidence intervals
@@ -87,34 +95,30 @@ PoolPrev <- function(data,result,poolSize,...,
     sdata <- list(N = nrow(data),
                   #Result = array(data$Result), #PERHAPS TRY REMOVING COLUMN NAMES?
                   Result = dplyr::select(data, !! result)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
-                  PoolSize = dplyr::select(data, !! poolSize)[,1] %>% as.matrix %>% array
+                  PoolSize = dplyr::select(data, !! poolSize)[,1] %>% as.matrix %>% array,
+                  PriorAlpha = ifelse(is.null(prior.alpha),0,prior.alpha),
+                  PriorBeta = ifelse(is.null(prior.beta),0,prior.beta),
+                  JeffreysPrior = useJefferysPrior
     )
 
+    #When prior is beta and all tests are negative Bayesian inference has an analytic solution. Otherwise we do MCMC
 
-    if(useJefferysPrior){
-      sfit <- rstan::sampling(stanmodels$BayesianPoolScreenJeffreys,
-                              data = sdata,
-                              pars = c('p'),
-                              chains = 4,
-                              iter = 2000,
-                              warmup = 1000,
-                              refresh = ifelse(verbose,200,0),
-                              cores = cores)
-    }else if(sum(sdata$PoolSize)){#When prior is beta and all tests are negative Bayesian inference has an analytic solution. Otherwise we do MCMC
-      sdata$PriorAlpha = prior.alpha
-      sdata$PriorBeta = prior.beta
+    #if any tests are positive or for the Jeffrey's prior case
+    if(sum(sdata$Result) | useJefferysPrior){
       sfit <- rstan::sampling(stanmodels$BayesianPoolScreen,
                               data = sdata,
                               pars = c('p'),
-                              chains = 4,
-                              iter = 2000,
-                              warmup = 1000,
+                              chains = chains,
+                              iter = iter,
+                              warmup = warmup,
                               refresh = ifelse(verbose,200,0),
-                              cores = cores)
+                              cores = cores,
+                              control = control)
+      sfit <- as.matrix(sfit)[,"p"]
     }
-    sfit <- as.matrix(sfit)[,"p"]
 
-    if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){ #if there is at least one positive and one negative result
+    #if there is at least one positive and one negative result
+    if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){
       out <- data.frame(mean = mean(sfit))
       out[,'CrILow'] <- stats::quantile(sfit,alpha/2)
       out[,'CrIHigh'] <- stats::quantile(sfit,1-alpha/2)
@@ -143,7 +147,9 @@ PoolPrev <- function(data,result,poolSize,...,
                                        result= sdata$Result,
                                        poolSize= sdata$PoolSize,
                                        tol = 1e-10)$root
-    }else if(all(as.logical(sdata$Result))){ #If all tests are positive
+    }
+    #If all tests are positive
+    else if(all(as.logical(sdata$Result))){
       out <- data.frame(mean = mean(sfit))
       out[,'CrILow'] <- stats::quantile(sfit,alpha)
       out[,'CrIHigh'] <- 1
@@ -157,26 +163,28 @@ PoolPrev <- function(data,result,poolSize,...,
                                       poolSize= sdata$PoolSize,
                                       tol = 1e-10)$root
       out[,'CIHigh'] <- 1
-    }else{ #if all tests are negative
+    }
+    #if all tests are negative
+    else{
       if(useJefferysPrior){
         out <- data.frame(mean = mean(sfit))
         out[,'CrILow'] <- 0
         out[,'CrIHigh'] <- stats::quantile(sfit,1-alpha)
         out[,'ProbAbsent'] <- NA
-      } else{ #for beta priors
+      }else{
         ProbAbsent <- 1/(1 + (1/prior.absent - 1) * beta(prior.alpha, prior.beta + sum(sdata$PoolSize))/beta(prior.alpha, prior.beta))
 
         #This is the quantile we need to extract from the posterior of the beta-binomial posterior dist to get the 1-alpha credible interval
         q <- (1 - alpha - ProbAbsent)/(1 - ProbAbsent)
 
-        out <- data.frame(mean = mean(sfit)*(1-ProbAbsent))
+        out <- data.frame(mean = prior.alpha/(prior.alpha + prior.beta + sum(sdata$PoolSize))*(1-ProbAbsent))
         out[,'CrILow'] <- 0
         out[,'CrIHigh'] <- ifelse(q<0, #i.e. if the probability that the disease is absent exceeds the desired size of the credible interval
                                   0,
                                   stats::qbeta(q,prior.alpha, prior.beta + sum(sdata$PoolSize)))
-        out$ProbAbsent <- ifelse(prior.absent,
-                                 ProbAbsent,
-                                 NA)
+        out[,'ProbAbsent'] <- ifelse(prior.absent,
+                                     ProbAbsent,
+                                     NA)
       }
       out$PrevMLE <- 0
       out[,'CILow'] <- 0
@@ -188,6 +196,7 @@ PoolPrev <- function(data,result,poolSize,...,
                                        poolSize= sdata$PoolSize,
                                        tol = 1e-10)$root
     }
+
     out[,'NumberOfPools'] <- sdata$N
     out[,'NumberPositive'] <- sum(sdata$Result)
 
@@ -211,10 +220,14 @@ PoolPrev <- function(data,result,poolSize,...,
       ProgBar$tick(1)
       PoolPrev(x,!! result,!! poolSize,
                alpha=alpha,verbose = verbose,
-               prior.absent = prior.absent,
                prior.alpha = prior.alpha,
                prior.beta = prior.beta,
-               cores = cores)}) %>%
+               prior.absent = prior.absent,
+               cores = cores,
+               iter = iter,
+               warmup = warmup,
+               chains = chains,
+               control = control)}) %>%
       as.data.frame()
     ProgBar$tick(1)
   }

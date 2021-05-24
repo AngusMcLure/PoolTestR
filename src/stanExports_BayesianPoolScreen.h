@@ -33,7 +33,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_BayesianPoolScreen");
-    reader.add_event(22, 20, "end", "model_BayesianPoolScreen");
+    reader.add_event(36, 34, "end", "model_BayesianPoolScreen");
     return reader;
 }
 #include <stan_meta_header.hpp>
@@ -45,6 +45,7 @@ private:
         vector_d PoolSize;
         double PriorAlpha;
         double PriorBeta;
+        int JeffreysPrior;
 public:
     model_BayesianPoolScreen(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
@@ -122,13 +123,21 @@ public:
             pos__ = 0;
             PriorBeta = vals_r__[pos__++];
             check_greater_or_equal(function__, "PriorBeta", PriorBeta, 0);
+            current_statement_begin__ = 7;
+            context__.validate_dims("data initialization", "JeffreysPrior", "int", context__.to_vec());
+            JeffreysPrior = int(0);
+            vals_i__ = context__.vals_i("JeffreysPrior");
+            pos__ = 0;
+            JeffreysPrior = vals_i__[pos__++];
+            check_greater_or_equal(function__, "JeffreysPrior", JeffreysPrior, 0);
+            check_less_or_equal(function__, "JeffreysPrior", JeffreysPrior, 1);
             // initialize transformed data variables
             // execute transformed data statements
             // validate transformed data
             // validate, set parameter ranges
             num_params_r__ = 0U;
             param_ranges_i__.clear();
-            current_statement_begin__ = 9;
+            current_statement_begin__ = 10;
             num_params_r__ += 1;
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -147,7 +156,7 @@ public:
         (void) pos__; // dummy call to supress warning
         std::vector<double> vals_r__;
         std::vector<int> vals_i__;
-        current_statement_begin__ = 9;
+        current_statement_begin__ = 10;
         if (!(context__.contains_r("p")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable p missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("p");
@@ -185,7 +194,7 @@ public:
         try {
             stan::io::reader<local_scalar_t__> in__(params_r__, params_i__);
             // model parameters
-            current_statement_begin__ = 9;
+            current_statement_begin__ = 10;
             local_scalar_t__ p;
             (void) p;  // dummy to suppress unused var warning
             if (jacobian__)
@@ -193,24 +202,39 @@ public:
             else
                 p = in__.scalar_lub_constrain(0, 1);
             // transformed parameters
-            current_statement_begin__ = 12;
+            current_statement_begin__ = 13;
             validate_non_negative_index("ps", "N", N);
             std::vector<local_scalar_t__> ps(N, local_scalar_t__(0));
             stan::math::initialize(ps, DUMMY_VAR__);
             stan::math::fill(ps, DUMMY_VAR__);
+            current_statement_begin__ = 14;
+            local_scalar_t__ q;
+            (void) q;  // dummy to suppress unused var warning
+            stan::math::initialize(q, DUMMY_VAR__);
+            stan::math::fill(q, DUMMY_VAR__);
             // transformed parameters block statements
-            current_statement_begin__ = 13;
+            current_statement_begin__ = 15;
+            stan::math::assign(q, (1 - p));
+            current_statement_begin__ = 16;
             for (int n = 1; n <= N; ++n) {
-                current_statement_begin__ = 14;
+                {
+                current_statement_begin__ = 17;
+                local_scalar_t__ PS(DUMMY_VAR__);
+                (void) PS;  // dummy to suppress unused var warning
+                stan::math::initialize(PS, DUMMY_VAR__);
+                stan::math::fill(PS, DUMMY_VAR__);
+                stan::math::assign(PS,get_base1(PoolSize, n, "PoolSize", 1));
+                current_statement_begin__ = 18;
                 stan::model::assign(ps, 
                             stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list()), 
-                            (1 - pow((1 - p), get_base1(PoolSize, n, "PoolSize", 1))), 
+                            (1 - pow(q, PS)), 
                             "assigning variable ps");
+                }
             }
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 12;
+            current_statement_begin__ = 13;
             size_t ps_k_0_max__ = N;
             for (size_t k_0__ = 0; k_0__ < ps_k_0_max__; ++k_0__) {
                 if (stan::math::is_uninitialized(ps[k_0__])) {
@@ -224,10 +248,44 @@ public:
                 check_greater_or_equal(function__, "ps[i_0__]", ps[i_0__], 0);
                 check_less_or_equal(function__, "ps[i_0__]", ps[i_0__], 1);
             }
+            current_statement_begin__ = 14;
+            if (stan::math::is_uninitialized(q)) {
+                std::stringstream msg__;
+                msg__ << "Undefined transformed parameter: q";
+                stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable q: ") + msg__.str()), current_statement_begin__, prog_reader__());
+            }
             // model body
-            current_statement_begin__ = 18;
-            lp_accum__.add(beta_log<propto__>(p, PriorAlpha, PriorBeta));
-            current_statement_begin__ = 19;
+            current_statement_begin__ = 22;
+            if (as_bool(JeffreysPrior)) {
+                {
+                current_statement_begin__ = 23;
+                local_scalar_t__ s(DUMMY_VAR__);
+                (void) s;  // dummy to suppress unused var warning
+                stan::math::initialize(s, DUMMY_VAR__);
+                stan::math::fill(s, DUMMY_VAR__);
+                current_statement_begin__ = 24;
+                stan::math::assign(s, 0);
+                current_statement_begin__ = 25;
+                for (int n = 1; n <= N; ++n) {
+                    {
+                    current_statement_begin__ = 26;
+                    local_scalar_t__ PS(DUMMY_VAR__);
+                    (void) PS;  // dummy to suppress unused var warning
+                    stan::math::initialize(PS, DUMMY_VAR__);
+                    stan::math::fill(PS, DUMMY_VAR__);
+                    stan::math::assign(PS,get_base1(PoolSize, n, "PoolSize", 1));
+                    current_statement_begin__ = 27;
+                    stan::math::assign(s, (s + ((pow(PS, 2.0) * pow(q, (PS - 2))) / (1 - pow(q, PS)))));
+                    }
+                }
+                current_statement_begin__ = 29;
+                lp_accum__.add((stan::math::log(s) / 2));
+                }
+            } else {
+                current_statement_begin__ = 31;
+                lp_accum__.add(beta_log<propto__>(p, PriorAlpha, PriorBeta));
+            }
+            current_statement_begin__ = 33;
             lp_accum__.add(bernoulli_log<propto__>(Result, ps));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -251,6 +309,7 @@ public:
         names__.resize(0);
         names__.push_back("p");
         names__.push_back("ps");
+        names__.push_back("q");
     }
     void get_dims(std::vector<std::vector<size_t> >& dimss__) const {
         dimss__.resize(0);
@@ -259,6 +318,8 @@ public:
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(N);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
         dimss__.push_back(dims__);
     }
     template <typename RNG>
@@ -285,25 +346,40 @@ public:
         if (!include_tparams__ && !include_gqs__) return;
         try {
             // declare and define transformed parameters
-            current_statement_begin__ = 12;
+            current_statement_begin__ = 13;
             validate_non_negative_index("ps", "N", N);
             std::vector<double> ps(N, double(0));
             stan::math::initialize(ps, DUMMY_VAR__);
             stan::math::fill(ps, DUMMY_VAR__);
+            current_statement_begin__ = 14;
+            double q;
+            (void) q;  // dummy to suppress unused var warning
+            stan::math::initialize(q, DUMMY_VAR__);
+            stan::math::fill(q, DUMMY_VAR__);
             // do transformed parameters statements
-            current_statement_begin__ = 13;
+            current_statement_begin__ = 15;
+            stan::math::assign(q, (1 - p));
+            current_statement_begin__ = 16;
             for (int n = 1; n <= N; ++n) {
-                current_statement_begin__ = 14;
+                {
+                current_statement_begin__ = 17;
+                local_scalar_t__ PS(DUMMY_VAR__);
+                (void) PS;  // dummy to suppress unused var warning
+                stan::math::initialize(PS, DUMMY_VAR__);
+                stan::math::fill(PS, DUMMY_VAR__);
+                stan::math::assign(PS,get_base1(PoolSize, n, "PoolSize", 1));
+                current_statement_begin__ = 18;
                 stan::model::assign(ps, 
                             stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list()), 
-                            (1 - pow((1 - p), get_base1(PoolSize, n, "PoolSize", 1))), 
+                            (1 - pow(q, PS)), 
                             "assigning variable ps");
+                }
             }
             if (!include_gqs__ && !include_tparams__) return;
             // validate transformed parameters
             const char* function__ = "validate transformed params";
             (void) function__;  // dummy to suppress unused var warning
-            current_statement_begin__ = 12;
+            current_statement_begin__ = 13;
             size_t ps_i_0_max__ = N;
             for (size_t i_0__ = 0; i_0__ < ps_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "ps[i_0__]", ps[i_0__], 0);
@@ -315,6 +391,7 @@ public:
                 for (size_t k_0__ = 0; k_0__ < ps_k_0_max__; ++k_0__) {
                     vars__.push_back(ps[k_0__]);
                 }
+                vars__.push_back(q);
             }
             if (!include_gqs__) return;
         } catch (const std::exception& e) {
@@ -358,6 +435,9 @@ public:
                 param_name_stream__ << "ps" << '.' << k_0__ + 1;
                 param_names__.push_back(param_name_stream__.str());
             }
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "q";
+            param_names__.push_back(param_name_stream__.str());
         }
         if (!include_gqs__) return;
     }
@@ -376,6 +456,9 @@ public:
                 param_name_stream__ << "ps" << '.' << k_0__ + 1;
                 param_names__.push_back(param_name_stream__.str());
             }
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "q";
+            param_names__.push_back(param_name_stream__.str());
         }
         if (!include_gqs__) return;
     }
