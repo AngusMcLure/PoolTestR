@@ -25,6 +25,10 @@
 #'   of increasing granularity. For manual control you can set to NA for
 #'   population effects only, or a one-sided formula specifying the form of the
 #'   random effects to include in estimates, or a list of such objects.
+#'   @param robust Currently only relevant for brmsfit objects (returned by
+#'   PoolRegBayes). If \code{FALSE} (default) the point estimate of prevalence
+#'   is the mean over the posterior. If \code{TRUE}, the median over the
+#'   posterior is used instead.
 #' @return A \code{list} with at least one field \code{PopulationEffects} and an
 #'   additional field for every random/group effect variable. The field
 #'   \code{PopulationEffects} contains a \code{data.frame} with the prevalence
@@ -44,9 +48,9 @@
 #' @seealso [PoolReg()] and [PoolRegBayes()]
 #' @example examples/LogisticRegression.R
 
-getPrevalence <- function(model, newdata = NULL, re.form = NULL){
+getPrevalence <- function(model, newdata = NULL, re.form = NULL, robust = FALSE){
   out <- switch(class(model)[1],
-                brmsfit = getPrevalence.brmsfit(model, newdata, re.form),
+                brmsfit = getPrevalence.brmsfit(model, newdata, re.form, robust),
                 glm = getPrevalence.glm(model, newdata),
                 glmerMod = getPrevalence.glmerMod(model, newdata, re.form),
                 stop('The provided model must be the output of either PoolReg or PoolRegBayes'))
@@ -159,7 +163,7 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
   return(predlist)
 }
 
-getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL){
+getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL, robust = FALSE){
   if(is.null(newdata)){
     newdata <- model$data
   }
@@ -223,7 +227,8 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL){
     Prev <- stats::fitted(model,
                          scale = 'response',
                          re_formula = re,
-                         newdata = PredDataSub) %>%
+                         newdata = PredDataSub,
+                         robust = robust) %>%
       as.data.frame %>%
       dplyr::select(-dplyr::any_of(c("Est.Error"))) %>%
       stats::setNames(c("Estimate", "CrILow", "CrIHigh"))
