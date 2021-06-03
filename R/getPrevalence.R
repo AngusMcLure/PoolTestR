@@ -29,16 +29,17 @@
 #'   additional field for every random/group effect variable. The field
 #'   \code{PopulationEffects} contains a \code{data.frame} with the prevalence
 #'   estimated based only the fixed/population effects. When the intercept is
-#'   the only fixed/population effect, this is just the population mean (possibly
-#'   adjusted for random/group effects). When there are group effects terms,
-#'   \code{getPrevalence} attempts to order these with respect to 'granularity'
-#'   and extract the prevalence estimates for these random effects; e.g. if the
-#'   random/group effects included are there to account for a hierarchical
-#'   sampling frame with levels 'Village' and 'Site' with a formula like
-#'   \code{Result ~ Cov1 + Cov2 + (1|Village/Site)}, then getPrevalence will be
-#'   a list of three data frames: estimates for every combination of covariates,
-#'   estimates for every combination of covariates and village, and estimates
-#'   for every combination of covariates, village, and site.
+#'   the only fixed/population effect, this is just the population mean
+#'   (possibly adjusted for random/group effects). When there are group effects
+#'   terms, \code{getPrevalence} attempts to order these with respect to
+#'   'granularity' and extract the prevalence estimates for these random
+#'   effects; e.g. if the random/group effects included are there to account for
+#'   a hierarchical sampling frame with levels 'Village' and 'Site' with a
+#'   formula like \code{Result ~ Cov1 + Cov2 + (1|Village/Site)}, then
+#'   getPrevalence will be a list of three data frames: estimates for every
+#'   combination of covariates, estimates for every combination of covariates
+#'   and village, and estimates for every combination of covariates, village,
+#'   and site.
 #'
 #' @seealso [PoolReg()] and [PoolRegBayes()]
 #' @example examples/LogisticRegression.R
@@ -59,7 +60,7 @@ getPrevalence.glm <- function(model, newdata = NULL){
   PoolSizeName <- attr(model,'PoolSizeName')
   invlink <- switch(attr(model,'link'),
                     logit = stats::plogis,
-                    cloglog = function(x){1-exp(-exp(x))})
+                    cloglog = function(x){-expm1(-exp(x))})
 
   s <- stats::qt(0.025, df = stats::df.residual(model), lower.tail = FALSE)
 
@@ -91,7 +92,7 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
 
   invlink <- switch(attr(model,"link"),
                     logit = stats::plogis,
-                    cloglog = function(x){1-exp(-exp(x))})
+                    cloglog = function(x){-expm1(-exp(x))})
 
   formula <- attr(model,'call')$formula
   PoolSizeName <- attr(model,'PoolSizeName')

@@ -24,11 +24,12 @@ logistic regression}
 \item{poolSize}{The name of the column with number of
 specimens/isolates/insects in each pool}
 
-\item{link}{Link function. There are two options `'logit'` (logistic
+\item{link}{link function. There are two options `'logit'` (logistic
 regression, the default) and `'cloglog'` (complementary log log
 regression).}
 
-\item{...}{Arguments to be passed on to \code{stats::glm} or \code{lme4::glmer}}
+\item{...}{Arguments to be passed on to \code{stats::glm} or \code{lme4::glmer}
+e.g. weights}
 }
 \value{
 An object of class \code{glmerMod} (or \code{glm} if there are no

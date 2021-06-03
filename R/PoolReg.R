@@ -23,10 +23,11 @@
 #'   formula should be the name of column in \code{data} with the result of the
 #'   test on the pooled samples. The result must be encoded with 1 indicating a
 #'   positive test result and 0 indicating a negative test result.
-#' @param link Link function. There are two options `'logit'` (logistic
+#' @param link link function. There are two options `'logit'` (logistic
 #'   regression, the default) and `'cloglog'` (complementary log log
 #'   regression).
 #' @param ... Arguments to be passed on to \code{stats::glm} or \code{lme4::glmer}
+#'   e.g. weights
 #' @return An object of class \code{glmerMod} (or \code{glm} if there are no
 #'   random/group effects)
 #'
