@@ -29,6 +29,8 @@
 #'   PoolRegBayes). If \code{FALSE} (default) the point estimate of prevalence
 #'   is the mean over the posterior. If \code{TRUE}, the median over the
 #'   posterior is used instead.
+#' @param level Defines the confidence level to be used for the confidence and
+#'   credible intervals. Defaults to 0.95 (i.e. 95\% intervals).
 #' @return A \code{list} with at least one field \code{PopulationEffects} and an
 #'   additional field for every random/group effect variable. The field
 #'   \code{PopulationEffects} contains a \code{data.frame} with the prevalence
@@ -48,16 +50,16 @@
 #' @seealso [PoolReg()] and [PoolRegBayes()]
 #' @example examples/LogisticRegression.R
 
-getPrevalence <- function(model, newdata = NULL, re.form = NULL, robust = FALSE){
+getPrevalence <- function(model, newdata = NULL, re.form = NULL, robust = FALSE, level = 0.95){
   out <- switch(class(model)[1],
-                brmsfit = getPrevalence.brmsfit(model, newdata, re.form, robust),
-                glm = getPrevalence.glm(model, newdata),
+                brmsfit = getPrevalence.brmsfit(model, newdata, re.form, robust, level),
+                glm = getPrevalence.glm(model, newdata, level),
                 glmerMod = getPrevalence.glmerMod(model, newdata, re.form),
                 stop('The provided model must be the output of either PoolReg or PoolRegBayes'))
   out
 }
 
-getPrevalence.glm <- function(model, newdata = NULL){
+getPrevalence.glm <- function(model, newdata = NULL, level = 0.95){
   if(is.null(newdata)){
     newdata <- model$data
   }
@@ -66,7 +68,7 @@ getPrevalence.glm <- function(model, newdata = NULL){
                     logit = stats::plogis,
                     cloglog = function(x){-expm1(-exp(x))})
 
-  s <- stats::qt(0.025, df = stats::df.residual(model), lower.tail = FALSE)
+  s <- stats::qt((1-level)/2, df = stats::df.residual(model), lower.tail = FALSE)
 
   PopTerms <- attr(stats::terms(model$formula),"term.labels")
   PredData <- newdata[,PopTerms,drop = FALSE] %>% unique
@@ -163,7 +165,7 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
   return(predlist)
 }
 
-getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL, robust = FALSE){
+getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL, robust = FALSE, level = 0.95){
   if(is.null(newdata)){
     newdata <- model$data
   }
@@ -228,7 +230,8 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL, robust 
                          scale = 'response',
                          re_formula = re,
                          newdata = PredDataSub,
-                         robust = robust) %>%
+                         robust = robust,
+                         probs = c((1-level)/2, (1+level)/2)) %>%
       as.data.frame %>%
       dplyr::select(-dplyr::any_of(c("Est.Error"))) %>%
       stats::setNames(c("Estimate", "CrILow", "CrIHigh"))

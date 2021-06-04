@@ -25,8 +25,8 @@
 #'   zero (prior.absent). Another popular uninformative choice is
 #'   \code{prior.alpha = 1, prior.beta = 1, prior.absent = 0}, i.e. a uniform
 #'   prior.
-#' @param alpha Defines the confidence level to be used for the confidence and
-#'   credible intervals. Defaults to 0.05 (i.e. 95\% intervals)
+#' @param level Defines the confidence level to be used for the confidence and
+#'   credible intervals. Defaults to 0.95 (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen).
 #' @param iter,warmup,chains MCMC options for passing onto the sampling
@@ -53,7 +53,7 @@
 
 PoolPrev <- function(data,result,poolSize,...,
                      prior.alpha = NULL, prior.beta = NULL, prior.absent = 0,
-                     alpha = 0.05, verbose = FALSE,cores = NULL,
+                     level = 0.95, verbose = FALSE,cores = NULL,
                      iter = 2000, warmup = iter/2,
                      chains = 4, control = list(adapt_delta = 0.9)){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
@@ -66,7 +66,7 @@ PoolPrev <- function(data,result,poolSize,...,
   }
 
   # log-likelihood difference used to calculate Likelihood ratio confidence intervals
-  LogLikDiff <- stats::qchisq(1-alpha, df = 1)/2
+  LogLikDiff <- stats::qchisq(level, df = 1)/2
   # log-likelihood function
   LogLikPrev = function(p,result,poolSize,goal=0){
     sum(log(result + (-1)^result * (1-p)^poolSize)) - goal
@@ -120,8 +120,8 @@ PoolPrev <- function(data,result,poolSize,...,
     #if there is at least one positive and one negative result
     if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){
       out <- data.frame(mean = mean(sfit))
-      out[,'CrILow'] <- stats::quantile(sfit,alpha/2)
-      out[,'CrIHigh'] <- stats::quantile(sfit,1-alpha/2)
+      out[,'CrILow'] <- stats::quantile(sfit,(1-level)/2)
+      out[,'CrIHigh'] <- stats::quantile(sfit,(1+level)/2)
       out$ProbAbsent <- ifelse(prior.absent & !useJefferysPrior,0,NA)
 
       # calculate maximum likelihood estimate
@@ -151,7 +151,7 @@ PoolPrev <- function(data,result,poolSize,...,
     #If all tests are positive
     else if(all(as.logical(sdata$Result))){
       out <- data.frame(mean = mean(sfit))
-      out[,'CrILow'] <- stats::quantile(sfit,alpha)
+      out[,'CrILow'] <- stats::quantile(sfit,1-level)
       out[,'CrIHigh'] <- 1
       out$ProbAbsent <- ifelse(prior.absent & !useJefferysPrior ,0,NA)
       out$PrevMLE <- 1
@@ -169,13 +169,13 @@ PoolPrev <- function(data,result,poolSize,...,
       if(useJefferysPrior){
         out <- data.frame(mean = mean(sfit))
         out[,'CrILow'] <- 0
-        out[,'CrIHigh'] <- stats::quantile(sfit,1-alpha)
+        out[,'CrIHigh'] <- stats::quantile(sfit,level)
         out[,'ProbAbsent'] <- NA
       }else{
         ProbAbsent <- 1/(1 + (1/prior.absent - 1) * beta(prior.alpha, prior.beta + sum(sdata$PoolSize))/beta(prior.alpha, prior.beta))
 
-        #This is the quantile we need to extract from the posterior of the beta-binomial posterior dist to get the 1-alpha credible interval
-        q <- (1 - alpha - ProbAbsent)/(1 - ProbAbsent)
+        #This is the quantile we need to extract from the posterior of the beta-binomial posterior dist to get the credible interval
+        q <- (level - ProbAbsent)/(1 - ProbAbsent)
 
         out <- data.frame(mean = prior.alpha/(prior.alpha + prior.beta + sum(sdata$PoolSize))*(1-ProbAbsent))
         out[,'CrILow'] <- 0
@@ -219,7 +219,7 @@ PoolPrev <- function(data,result,poolSize,...,
     out <- data %>% dplyr::group_modify(function(x,...){
       ProgBar$tick(1)
       PoolPrev(x,!! result,!! poolSize,
-               alpha=alpha,verbose = verbose,
+               level=level,verbose = verbose,
                prior.alpha = prior.alpha,
                prior.beta = prior.beta,
                prior.absent = prior.absent,

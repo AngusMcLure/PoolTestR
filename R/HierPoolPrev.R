@@ -34,8 +34,8 @@
 #'   uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e. a uniform
 #'   prior. \code{prior.absent} is included for consistency with \code{PoolPrev},
 #'   but is currently ignored
-#' @param alpha The confidence level to be used for the confidence and credible
-#'   intervals. Defaults to 0.5\% (i.e. 95\% intervals)
+#' @param level The confidence level to be used for the confidence and credible
+#'   intervals. Defaults to 0.95 (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen)
 #' @param cores The number of CPU cores to be used. By default one core is used
@@ -63,7 +63,7 @@
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                          prior.alpha = 0.5, prior.beta = 0.5,
                          prior.absent = 0,
-                         alpha=0.05, verbose = FALSE,cores = NULL,
+                         level = 0.95, verbose = FALSE,cores = NULL,
                          iter = 2000, warmup = iter/2,
                          chains = 4, control = list(adapt_delta = 0.9)){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
@@ -127,8 +127,8 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     sfit <- as.matrix(sfit)[,"p"]
 
     out <- data.frame(mean = mean(sfit))
-    out[,'CrILow'] <- stats::quantile(sfit,alpha/2)
-    out[,'CrIHigh'] <- stats::quantile(sfit,1-alpha/2)
+    out[,'CrILow'] <- stats::quantile(sfit,(1-level)/2)
+    out[,'CrIHigh'] <- stats::quantile(sfit,(1+level)/2)
 
     out[,'NumberOfPools'] <- sdata$N
     out[,'NumberPositive'] <- sum(sdata$Result)
@@ -153,7 +153,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                    prior.alpha = prior.alpha,
                    prior.beta = prior.beta,
                    prior.absent = prior.absent,
-                   alpha = alpha,
+                   level = level,
                    verbose = verbose,
                    cores = cores,
                    iter = iter, warmup = warmup,
