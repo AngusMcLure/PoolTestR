@@ -34,6 +34,13 @@
 #'   uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e. a uniform
 #'   prior. \code{prior.absent} is included for consistency with \code{PoolPrev},
 #'   but is currently ignored
+#' @param hyper.prior.sd Scale for the half-Cauchy hyper-prior for standard deviations
+#'  of random/group effect terms. Defaults to 2, which is weakly informative since
+#'  it implies that 50% of random/group effects terms will be within a order of
+#'  magnitude of each other, and 90% of random/group effects will be within four
+#'  orders of magnitude of each other. Decrease if you think group differences are
+#'  are smaller than this, and increase if you think group differences may often
+#'  reasonably be larger than this
 #' @param level The confidence level to be used for the confidence and credible
 #'   intervals. Defaults to 0.95 (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
@@ -62,7 +69,7 @@
 
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                          prior.alpha = 0.5, prior.beta = 0.5,
-                         prior.absent = 0,
+                         prior.absent = 0, hyper.prior.sd = 2,
                          level = 0.95, verbose = FALSE,cores = NULL,
                          iter = 2000, warmup = iter/2,
                          chains = 4, control = list(adapt_delta = 0.9)){
@@ -111,7 +118,8 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                   #G = G, #The group membership for each data point and level of hierarchy
                   Z = Z,
                   PriorAlpha = prior.alpha,
-                  PriorBeta = prior.beta
+                  PriorBeta = prior.beta,
+                  HyperpriorSD = hyper.prior.sd
                   )
     #return(sdata)
     sfit <- rstan::sampling(stanmodels$HierBayesianPoolScreen,

@@ -14,7 +14,8 @@ HierPoolPrev(
   prior.alpha = 0.5,
   prior.beta = 0.5,
   prior.absent = 0,
-  alpha = 0.05,
+  hyper.prior.sd = 2,
+  level = 0.95,
   verbose = FALSE,
   cores = NULL,
   iter = 2000,
@@ -62,8 +63,16 @@ uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e. a uniform
 prior. \code{prior.absent} is included for consistency with \code{PoolPrev},
 but is currently ignored}
 
-\item{alpha}{The confidence level to be used for the confidence and credible
-intervals. Defaults to 0.5\% (i.e. 95\% intervals)}
+\item{hyper.prior.sd}{Scale for the Cauchy hyper-prior for standard deviations
+of random/group effect terms. Defaults to 2, which is weakly informative since
+it assumes that 50% of random/group effects terms will be within a order of
+magnitude of each other, and 90% of random/group effects will be within four
+orders of magnitude of each other. Decrease if you think group differences are
+are smaller than this, and increase if you think group differences may sometimes
+be larger than this}
+
+\item{level}{The confidence level to be used for the confidence and credible
+intervals. Defaults to 0.95 (i.e. 95\% intervals)}
 
 \item{verbose}{Logical indicating whether to print progress to screen.
 Defaults to false (no printing to screen)}
@@ -106,7 +115,7 @@ a hierarchical sampling frame
   #ignoring hierarchical sampling frame within each region
   PoolPrev(SimpleExampleData, Result, NumInPool, Region, Year)
   #accounting hierarchical sampling frame within each region
-  HierPoolPrev(SimpleExampleData, Result, NumInPool, c("Village","Site"), Region, Year)
+  HierPoolPrev(SimpleExampleData, Result, NumInPool, c("Village"), Region, Year)
 }
 
 

@@ -9,6 +9,7 @@ data {
   matrix<lower = 0, upper = 1>[N,TotalGroups] Z; //Model matrix for group effects
   real<lower=0> PriorAlpha;
   real<lower=0> PriorBeta;
+  real<lower=0> HyperpriorSD;
 }
 transformed data{
   int<lower=0, upper=1> FlippedResult[N];
@@ -46,7 +47,7 @@ model{
   ps = exp(log1m_inv_logit(logit(p) + csr_matrix_times_vector(N,TotalGroups,Zw,Zv,Zu,au)) .* PoolSize);
 
   u ~ normal(0, 1);
-  group_sd ~ cauchy(0,25);
+  group_sd ~ cauchy(0,HyperpriorSD);
   p ~ beta(PriorAlpha,PriorBeta);
   FlippedResult ~ bernoulli(ps);
 }

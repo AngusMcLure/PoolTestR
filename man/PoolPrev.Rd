@@ -12,7 +12,7 @@ PoolPrev(
   prior.alpha = NULL,
   prior.beta = NULL,
   prior.absent = 0,
-  alpha = 0.05,
+  level = 0.95,
   verbose = FALSE,
   cores = NULL,
   iter = 2000,
@@ -51,8 +51,8 @@ zero (prior.absent). Another popular uninformative choice is
 \code{prior.alpha = 1, prior.beta = 1, prior.absent = 0}, i.e. a uniform
 prior.}
 
-\item{alpha}{Defines the confidence level to be used for the confidence and
-credible intervals. Defaults to 0.05 (i.e. 95\% intervals)}
+\item{level}{Defines the confidence level to be used for the confidence and
+credible intervals. Defaults to 0.95 (i.e. 95\% intervals)}
 
 \item{verbose}{Logical indicating whether to print progress to screen.
 Defaults to false (no printing to screen).}

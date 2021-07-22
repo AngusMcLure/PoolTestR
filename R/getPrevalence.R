@@ -25,7 +25,7 @@
 #'   of increasing granularity. For manual control you can set to NA for
 #'   population effects only, or a one-sided formula specifying the form of the
 #'   random effects to include in estimates, or a list of such objects.
-#'   @param robust Currently only relevant for brmsfit objects (returned by
+#' @param robust Currently only relevant for brmsfit objects (returned by
 #'   PoolRegBayes). If \code{FALSE} (default) the point estimate of prevalence
 #'   is the mean over the posterior. If \code{TRUE}, the median over the
 #'   posterior is used instead.

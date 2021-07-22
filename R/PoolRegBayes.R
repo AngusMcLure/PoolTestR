@@ -149,7 +149,7 @@ pool_bernoulli_logit_lpmf <- function(y, alpha, N){
 }
 
 pool_bernoulli_logit_rng <- function(alpha, N){
-  as.integer(stats::runif(length(alpha)) > exp(log1p(-plogis(alpha)) * N))
+  as.integer(stats::runif(length(alpha)) > exp(log1p(-stats::plogis(alpha)) * N))
 }
 
 
@@ -171,7 +171,7 @@ posterior_epred_pool_bernoulli_logit <- function(prep) {
   alpha <- prep$dpars$mu
   N <- prep$data$vint1
   N <- matrix(N, nrow = nrow(alpha), ncol = ncol(alpha), byrow = TRUE)
-  1 - exp(log1p(-plogis(alpha)) * N)
+  1 - exp(log1p(-stats::plogis(alpha)) * N)
 }
 
 

@@ -7,7 +7,7 @@ If you find this package helpful, please [let us know](mailto:angus.mclure@anu.e
 
 ## Installation
 
-PoolTestR is now available on the offical repository of R packages, CRAN, so can now be installed like any standard package; i.e. using the package manager in RStudio or the command:
+PoolTestR is now available on the official repository of R packages, CRAN, so can now be installed like any standard package; i.e. using the package manager in RStudio or the command:
 
 ```R
 install.packages("PoolTestR")

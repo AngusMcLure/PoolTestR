@@ -5,7 +5,13 @@
 \title{Predicting Prevalence from a Mixed or Fixed Effect Logistic Regression with
 Presence/Absence Tests on Pooled Samples}
 \usage{
-getPrevalence(model, newdata = NULL, re.form = NULL, robust = FALSE)
+getPrevalence(
+  model,
+  newdata = NULL,
+  re.form = NULL,
+  robust = FALSE,
+  level = 0.95
+)
 }
 \arguments{
 \item{model}{An object returned by [PoolReg()] or [PoolRegBayes()]}
@@ -23,11 +29,15 @@ addition to the estimates based on population effects only, it will
 estimate at different levels of the nested hierarchical structure in order
 of increasing granularity. For manual control you can set to NA for
 population effects only, or a one-sided formula specifying the form of the
-random effects to include in estimates, or a list of such objects.
-@param robust Currently only relevant for brmsfit objects (returned by
+random effects to include in estimates, or a list of such objects.}
+
+\item{robust}{Currently only relevant for brmsfit objects (returned by
 PoolRegBayes). If \code{FALSE} (default) the point estimate of prevalence
 is the mean over the posterior. If \code{TRUE}, the median over the
 posterior is used instead.}
+
+\item{level}{Defines the confidence level to be used for the confidence and
+credible intervals. Defaults to 0.95 (i.e. 95\% intervals).}
 }
 \value{
 A \code{list} with at least one field \code{PopulationEffects} and an
