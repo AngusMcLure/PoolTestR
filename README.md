@@ -3,7 +3,7 @@ This is an R package with tools for working with pooled samples, initially inspi
 
 More features are planned or in the works: spatial mapping; models for combining and comparing results from human-based and vector-based surveillance, adjustments for imperfect test specificity/sensitivity; functions for helping with optimal experimental design; functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time. Suggestions are welcome.
 
-If you find this package helpful, please [let us know](mailto:angus.mclure@anu.edu.au) -- we'd love to hear how it's being used. The details of our package are soon to be published as an academic journal article, but currently available as a [preprint](https://arxiv.org/abs/2012.05405).
+If you find this package helpful, please [let us know](mailto:angus.mclure@anu.edu.au) -- we'd love to hear how it's being used. The details of our package are described in an [article published in Environmental Modelling and Software](https://doi.org/10.1016/j.envsoft.2021.105158). We are happy to share a pdf of this article with you [on request](mailto:angus.mclure@anu.edu.au).
 
 ## Installation
 
