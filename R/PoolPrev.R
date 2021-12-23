@@ -49,6 +49,8 @@
 #'   for each group.
 #'
 #' @example examples/Prevalence.R
+#'      \code{\link{HierPoolPrev}},
+#'      \code{\link{getPrevalence}}
 
 
 PoolPrev <- function(data,result,poolSize,...,

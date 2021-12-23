@@ -32,15 +32,18 @@ logistic regression.}
 \item{poolSize}{The name of the column with number of specimens / isolates /
 insects in each pool.}
 
-\item{link}{Link function. There are two options `'logit'` (logistic
-regression, the default) and `'cloglog'` (complementary log log
-regression).}
+\item{link}{Link function. There are three options `logit` (i.e logistic
+regression, the default), `cloglog` (complementary log-log), and
+`loglogit`. The final option blends a log link function and the logit
+function so that parameters are (log) prevalence/rate ratios as long as
+predicted prevalence is <0.8 (for details see Clark and Barr, Stat Methods
+Med Res (2018) <DOI:10.1177/0962280217698174>)}
 
 \item{prior}{The priors to be used for the regression parameters. Defaults to
 a non-informative (normal(0,100)) prior on linear coefficients and a
 zero-truncated student-t prior on the group effect standard deviations.
-Custom priors must \code{brmsprior} objects produced by
-[brms::set_prior()].}
+Custom priors must be \code{brmsprior} objects produced by
+\code{\link[brms:set_prior]{brms::set_prior}}}
 
 \item{cores}{The number of CPU cores to be used. By default one core is used}
 
@@ -129,6 +132,17 @@ getPrevalence(HierMod, newdata = DataFuture)
   getPrevalence(BayesHierMod, newdata = DataFuture)
 }
 }
+\references{
+Clark RG, Barr M: A blended link approach to relative risk regression.
+  Statistical Methods in Medical Research 2018, 27(11):3325-3339.
+  <DOI:10.1177/0962280217698174>
+
+  Angus McLure, Ben O'Neill, Helen Mayfield, Colleen Lau, Brady McPherson (2021).
+  PoolTestR: An R package for estimating prevalence and regression modelling
+  for molecular xenomonitoring and other applications with pooled samples.
+  Environmental Modelling & Software, 145:105158. <DOI:10.1016/j.envsoft.2021.105158>
+}
 \seealso{
-[PoolTestR::PoolReg()], [PoolTestR::getPrevalence()]
+\code{\link{PoolReg}},
+     \code{\link{getPrevalence}}
 }

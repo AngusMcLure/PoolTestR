@@ -119,3 +119,7 @@ getPrevalence(HierMod, newdata = DataFuture)
   getPrevalence(BayesHierMod, newdata = DataFuture)
 }
 }
+\seealso{
+\code{\link{getPrevalence}},
+  \code{\link{PoolRegBayes}}
+}

@@ -1,0 +1,18 @@
+bibentry(
+  bibtype = "Article",
+  title = "{PoolTestR}: An {R} package for estimating prevalence and regression modelling for molecular xenomonitoring and other applications with pooled samples",
+  author = c(person(given = "Angus", family = "McLure"), person(given = "Ben", family = "O'Neill"), person(given = "Helen", family = "Mayfield"), person(given = "Colleen", family = "Lau"), person(given = "Brady", family = "McPherson")),
+  journal = "Environmental Modelling and Software",
+  year = "2021",
+  volume = "145",
+  pages = "105158",
+  doi = "10.1016/j.envsoft.2021.105158",
+  encoding = "UTF-8",
+  publisher = "Elsevier",
+  textVersion = paste(
+    "Angus McLure, Ben O'Neill, Helen Mayfield, Colleen Lau and Brady McPherson (2021).",
+    "PoolTestR: An R package for estimating prevalence and regression modelling for molecular xenomonitoring and other applications with pooled samples",
+    "Environmental Modelling and Software, 145, 105158.",
+    "doi:10.1016/j.envsoft.2021.105158"
+  )
+)

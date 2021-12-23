@@ -65,6 +65,9 @@
 #'   for each group.
 #'
 #' @example examples/HierPrevalence.R
+#' @seealso
+#'      \code{\link{PoolPrev}},
+#'      \code{\link{getPrevalence}}
 
 
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,

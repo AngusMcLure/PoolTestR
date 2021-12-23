@@ -20,5 +20,9 @@ This is a package for working with presence/absence tests on pooled
              design, and functions for spatial modelling.
 }
 \references{
+Angus McLure, Ben O'Neill, Helen Mayfield, Colleen Lau, Brady McPherson (2021). PoolTestR: An R package for estimating prevalence and regression modelling for molecular xenomonitoring and other applications with pooled samples. Environmental Modelling & Software, 145:105158. <DOI:10.1016/j.envsoft.2021.105158>
+
 Stan Development Team (2019). RStan: the R interface to Stan. R package version 2.19.2. https://mc-stan.org
+
+Paul-Christian Bürkner (2017). brms: An R Package for Bayesian Multilevel Models Using Stan. Journal of Statistical Software, 80(1), 1-28. <DOI:10.18637/jss.v080.i01>
 }

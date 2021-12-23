@@ -47,7 +47,9 @@
 #'   and village, and estimates for every combination of covariates, village,
 #'   and site.
 #'
-#' @seealso [PoolReg()] and [PoolRegBayes()]
+#' @seealso
+#'   \code{\link{PoolReg}},
+#'    \code{\link{PoolRegBayes}}
 #' @example examples/LogisticRegression.R
 
 getPrevalence <- function(model, newdata = NULL, re.form = NULL, robust = FALSE, level = 0.95){
@@ -170,27 +172,30 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL, robust 
     newdata <- model$data
   }
 
-  if(model$link == "logit"){
-    formula <- model$formula$formula
-  }
-  else{
-    formula <- model$formula$pforms$eta
-  }
+  formula <- model$formula$formula
+
   PoolSizeName <- model$PoolSizeName
 
   #Get the the random/group effect terms names
   GroupVarNames <- getGroupVarNames(formula)
   #Order group terms in order of the number of unique values (i.e. coarsest first)
   NGroupVars <- length(GroupVarNames)
-  if(NGroupVars >0){
-    GroupVarNames <- orderByGranularity(newdata,GroupVarNames)
-  }
+
 
   #set up default re.form list - and if an NA or a single formula wrap in a list
   switch(class(re.form),
          NULL = {
+           if(!all(GroupVarNames %in% colnames(newdata))){
+             stop('Cannot calculate random effects for variables ',
+                  paste(setdiff(GroupVarNames, colnames(newdata)),collapse = ', '),
+                  ' as these have not been provided in `newdata`')
+           }
+
+           if(NGroupVars >0){
+             GroupVarNames <- orderByGranularity(newdata,GroupVarNames)
+           }
+
            if(isNested(newdata,GroupVarNames)){
-             GroupTerms <- lme4::findbars(formula)
              re.form <- c(list(PopulationEffects = NA),
                           orderedGroupTerms(formula,GroupVarNames))
            }else{
@@ -219,13 +224,14 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL, robust 
         stop('re.form must be a list of random effect formulas or NA (for no random effect terms)')
       }
     }
-
     #We just want to predict for unique combinations of the relevant variables
     PredDataSub <-  newdata[,unique(c(PopTerms,SubGroupVarNames)),drop = FALSE] %>%
-      dplyr::mutate(DummyVar = 1) %>% #guarantees that the PredDataSub is non-empty
+      dplyr::mutate(.DummyVar = 1) %>% #guarantees that the PredDataSub is non-empty
       unique
     rownames(PredDataSub) <- NULL
     PredDataSub[,PoolSizeName] <- 1
+    View(PredDataSub)
+    View(model)
     Prev <- stats::fitted(model,
                          scale = 'response',
                          re_formula = re,
@@ -235,7 +241,7 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL, robust 
       as.data.frame %>%
       dplyr::select(-dplyr::any_of(c("Est.Error"))) %>%
       stats::setNames(c("Estimate", "CrILow", "CrIHigh"))
-    predlist[[n]] <- cbind(PredDataSub[,!names(PredDataSub) %in% c("DummyVar", PoolSizeName), drop = FALSE],
+    predlist[[n]] <- cbind(PredDataSub[,!names(PredDataSub) %in% c(".DummyVar", PoolSizeName), drop = FALSE],
                            Prev)
   }
 

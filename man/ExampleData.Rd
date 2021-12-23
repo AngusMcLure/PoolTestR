@@ -8,8 +8,8 @@
 A data frame with 6 variables: \describe{
   \item{NumInPool}{Number of specimens in pool. Range = 1:25}
   \item{Region}{ID of the region the pool was taken from. "A", "B", or "C"}
-  \item{Village}{ID of village pool was taken from. Includes name of region e.g. "B-3" is village 3 from region B}
-  \item{Site}{ID of village pool was taken from. Includes name of region and village e.g. "B-3-7" is site 7 from village 3 from region B}
+  \item{Village}{ID of village that pool was taken from. Includes name of region e.g. "B-3" is village 3 from region B}
+  \item{Site}{ID of site that pool was taken from. Includes name of region and village e.g. "B-3-7" is site 7 from village 3 from region B}
   \item{Result}{Result of test on pool; 0 = negative, 1 = positive}
   \item{Year}{Year of sampling. Years are 0, 1, or 2} }
 }

@@ -17,10 +17,11 @@ Description: An easy-to-use tool for working with presence/absence tests on 'poo
     'PoolScreen' <https://sites.uab.edu/statgenetics/software/>. However, it goes
     further, allowing for estimates of prevalence to be adjusted for hierarchical
     sampling frames, and perform flexible mixed-effect regression analyses
-    (McLure et al. pre-print <arXiv:2012.05405>). The package is currently in
-    early stages, however more features are planned or in the works: e.g.
-    adjustments for imperfect test specificity/sensitivity, functions for helping
-    with optimal experimental design, and functions for spatial modelling.
+    (McLure et al. Environmental Modelling and Software.
+    <DOI:10.1016/j.envsoft.2021.105158>). The package is currently in early stages,
+    however more features are planned or in the works: e.g. adjustments for
+    imperfect test specificity/sensitivity, functions for helping with optimal
+    experimental design, and functions for spatial modelling.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
@@ -45,5 +46,5 @@ LinkingTo:
     rstan (>= 2.18.1),
     StanHeaders (>= 2.18.0)
 SystemRequirements: GNU make
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Language: en-AU

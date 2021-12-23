@@ -10,7 +10,7 @@ A data frame with 1152 rows and 6 variables:
   \item{NumInPool}{Number of specimens in pool. Takes values 1, 5, or 10.}
   \item{Region}{ID of the region the pool was taken from. "A", "B", "C", or "D"}
   \item{Village}{ID of village pool was taken from. Includes name of region e.g. "B-3" is village 3 from region B}
-  \item{Site}{ID of village pool was taken from. Includes name of region and village e.g. "B-3-7" is  site 7 from village 3 from region B}
+  \item{Site}{ID of site pool was taken from. Includes name of region and village e.g. "B-3-7" is  site 7 from village 3 from region B}
   \item{Result}{Result of test on pool; 0 = negative, 1 = positive}
   \item{Year}{Year of sampling. Years are 0, 1, or 2}
 }

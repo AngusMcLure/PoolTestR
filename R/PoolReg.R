@@ -30,6 +30,9 @@
 #'   e.g. weights
 #' @return An object of class \code{glmerMod} (or \code{glm} if there are no
 #'   random/group effects)
+#' @seealso
+#'   \code{\link{getPrevalence}},
+#'   \code{\link{PoolRegBayes}}
 #'
 #' @example examples/LogisticRegression.R
 
