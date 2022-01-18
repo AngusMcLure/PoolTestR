@@ -120,7 +120,7 @@ Data %>% group_by(Species, Region,Village,Site) %>%
   summarise(Pools = n()) %>%
   summarise(MedPools = median(Pools),
             MinPools = min(Pools),
-            MaxPools = max(Pools)) %>% View
+            MaxPools = max(Pools))
 
 Data %>% group_by(Species, Region,Village,Site) %>%
   summarise(Pools = n(),
@@ -130,7 +130,7 @@ Data %>% group_by(Species, Region,Village,Site) %>%
             MaxPools = max(Pools),
             MedPosPools = median(PosPools),
             MinPosPools = min(PosPools),
-            MaxPosPools = max(PosPools)) %>% View
+            MaxPosPools = max(PosPools))
 
 Data <- Data %>%
   group_by(Species,Region,Village,Site) %>%
@@ -537,7 +537,6 @@ myModel <- HierPoolPrev(Data, Result, PoolSize,
                         Species, Region,
                         cores = 4, verbose=T)
 myModel
-myModel$Z %>% View
 
 sfit <- stan("inst/stan/HierBayesianPoolScreen.stan",
              data = myModel,

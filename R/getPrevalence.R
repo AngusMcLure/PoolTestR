@@ -230,8 +230,6 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL, robust 
       unique
     rownames(PredDataSub) <- NULL
     PredDataSub[,PoolSizeName] <- 1
-    View(PredDataSub)
-    View(model)
     Prev <- stats::fitted(model,
                          scale = 'response',
                          re_formula = re,
