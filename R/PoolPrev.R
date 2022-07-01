@@ -132,6 +132,7 @@ PoolPrev <- function(data,result,poolSize,...,
       MLEdata <- sdata
       MLEdata$PriorAlpha <- 1
       MLEdata$PriorBeta  <- 1
+      MLEdata$JeffreysPrior  <- FALSE
       out$PrevMLE <- rstan::optimizing(stanmodels$BayesianPoolScreen,MLEdata)$par["p"]
 
 
