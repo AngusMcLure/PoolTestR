@@ -65,8 +65,8 @@ but is currently ignored}
 
 \item{hyper.prior.sd}{Scale for the half-Cauchy hyper-prior for standard deviations
 of random/group effect terms. Defaults to 2, which is weakly informative since
-it implies that 50% of random/group effects terms will be within a order of
-magnitude of each other, and 90% of random/group effects will be within four
+it implies that 50\% of random/group effects terms will be within a order of
+magnitude of each other, and 90\% of random/group effects will be within four
 orders of magnitude of each other. Decrease if you think group differences are
 are smaller than this, and increase if you think group differences may often
 reasonably be larger than this}
@@ -88,17 +88,17 @@ Defaults to default values as defined in \link[rstan]{stan}, except for
 \link[rstan]{stan} for details.}
 }
 \value{
-A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
-  Maximum Likelihood Estimate of prevalence)} \item{\code{CILow} and
-  \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
-  Ratio method)} \item{\code{Bayesian Posterior Expectation}}
-  \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
-  \item{\code{Number Positive}} } If stratifying variables are provided in
-  \code{...} there will be an additional column for each stratifying variable.
-  When there are no stratifying variables (supplied in \code{...}) then the
-  output has only one row with the prevalence estimates for the whole
-  dataset. When stratifying variables are supplied, then there is a separate row
-  for each group.
+A \code{data.frame} with columns:
+  \itemize{\item{\code{PrevBayes} the (Bayesian) posterior expectation}
+           \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds
+                 for credible intervals}
+           \item{\code{NumberOfPools} -- number of pools}
+           \item{\code{NumberPositive} -- the number of positive pools} }
+  If grouping variables are provided in \code{...} there will be an additional
+  column for each grouping variable. When there are no grouping variables
+  (supplied in \code{...}) then the output has only one row with the
+  prevalence estimates for the whole dataset. When grouping variables are
+  supplied, then there is a separate row for each group.
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples in

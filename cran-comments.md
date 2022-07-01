@@ -1,9 +1,7 @@
 ## Test environments
 * local macOS install, R 4.1.2
 * win-builder (development)
-* R-hub: Ubuntu Linux 20.04.1 LTS, R-release, GCC
-* R-hub: Fedora Linux, R-devel, clang, gfortran
-* I have been having issues with other R-hub checks E.g. Windows Server builds fail to compile (but no problems on win-builder). Debian Linux, R-devel, GCC ASAN/UBSAN fails because it can't find the dependency packages, but the missing packages include really important/popular/well-maintained packages like ```Rcpp```. I'm guessing these are problems with R-hub rather than the PoolTestR, but I cannot confirm. Apologies if this causes problems.
+* I have been having issues with R-hub checks, but googling the errors suggests these are problems with R-hub rather than the PoolTestR, but I cannot confirm. Apologies if this causes problems.
 
 ## R CMD check results
 There were no ERRORs or WARNINGs. 

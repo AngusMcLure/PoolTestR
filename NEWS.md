@@ -1,3 +1,8 @@
+# PoolTestR v0.1.3 (Release date: 2022-07-XX)
+This is patch to fix an important bug affecting `PoolPrev`. The bug affected the maximum likelihood estimates (MLE) and likelihood ratio confidence intervals (LR-CIs) of prevalence when the default Jeffery's prior was being used. The bug would usually make the MLE and LR-CIs much closer to the bayesian estimates than they should have been. As both sets of estimates are valid, the results will still have been approximately correct.
+
+This patch also includes an option, `replicate.poolscreen` (default to `FALSE`), for `PoolPrev`. This options changes the way the likelihood ratio confidence intervals are calculated. With `replicate.poolscreen = TRUE` PoolPrev will more closely reproduce the results produced by Poolscreen. We believe that our implementation of these intervals is more correct so would recommend that users continue to use the default (`replicate.poolscreen = FALSE`), but this option may be helpful for those who are trying to compare results across the two programs.
+
 # PoolTestR v0.1.2 (Release date: 2021-07-XX)
 We have published a paper about PoolTestR in *Environmental Modelling and Software* now available at https://doi.org/10.1016/j.envsoft.2021.105158. If you find this package useful, please let us know and/or cite our paper!
 

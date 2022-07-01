@@ -13,6 +13,7 @@ PoolPrev(
   prior.beta = NULL,
   prior.absent = 0,
   level = 0.95,
+  reproduce.poolscreen = FALSE,
   verbose = FALSE,
   cores = NULL,
   iter = 2000,
@@ -54,6 +55,12 @@ prior.}
 \item{level}{Defines the confidence level to be used for the confidence and
 credible intervals. Defaults to 0.95 (i.e. 95\% intervals)}
 
+\item{reproduce.poolscreen}{(defaults to FALSE). If TRUE this changes the
+way that likelihood ratio confidence intervals are computed to be somewhat
+wider and more closely match those returned by Poolscreen. We recommend
+using the default (FALSE). However setting to TRUE can help to make
+comparisons between PoolPrev and Poolscreen.}
+
 \item{verbose}{Logical indicating whether to print progress to screen.
 Defaults to false (no printing to screen).}
 
@@ -68,17 +75,23 @@ Defaults to default values as defined in \link[rstan]{stan}, except for
 \link[rstan]{stan} for details.}
 }
 \value{
-A \code{data.frame} with columns: \itemize{ \item{\code{PrevMLE} (the
-  Maximum Likelihood Estimate of prevalence)} \item{\code{CILow} and
-  \code{CIHigh} (Lower and Upper Confidence intervals using the Likelihood
-  Ratio method)} \item{\code{Bayesian Posterior Expectation}}
-  \item{\code{CrILow} and \code{CrIHigh}} \item{\code{Number of Pools}}
-  \item{\code{Number Positive}} } If grouping variables are provided in
-  \code{...} there will be an additional column for each grouping variable.
-  When there are no grouping variables (supplied in \code{...}) then the
-  dataframe has only one row with the prevalence estimates for the whole
-  dataset. When grouping variables are supplied, then there is a separate row
-  for each group.
+A \code{data.frame} with columns:
+  \itemize{\item{\code{PrevMLE} (the Maximum Likelihood Estimate of prevalence)}
+           \item{\code{CILow} and \code{CIHigh} - lower and upper confidence
+                 intervals using the likelihood ratio method}
+           \item{\code{PrevBayes} the (Bayesian) posterior expectation}
+           \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds
+                 for credible intervals}
+           \item{\code{ProbAbsent} the posterior probability that prevalence
+                 is exactly 0 (i.e. disease marker is absent). NA if using
+                 default Jeffrey's prior or if prior.absent = 0.}
+           \item{\code{NumberOfPools} -- number of pools}
+           \item{\code{NumberPositive} -- the number of positive pools} }
+  If grouping variables are provided in \code{...} there will be an additional
+  column for each grouping variable. When there are no grouping variables
+  (supplied in \code{...}) then the output has only one row with the
+  prevalence estimates for the whole dataset. When grouping variables are
+  supplied, then there is a separate row for each group.
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples
