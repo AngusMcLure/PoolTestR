@@ -33,9 +33,105 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_HierBayesianPoolScreen");
-    reader.add_event(55, 53, "end", "model_HierBayesianPoolScreen");
+    reader.add_event(80, 78, "end", "model_HierBayesianPoolScreen");
     return reader;
 }
+template <typename T0__, typename T1__, typename T2__, typename T3__>
+typename boost::math::tools::promote_args<T0__, T1__, T2__, T3__>::type
+logitnorm_mean_integrand(const T0__& x,
+                             const T1__& xc,
+                             const std::vector<T2__>& pars,
+                             const std::vector<T3__>& x_r,
+                             const std::vector<int>& x_i, std::ostream* pstream__) {
+    typedef typename boost::math::tools::promote_args<T0__, T1__, T2__, T3__>::type local_scalar_t__;
+    typedef local_scalar_t__ fun_return_scalar_t__;
+    const static bool propto__ = true;
+    (void) propto__;
+        local_scalar_t__ DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+    int current_statement_begin__ = -1;
+    try {
+        {
+        current_statement_begin__ = 3;
+        local_scalar_t__ mu(DUMMY_VAR__);
+        (void) mu;  // dummy to suppress unused var warning
+        stan::math::initialize(mu, DUMMY_VAR__);
+        stan::math::fill(mu, DUMMY_VAR__);
+        stan::math::assign(mu,get_base1(pars, 1, "pars", 1));
+        current_statement_begin__ = 4;
+        local_scalar_t__ s(DUMMY_VAR__);
+        (void) s;  // dummy to suppress unused var warning
+        stan::math::initialize(s, DUMMY_VAR__);
+        stan::math::fill(s, DUMMY_VAR__);
+        stan::math::assign(s,get_base1(pars, 2, "pars", 1));
+        current_statement_begin__ = 6;
+        return stan::math::promote_scalar<fun_return_scalar_t__>((inv_logit(x) * stan::math::exp(normal_log(x, mu, s))));
+        }
+    } catch (const std::exception& e) {
+        stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
+        // Next line prevents compiler griping about no return
+        throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+    }
+}
+struct logitnorm_mean_integrand_functor__ {
+    template <typename T0__, typename T1__, typename T2__, typename T3__>
+        typename boost::math::tools::promote_args<T0__, T1__, T2__, T3__>::type
+    operator()(const T0__& x,
+                             const T1__& xc,
+                             const std::vector<T2__>& pars,
+                             const std::vector<T3__>& x_r,
+                             const std::vector<int>& x_i, std::ostream* pstream__) const {
+        return logitnorm_mean_integrand(x, xc, pars, x_r, x_i, pstream__);
+    }
+};
+template <typename T0__, typename T1__, typename T2__, typename T3__>
+typename boost::math::tools::promote_args<T0__, T1__, T2__, T3__>::type
+adjustment_integrand(const T0__& x,
+                         const T1__& xc,
+                         const std::vector<T2__>& pars,
+                         const std::vector<T3__>& x_r,
+                         const std::vector<int>& x_i, std::ostream* pstream__) {
+    typedef typename boost::math::tools::promote_args<T0__, T1__, T2__, T3__>::type local_scalar_t__;
+    typedef local_scalar_t__ fun_return_scalar_t__;
+    const static bool propto__ = true;
+    (void) propto__;
+        local_scalar_t__ DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+    int current_statement_begin__ = -1;
+    try {
+        {
+        current_statement_begin__ = 10;
+        local_scalar_t__ mu(DUMMY_VAR__);
+        (void) mu;  // dummy to suppress unused var warning
+        stan::math::initialize(mu, DUMMY_VAR__);
+        stan::math::fill(mu, DUMMY_VAR__);
+        stan::math::assign(mu,get_base1(pars, 1, "pars", 1));
+        current_statement_begin__ = 11;
+        local_scalar_t__ s(DUMMY_VAR__);
+        (void) s;  // dummy to suppress unused var warning
+        stan::math::initialize(s, DUMMY_VAR__);
+        stan::math::fill(s, DUMMY_VAR__);
+        stan::math::assign(s,get_base1(pars, 2, "pars", 1));
+        current_statement_begin__ = 12;
+        return stan::math::promote_scalar<fun_return_scalar_t__>(((logitnorm_mean_integrand(x, xc, pars, x_r, x_i, pstream__) * (x - mu)) / pow(s, 2)));
+        }
+    } catch (const std::exception& e) {
+        stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
+        // Next line prevents compiler griping about no return
+        throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+    }
+}
+struct adjustment_integrand_functor__ {
+    template <typename T0__, typename T1__, typename T2__, typename T3__>
+        typename boost::math::tools::promote_args<T0__, T1__, T2__, T3__>::type
+    operator()(const T0__& x,
+                         const T1__& xc,
+                         const std::vector<T2__>& pars,
+                         const std::vector<T3__>& x_r,
+                         const std::vector<int>& x_i, std::ostream* pstream__) const {
+        return adjustment_integrand(x, xc, pars, x_r, x_i, pstream__);
+    }
+};
 #include <stan_meta_header.hpp>
 class model_HierBayesianPoolScreen
   : public stan::model::model_base_crtp<model_HierBayesianPoolScreen> {
@@ -54,6 +150,8 @@ private:
         vector_d Zw;
         std::vector<int> Zv;
         std::vector<int> Zu;
+        std::vector<double> x_r;
+        std::vector<int> x_i;
 public:
     model_HierBayesianPoolScreen(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
@@ -84,21 +182,21 @@ public:
         (void) DUMMY_VAR__;  // suppress unused var warning
         try {
             // initialize data block variables from context__
-            current_statement_begin__ = 2;
+            current_statement_begin__ = 17;
             context__.validate_dims("data initialization", "N", "int", context__.to_vec());
             N = int(0);
             vals_i__ = context__.vals_i("N");
             pos__ = 0;
             N = vals_i__[pos__++];
             check_greater_or_equal(function__, "N", N, 1);
-            current_statement_begin__ = 3;
+            current_statement_begin__ = 18;
             context__.validate_dims("data initialization", "L", "int", context__.to_vec());
             L = int(0);
             vals_i__ = context__.vals_i("L");
             pos__ = 0;
             L = vals_i__[pos__++];
             check_greater_or_equal(function__, "L", L, 1);
-            current_statement_begin__ = 4;
+            current_statement_begin__ = 19;
             validate_non_negative_index("NumGroups", "L", L);
             context__.validate_dims("data initialization", "NumGroups", "int", context__.to_vec(L));
             NumGroups = std::vector<int>(L, int(0));
@@ -112,14 +210,14 @@ public:
             for (size_t i_0__ = 0; i_0__ < NumGroups_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "NumGroups[i_0__]", NumGroups[i_0__], 1);
             }
-            current_statement_begin__ = 5;
+            current_statement_begin__ = 20;
             context__.validate_dims("data initialization", "TotalGroups", "int", context__.to_vec());
             TotalGroups = int(0);
             vals_i__ = context__.vals_i("TotalGroups");
             pos__ = 0;
             TotalGroups = vals_i__[pos__++];
             check_greater_or_equal(function__, "TotalGroups", TotalGroups, L);
-            current_statement_begin__ = 6;
+            current_statement_begin__ = 21;
             validate_non_negative_index("Result", "N", N);
             context__.validate_dims("data initialization", "Result", "int", context__.to_vec(N));
             Result = std::vector<int>(N, int(0));
@@ -134,7 +232,7 @@ public:
                 check_greater_or_equal(function__, "Result[i_0__]", Result[i_0__], 0);
                 check_less_or_equal(function__, "Result[i_0__]", Result[i_0__], 1);
             }
-            current_statement_begin__ = 7;
+            current_statement_begin__ = 22;
             validate_non_negative_index("PoolSize", "N", N);
             context__.validate_dims("data initialization", "PoolSize", "vector_d", context__.to_vec(N));
             PoolSize = Eigen::Matrix<double, Eigen::Dynamic, 1>(N);
@@ -145,7 +243,7 @@ public:
                 PoolSize(j_1__) = vals_r__[pos__++];
             }
             check_greater_or_equal(function__, "PoolSize", PoolSize, 0);
-            current_statement_begin__ = 9;
+            current_statement_begin__ = 24;
             validate_non_negative_index("Z", "N", N);
             validate_non_negative_index("Z", "TotalGroups", TotalGroups);
             context__.validate_dims("data initialization", "Z", "matrix_d", context__.to_vec(N,TotalGroups));
@@ -161,21 +259,21 @@ public:
             }
             check_greater_or_equal(function__, "Z", Z, 0);
             check_less_or_equal(function__, "Z", Z, 1);
-            current_statement_begin__ = 10;
+            current_statement_begin__ = 25;
             context__.validate_dims("data initialization", "PriorAlpha", "double", context__.to_vec());
             PriorAlpha = double(0);
             vals_r__ = context__.vals_r("PriorAlpha");
             pos__ = 0;
             PriorAlpha = vals_r__[pos__++];
             check_greater_or_equal(function__, "PriorAlpha", PriorAlpha, 0);
-            current_statement_begin__ = 11;
+            current_statement_begin__ = 26;
             context__.validate_dims("data initialization", "PriorBeta", "double", context__.to_vec());
             PriorBeta = double(0);
             vals_r__ = context__.vals_r("PriorBeta");
             pos__ = 0;
             PriorBeta = vals_r__[pos__++];
             check_greater_or_equal(function__, "PriorBeta", PriorBeta, 0);
-            current_statement_begin__ = 12;
+            current_statement_begin__ = 27;
             context__.validate_dims("data initialization", "HyperpriorSD", "double", context__.to_vec());
             HyperpriorSD = double(0);
             vals_r__ = context__.vals_r("HyperpriorSD");
@@ -183,39 +281,47 @@ public:
             HyperpriorSD = vals_r__[pos__++];
             check_greater_or_equal(function__, "HyperpriorSD", HyperpriorSD, 0);
             // initialize transformed data variables
-            current_statement_begin__ = 15;
+            current_statement_begin__ = 30;
             validate_non_negative_index("FlippedResult", "N", N);
             FlippedResult = std::vector<int>(N, int(0));
             stan::math::fill(FlippedResult, std::numeric_limits<int>::min());
-            current_statement_begin__ = 17;
+            current_statement_begin__ = 32;
             validate_non_negative_index("Zw", "(L * N)", (L * N));
             Zw = Eigen::Matrix<double, Eigen::Dynamic, 1>((L * N));
             stan::math::fill(Zw, DUMMY_VAR__);
-            current_statement_begin__ = 18;
+            current_statement_begin__ = 33;
             validate_non_negative_index("Zv", "(L * N)", (L * N));
             Zv = std::vector<int>((L * N), int(0));
             stan::math::fill(Zv, std::numeric_limits<int>::min());
-            current_statement_begin__ = 19;
+            current_statement_begin__ = 34;
             validate_non_negative_index("Zu", "(N + 1)", (N + 1));
             Zu = std::vector<int>((N + 1), int(0));
             stan::math::fill(Zu, std::numeric_limits<int>::min());
+            current_statement_begin__ = 35;
+            validate_non_negative_index("x_r", "0", 0);
+            x_r = std::vector<double>(0, double(0));
+            stan::math::fill(x_r, DUMMY_VAR__);
+            current_statement_begin__ = 36;
+            validate_non_negative_index("x_i", "0", 0);
+            x_i = std::vector<int>(0, int(0));
+            stan::math::fill(x_i, std::numeric_limits<int>::min());
             // execute transformed data statements
-            current_statement_begin__ = 20;
+            current_statement_begin__ = 37;
             stan::math::assign(Zw, csr_extract_w(Z));
-            current_statement_begin__ = 21;
+            current_statement_begin__ = 38;
             stan::math::assign(Zv, csr_extract_v(Z));
-            current_statement_begin__ = 22;
+            current_statement_begin__ = 39;
             stan::math::assign(Zu, csr_extract_u(Z));
-            current_statement_begin__ = 24;
+            current_statement_begin__ = 41;
             for (int n = 1; n <= N; ++n) {
-                current_statement_begin__ = 25;
+                current_statement_begin__ = 42;
                 stan::model::assign(FlippedResult, 
                             stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list()), 
                             (1 - get_base1(Result, n, "Result", 1)), 
                             "assigning variable FlippedResult");
             }
             // validate transformed data
-            current_statement_begin__ = 15;
+            current_statement_begin__ = 30;
             size_t FlippedResult_i_0_max__ = N;
             for (size_t i_0__ = 0; i_0__ < FlippedResult_i_0_max__; ++i_0__) {
                 check_greater_or_equal(function__, "FlippedResult[i_0__]", FlippedResult[i_0__], 0);
@@ -224,12 +330,12 @@ public:
             // validate, set parameter ranges
             num_params_r__ = 0U;
             param_ranges_i__.clear();
-            current_statement_begin__ = 29;
+            current_statement_begin__ = 46;
             num_params_r__ += 1;
-            current_statement_begin__ = 30;
+            current_statement_begin__ = 47;
             validate_non_negative_index("u", "TotalGroups", TotalGroups);
             num_params_r__ += TotalGroups;
-            current_statement_begin__ = 31;
+            current_statement_begin__ = 48;
             validate_non_negative_index("group_sd", "L", L);
             num_params_r__ += L;
         } catch (const std::exception& e) {
@@ -249,20 +355,20 @@ public:
         (void) pos__; // dummy call to supress warning
         std::vector<double> vals_r__;
         std::vector<int> vals_i__;
-        current_statement_begin__ = 29;
-        if (!(context__.contains_r("p")))
-            stan::lang::rethrow_located(std::runtime_error(std::string("Variable p missing")), current_statement_begin__, prog_reader__());
-        vals_r__ = context__.vals_r("p");
+        current_statement_begin__ = 46;
+        if (!(context__.contains_r("mu")))
+            stan::lang::rethrow_located(std::runtime_error(std::string("Variable mu missing")), current_statement_begin__, prog_reader__());
+        vals_r__ = context__.vals_r("mu");
         pos__ = 0U;
-        context__.validate_dims("parameter initialization", "p", "double", context__.to_vec());
-        double p(0);
-        p = vals_r__[pos__++];
+        context__.validate_dims("parameter initialization", "mu", "double", context__.to_vec());
+        double mu(0);
+        mu = vals_r__[pos__++];
         try {
-            writer__.scalar_lub_unconstrain(0, 1, p);
+            writer__.scalar_unconstrain(mu);
         } catch (const std::exception& e) {
-            stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable p: ") + e.what()), current_statement_begin__, prog_reader__());
+            stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable mu: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 30;
+        current_statement_begin__ = 47;
         if (!(context__.contains_r("u")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable u missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("u");
@@ -279,7 +385,7 @@ public:
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(std::runtime_error(std::string("Error transforming variable u: ") + e.what()), current_statement_begin__, prog_reader__());
         }
-        current_statement_begin__ = 31;
+        current_statement_begin__ = 48;
         if (!(context__.contains_r("group_sd")))
             stan::lang::rethrow_located(std::runtime_error(std::string("Variable group_sd missing")), current_statement_begin__, prog_reader__());
         vals_r__ = context__.vals_r("group_sd");
@@ -321,65 +427,111 @@ public:
         try {
             stan::io::reader<local_scalar_t__> in__(params_r__, params_i__);
             // model parameters
-            current_statement_begin__ = 29;
-            local_scalar_t__ p;
-            (void) p;  // dummy to suppress unused var warning
+            current_statement_begin__ = 46;
+            local_scalar_t__ mu;
+            (void) mu;  // dummy to suppress unused var warning
             if (jacobian__)
-                p = in__.scalar_lub_constrain(0, 1, lp__);
+                mu = in__.scalar_constrain(lp__);
             else
-                p = in__.scalar_lub_constrain(0, 1);
-            current_statement_begin__ = 30;
+                mu = in__.scalar_constrain();
+            current_statement_begin__ = 47;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> u;
             (void) u;  // dummy to suppress unused var warning
             if (jacobian__)
                 u = in__.vector_constrain(TotalGroups, lp__);
             else
                 u = in__.vector_constrain(TotalGroups);
-            current_statement_begin__ = 31;
+            current_statement_begin__ = 48;
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> group_sd;
             (void) group_sd;  // dummy to suppress unused var warning
             if (jacobian__)
                 group_sd = in__.vector_lb_constrain(0, L, lp__);
             else
                 group_sd = in__.vector_lb_constrain(0, L);
+            // transformed parameters
+            current_statement_begin__ = 51;
+            local_scalar_t__ p;
+            (void) p;  // dummy to suppress unused var warning
+            stan::math::initialize(p, DUMMY_VAR__);
+            stan::math::fill(p, DUMMY_VAR__);
+            current_statement_begin__ = 52;
+            validate_non_negative_index("logistic_pars", "2", 2);
+            std::vector<local_scalar_t__> logistic_pars(2, local_scalar_t__(0));
+            stan::math::initialize(logistic_pars, DUMMY_VAR__);
+            stan::math::fill(logistic_pars, DUMMY_VAR__);
+            // transformed parameters block statements
+            current_statement_begin__ = 53;
+            stan::model::assign(logistic_pars, 
+                        stan::model::cons_list(stan::model::index_uni(1), stan::model::nil_index_list()), 
+                        mu, 
+                        "assigning variable logistic_pars");
+            current_statement_begin__ = 54;
+            stan::model::assign(logistic_pars, 
+                        stan::model::cons_list(stan::model::index_uni(2), stan::model::nil_index_list()), 
+                        stan::math::sqrt(dot_self(group_sd)), 
+                        "assigning variable logistic_pars");
+            current_statement_begin__ = 55;
+            stan::math::assign(p, integrate_1d(logitnorm_mean_integrand_functor__(), stan::math::negative_infinity(), stan::math::positive_infinity(), logistic_pars, x_r, x_i, *pstream__, 1e-8));
+            // validate transformed parameters
+            const char* function__ = "validate transformed params";
+            (void) function__;  // dummy to suppress unused var warning
+            current_statement_begin__ = 51;
+            if (stan::math::is_uninitialized(p)) {
+                std::stringstream msg__;
+                msg__ << "Undefined transformed parameter: p";
+                stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable p: ") + msg__.str()), current_statement_begin__, prog_reader__());
+            }
+            check_greater_or_equal(function__, "p", p, 0);
+            check_less_or_equal(function__, "p", p, 1);
+            current_statement_begin__ = 52;
+            size_t logistic_pars_k_0_max__ = 2;
+            for (size_t k_0__ = 0; k_0__ < logistic_pars_k_0_max__; ++k_0__) {
+                if (stan::math::is_uninitialized(logistic_pars[k_0__])) {
+                    std::stringstream msg__;
+                    msg__ << "Undefined transformed parameter: logistic_pars" << "[" << k_0__ << "]";
+                    stan::lang::rethrow_located(std::runtime_error(std::string("Error initializing variable logistic_pars: ") + msg__.str()), current_statement_begin__, prog_reader__());
+                }
+            }
             // model body
             {
-            current_statement_begin__ = 34;
+            current_statement_begin__ = 58;
             int k(0);
             (void) k;  // dummy to suppress unused var warning
             stan::math::fill(k, std::numeric_limits<int>::min());
-            current_statement_begin__ = 35;
+            current_statement_begin__ = 59;
             validate_non_negative_index("ps", "N", N);
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> ps(N);
             stan::math::initialize(ps, DUMMY_VAR__);
             stan::math::fill(ps, DUMMY_VAR__);
-            current_statement_begin__ = 36;
+            current_statement_begin__ = 60;
             validate_non_negative_index("au", "TotalGroups", TotalGroups);
             Eigen::Matrix<local_scalar_t__, Eigen::Dynamic, 1> au(TotalGroups);
             stan::math::initialize(au, DUMMY_VAR__);
             stan::math::fill(au, DUMMY_VAR__);
-            current_statement_begin__ = 37;
+            current_statement_begin__ = 61;
             stan::math::assign(k, 1);
-            current_statement_begin__ = 38;
+            current_statement_begin__ = 62;
             for (int l = 1; l <= L; ++l) {
-                current_statement_begin__ = 39;
+                current_statement_begin__ = 63;
                 stan::model::assign(au, 
                             stan::model::cons_list(stan::model::index_min_max(k, ((k + get_base1(NumGroups, l, "NumGroups", 1)) - 1)), stan::model::nil_index_list()), 
                             multiply(stan::model::rvalue(u, stan::model::cons_list(stan::model::index_min_max(k, ((k + get_base1(NumGroups, l, "NumGroups", 1)) - 1)), stan::model::nil_index_list()), "u"), get_base1(group_sd, l, "group_sd", 1)), 
                             "assigning variable au");
-                current_statement_begin__ = 40;
+                current_statement_begin__ = 64;
                 stan::math::assign(k, (k + get_base1(NumGroups, l, "NumGroups", 1)));
             }
-            current_statement_begin__ = 47;
-            stan::math::assign(ps, stan::math::exp(elt_multiply(log1m_inv_logit(add(logit(p), csr_matrix_times_vector(N, TotalGroups, Zw, Zv, Zu, au))), PoolSize)));
-            current_statement_begin__ = 49;
+            current_statement_begin__ = 71;
+            stan::math::assign(ps, stan::math::exp(elt_multiply(log1m_inv_logit(add(mu, csr_matrix_times_vector(N, TotalGroups, Zw, Zv, Zu, au))), PoolSize)));
+            current_statement_begin__ = 72;
             lp_accum__.add(normal_log<propto__>(u, 0, 1));
-            current_statement_begin__ = 50;
+            current_statement_begin__ = 73;
             lp_accum__.add(cauchy_log<propto__>(group_sd, 0, HyperpriorSD));
-            current_statement_begin__ = 51;
+            current_statement_begin__ = 74;
             lp_accum__.add(beta_log<propto__>(p, PriorAlpha, PriorBeta));
-            current_statement_begin__ = 52;
+            current_statement_begin__ = 75;
             lp_accum__.add(bernoulli_log<propto__>(FlippedResult, ps));
+            current_statement_begin__ = 77;
+            lp_accum__.add(stan::math::log(integrate_1d(adjustment_integrand_functor__(), stan::math::negative_infinity(), stan::math::positive_infinity(), logistic_pars, x_r, x_i, *pstream__, 1e-8)));
             }
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -401,9 +553,11 @@ public:
     }
     void get_param_names(std::vector<std::string>& names__) const {
         names__.resize(0);
-        names__.push_back("p");
+        names__.push_back("mu");
         names__.push_back("u");
         names__.push_back("group_sd");
+        names__.push_back("p");
+        names__.push_back("logistic_pars");
     }
     void get_dims(std::vector<std::vector<size_t> >& dimss__) const {
         dimss__.resize(0);
@@ -415,6 +569,11 @@ public:
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(L);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(2);
         dimss__.push_back(dims__);
     }
     template <typename RNG>
@@ -431,8 +590,8 @@ public:
         static const char* function__ = "model_HierBayesianPoolScreen_namespace::write_array";
         (void) function__;  // dummy to suppress unused var warning
         // read-transform, write parameters
-        double p = in__.scalar_lub_constrain(0, 1);
-        vars__.push_back(p);
+        double mu = in__.scalar_constrain();
+        vars__.push_back(mu);
         Eigen::Matrix<double, Eigen::Dynamic, 1> u = in__.vector_constrain(TotalGroups);
         size_t u_j_1_max__ = TotalGroups;
         for (size_t j_1__ = 0; j_1__ < u_j_1_max__; ++j_1__) {
@@ -450,7 +609,45 @@ public:
         (void) DUMMY_VAR__;  // suppress unused var warning
         if (!include_tparams__ && !include_gqs__) return;
         try {
+            // declare and define transformed parameters
+            current_statement_begin__ = 51;
+            double p;
+            (void) p;  // dummy to suppress unused var warning
+            stan::math::initialize(p, DUMMY_VAR__);
+            stan::math::fill(p, DUMMY_VAR__);
+            current_statement_begin__ = 52;
+            validate_non_negative_index("logistic_pars", "2", 2);
+            std::vector<double> logistic_pars(2, double(0));
+            stan::math::initialize(logistic_pars, DUMMY_VAR__);
+            stan::math::fill(logistic_pars, DUMMY_VAR__);
+            // do transformed parameters statements
+            current_statement_begin__ = 53;
+            stan::model::assign(logistic_pars, 
+                        stan::model::cons_list(stan::model::index_uni(1), stan::model::nil_index_list()), 
+                        mu, 
+                        "assigning variable logistic_pars");
+            current_statement_begin__ = 54;
+            stan::model::assign(logistic_pars, 
+                        stan::model::cons_list(stan::model::index_uni(2), stan::model::nil_index_list()), 
+                        stan::math::sqrt(dot_self(group_sd)), 
+                        "assigning variable logistic_pars");
+            current_statement_begin__ = 55;
+            stan::math::assign(p, integrate_1d(logitnorm_mean_integrand_functor__(), stan::math::negative_infinity(), stan::math::positive_infinity(), logistic_pars, x_r, x_i, *pstream__, 1e-8));
             if (!include_gqs__ && !include_tparams__) return;
+            // validate transformed parameters
+            const char* function__ = "validate transformed params";
+            (void) function__;  // dummy to suppress unused var warning
+            current_statement_begin__ = 51;
+            check_greater_or_equal(function__, "p", p, 0);
+            check_less_or_equal(function__, "p", p, 1);
+            // write transformed parameters
+            if (include_tparams__) {
+                vars__.push_back(p);
+                size_t logistic_pars_k_0_max__ = 2;
+                for (size_t k_0__ = 0; k_0__ < logistic_pars_k_0_max__; ++k_0__) {
+                    vars__.push_back(logistic_pars[k_0__]);
+                }
+            }
             if (!include_gqs__) return;
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -483,7 +680,7 @@ public:
                                  bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
         param_name_stream__.str(std::string());
-        param_name_stream__ << "p";
+        param_name_stream__ << "mu";
         param_names__.push_back(param_name_stream__.str());
         size_t u_j_1_max__ = TotalGroups;
         for (size_t j_1__ = 0; j_1__ < u_j_1_max__; ++j_1__) {
@@ -499,6 +696,15 @@ public:
         }
         if (!include_gqs__ && !include_tparams__) return;
         if (include_tparams__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "p";
+            param_names__.push_back(param_name_stream__.str());
+            size_t logistic_pars_k_0_max__ = 2;
+            for (size_t k_0__ = 0; k_0__ < logistic_pars_k_0_max__; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "logistic_pars" << '.' << k_0__ + 1;
+                param_names__.push_back(param_name_stream__.str());
+            }
         }
         if (!include_gqs__) return;
     }
@@ -507,7 +713,7 @@ public:
                                    bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
         param_name_stream__.str(std::string());
-        param_name_stream__ << "p";
+        param_name_stream__ << "mu";
         param_names__.push_back(param_name_stream__.str());
         size_t u_j_1_max__ = TotalGroups;
         for (size_t j_1__ = 0; j_1__ < u_j_1_max__; ++j_1__) {
@@ -523,6 +729,15 @@ public:
         }
         if (!include_gqs__ && !include_tparams__) return;
         if (include_tparams__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "p";
+            param_names__.push_back(param_name_stream__.str());
+            size_t logistic_pars_k_0_max__ = 2;
+            for (size_t k_0__ = 0; k_0__ < logistic_pars_k_0_max__; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "logistic_pars" << '.' << k_0__ + 1;
+                param_names__.push_back(param_name_stream__.str());
+            }
         }
         if (!include_gqs__) return;
     }
