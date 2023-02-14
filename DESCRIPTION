@@ -48,3 +48,5 @@ LinkingTo:
 SystemRequirements: GNU make
 RoxygenNote: 7.1.2
 Language: en-AU
+Suggests: 
+    covr
