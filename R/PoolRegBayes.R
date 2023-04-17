@@ -135,6 +135,7 @@ PoolRegBayes <- function (formula, data, poolSize,
                      cores = cores,
                      prior = prior,
                      stanvars = stanvars,
+                     save_pars = brms::save_pars(all = TRUE),
                      ...)
   model$link <- link
   model$PoolSizeName <- PoolSizeName
