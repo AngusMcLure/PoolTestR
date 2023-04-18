@@ -6,9 +6,25 @@ mod <- PoolRegBayes(Result ~ Year + (1+Year|Village) + (1|Site),
                     subset(ExampleData, Region == "C"),
                     NumInPool,cores = 4)
 
-prev <- getPrevalence(mod)
+saveRDS(mod,'./test/mod.RDS')
+mod <- readRDS(file = './test/mod.RDS')
 
-#Check that CrI at site level are good
+prev <- getPrevalence(mod) #check output below
+
+#These should all also work --- not check output
+getPrevalence(mod, re.form = list(NA))
+getPrevalence(mod, re.form = NA)
+getPrevalence(mod, re.form = F)
+getPrevalence(mod, re.form = T)
+getPrevalence(mod, re.form = list(NA, ~(1+Year|Village) + (1|Site)))
+
+#These should fail
+getPrevalence(mod, re.form = ~(1|Year))
+getPrevalence(modglmer, re.form = ~(1+Year|Site))
+
+
+
+#Check that CrI and Estimates at site level are good
 TruePrev %>% subset(Region == "C") %>%
   select(Year, Region, Village, Site, PrevalenceSite) %>%
   unique %>% merge(prev$Site) %>%
@@ -16,7 +32,14 @@ TruePrev %>% subset(Region == "C") %>%
   group_by(Region,Year, Village) %>%
   summarise(Coverage = mean(Within)) %>% View
 
-#Check that CrI at village level are good
+TruePrev %>% subset(Region == "C") %>%
+  select(Year, Region, Village, Site, PrevalenceSite) %>%
+  unique %>% merge(prev$Site) %>%
+  mutate(error = (Estimate - PrevalenceSite)/PrevalenceSite) %>%
+  ggplot(aes(x = error)) + geom_histogram(bins = 100,alpha = 0.7) +
+  scale_x_continuous(labels = scales::percent)
+
+#Check that CrI and Estimates at village level are good
 TruePrev %>% subset(Region == "C") %>%
   select(Year, Region, Village, PrevalenceVillage) %>%
   unique %>% merge(prev$Village) %>%
@@ -24,43 +47,75 @@ TruePrev %>% subset(Region == "C") %>%
   group_by(Region,Year) %>%
   summarise(Coverage = mean(Within)) %>% View
 
-#Check that CrI at the year/region level are good
+TruePrev %>%subset(Region == "C") %>%
+  select(Year, Region, Village, PrevalenceVillage) %>%
+  unique %>% merge(prev$Village) %>%
+  mutate(error = (Estimate - PrevalenceVillage)/PrevalenceVillage) %>%
+  ggplot(aes(x = error)) + geom_histogram(bins = 100) + facet_grid(Year~.)+
+  scale_x_continuous(labels = scales::percent)
+
+#Check that CrI and estimates at the year/region level are good
 TruePrev %>% subset(Region == "C") %>%
   select(Year, Region, PrevalenceRegion) %>%
   unique %>% merge(prev$PopulationEffects) %>%
   mutate(Within = PrevalenceRegion <= CrIHigh & PrevalenceRegion >= CrILow) %>%
   View
 
+TruePrev %>% subset(Region == "C") %>%
+  select(Year, Region, PrevalenceRegion) %>%
+  unique %>% merge(prev$PopulationEffects) %>%
+  mutate(error = (Estimate - PrevalenceRegion)/PrevalenceRegion) %>%
+  ggplot(aes(x = error)) + geom_histogram(bins = 100) +
+  scale_x_continuous(labels = scales::percent)
+
 #Frequentist glmer version
 
-modglmer <- PoolReg(Result ~ Region + Year + (1+Year|Village) + (1|Site),
+modglmer <- PoolReg(Result ~ Region + Year + (1 + Year|Village) + (1|Site),
                     ExampleData,
                     NumInPool)
 modglmer
 
-glmerprev <- getPrevalence(modglmer)
+glmerprev <- getPrevalence(modglmer) #check outputs below
 glmerprev
+
+#These should all also work --- not checking output
+getPrevalence(modglmer, re.form = list(NA))
+getPrevalence(modglmer, re.form = NA)
+getPrevalence(modglmer, re.form = F)
+getPrevalence(modglmer, re.form = T)
+getPrevalence(modglmer, re.form = list(NA, ~(1+Year|Village) + (1|Site)))
+
+#These should fail
+getPrevalence(modglmer, re.form = ~(1|Year))
+getPrevalence(modglmer, re.form = ~(1+Year|Site))
+
+
 
 #Check that Estimates at site level are good
 TruePrev %>%
   select(Year, Region, Village, Site, PrevalenceSite) %>%
   unique %>% merge(glmerprev$Site) %>%
-  mutate(error = Estimate - PrevalenceSite) %>%
-  ggplot(aes(x = error)) + geom_histogram(bins = 100,alpha = 0.7)
+  mutate(error = (Estimate - PrevalenceSite)/PrevalenceSite) %>%
+  ggplot(aes(x = error)) + geom_histogram(bins = 100,alpha = 0.7) +
+  scale_x_continuous(labels = scales::percent)
+
 
 #Check that Estimates at village level are good
 TruePrev %>%
   select(Year, Region, Village, PrevalenceVillage) %>%
   unique %>% merge(glmerprev$Village) %>%
-  mutate(error = Estimate - PrevalenceVillage) %>%
-  ggplot(aes(x = error)) + geom_histogram(bins = 100) + facet_grid(Year~.)
+  mutate(error = (Estimate - PrevalenceVillage)/PrevalenceVillage) %>%
+  ggplot(aes(x = error)) + geom_histogram(bins = 100) + facet_grid(Year~.)+
+  scale_x_continuous(labels = scales::percent)
+
 
 #Check that Estimates at the year/region level are good
 TruePrev %>%
   select(Year, Region, PrevalenceRegion) %>%
   unique %>% merge(glmerprev$PopulationEffects) %>%
-  mutate(error = Estimate - PrevalenceRegion) %>%
-  ggplot(aes(x = error)) + geom_histogram(bins = 100)
+  mutate(error = (Estimate - PrevalenceRegion)/PrevalenceRegion) %>%
+  ggplot(aes(x = error)) + geom_histogram(bins = 100) +
+  scale_x_continuous(labels = scales::percent)
 
 
 glmerfutureprev <- getPrevalence(modglmer, newdata = data.frame(Region = 'C',Year = 0:10, Village= "C-1"), re.form = ~(1+Year|Village))
@@ -73,6 +128,7 @@ glmmod <- PoolReg(Result ~ Region + Year ,
 glmprev <- getPrevalence(glmmod)
 glmprev
 
+
 #Check that CrI at the year/region level are BAD (they should have poor coverage)
 TruePrev %>%
   select(Year, Region, PrevalenceRegion) %>%
@@ -84,8 +140,10 @@ TruePrev %>%
 TruePrev %>%
   select(Year, Region, PrevalenceRegion) %>%
   unique %>% merge(glmprev$PopulationEffects) %>%
-  mutate(error = Estimate - PrevalenceRegion) %>%
-  ggplot(aes(x = error)) + geom_histogram(bins = 100)
+  mutate(error = (Estimate - PrevalenceRegion)/PrevalenceRegion) %>%
+  ggplot(aes(x = error)) + geom_histogram(bins = 100) +
+  scale_x_continuous(labels = scales::percent)
+
 
 #
 #

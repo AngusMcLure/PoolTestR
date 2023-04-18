@@ -59,6 +59,7 @@
 #' @example examples/LogisticRegression.R
 
 getPrevalence <- function(model, newdata = NULL, re.form = NULL, robust = FALSE, level = 0.95){
+  #I should just make this a proper generic function
   out <- switch(class(model)[1],
                 brmsfit = getPrevalence.brmsfit(model, newdata, re.form, robust, level),
                 glm = getPrevalence.glm(model, newdata, level),
@@ -122,63 +123,34 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
   formula <- attr(model,'call')$formula
   PoolSizeName <- attr(model,'PoolSizeName')
 
-  #Get the the random/group effect terms names
-  GroupVarNames <- getGroupVarNames(formula)
-  NGroupVars <- length(GroupVarNames)
-
-  #set up default re.form list - and if an NA or a single formula wrap in a list
-  switch(class(re.form),
-         NULL = {
-           if(isNested(newdata,GroupVarNames)){
-             #Order group terms in order of the number of unique values (i.e. coarsest first)
-             GroupVarNames <- orderByGranularity(newdata,GroupVarNames)
-             GroupTerms <- lme4::findbars(formula)
-             re.form <- c(list(PopulationEffects = NA),
-                          orderedGroupTerms(formula,GroupVarNames))
-           }else{
-             re.form <- list(PopulationEffects = NA)
-           }
-         },
-         list = {},
-         logical = {re.form <- list(PopulationEffects = NA)},
-         formula = {re.form <- list(re.form)},
-         stop('re.form must be a list of random effect formulas, NA (for no random effect terms)')
-  )
-
-
-  AllTerms <- setdiff(all.vars(formula), all.vars(formula[[2]]))
-  PopTerms <- setdiff(AllTerms,GroupVarNames)
+  GroupEffectTerms <- getGroupEffectTerms(formula, newdata, re.form)
+  PredData <- preparePredictionData(GroupEffectTerms, newdata, formula, PoolSizeName)
 
   predlist <- list()
   #Make predictions based on group effects
-  for(nre in 1:length(re.form)){
-    re <- re.form[[nre]]
-    if(inherits(re, 'formula')){
-      SubGroupVarNames <- all.vars(re)
-    }else{
-      if(is.na(re)){
-        SubGroupVarNames <- NULL
-      }else{
-        stop('re.form must be a list of random effect formulas or NA (for no random effect terms)')
-      }
-    }
+  for(nge in 1:length(GroupEffectTerms)){
+    ge <- GroupEffectTerms[[nge]] #The formula for the group effect(s) at this level
+    PredDataSub <- PredData[[nge]] #Subset of newdata to make preditions on (only unique combinations of inputs relevant to the level of random effects)
 
-    #We just want to predict for unique combinations of the relevant variables
-    PredDataSub <-  newdata[,unique(c(PopTerms,SubGroupVarNames)),drop = FALSE] %>%
-      dplyr::mutate(DummyVar = 1) %>% #guarantees that the PredDataSub is non-empty
-      unique
-    rownames(PredDataSub) <- NULL
-    PredDataSub[,PoolSizeName] <- 1
+    #linear predictor
+    eta <- stats::predict(model,
+                          type = 'link',
+                          re.form = ge,
+                          newdata = PredDataSub)
 
     #the random/group effect terms that we need to marginalise/integrate over
-    maringal.re.terms <- retermdiff(formula,re)
-    print(maringal.re.terms)
+    maringal.ge.terms <- retermdiff(formula,ge)
+
+    #correlation matrices for each grouping variable
+    correlations <- lme4::VarCorr(model, summary = FALSE)
+
     #the standard deviations of the random/group effects that are being integrated over
     #Note that the loop adds up the variances so we need to take square roots after
     sds <- vector('numeric', nrow(PredDataSub))
-    for(mre in maringal.re.terms){
-      mm <- stats::model.matrix(stats::reformulate(as.character(mre[2])),PredDataSub)
-      Sigma <- lme4::VarCorr(model)[[as.character(mre[3])]]
+    for(mge in maringal.ge.terms){
+      gn <- as.character(mge[3]) #name of grouping variable
+      mm <- stats::model.matrix(stats::reformulate(as.character(mge[2])),PredDataSub)
+      Sigma <- correlations[[gn]]
       #sds <- sds + diag(mm %*% Sigma %*% t(mm))
       sds <- sds + sapply(1:nrow(mm), #same as the commented out line above but uses far fewer computations since we only need the diagonal terms
                           function(n){d <- mm[n,,drop = FALSE];
@@ -186,18 +158,14 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
     }
     sds <- sqrt(sds)
 
-    #linear predictor
-    eta <- stats::predict(model,
-                          type = 'link',
-                          re.form = re,
-                          newdata = PredDataSub)
     Prev <- data.frame(Estimate = Vectorize(meanlinknormal)(eta, sds, list(invlink)))
 
-    predlist[[nre]] <- cbind(PredDataSub[,!names(PredDataSub) %in% c("DummyVar", PoolSizeName), drop = FALSE],
-                             Prev)
+    pred <- cbind(PredDataSub[,!names(PredDataSub) %in% c("DummyVar", PoolSizeName), drop = FALSE],
+                  Prev)
+    predlist <- c(predlist, list(pred))
   }
 
-  names(predlist) <- names(re.form)
+  names(predlist) <- names(GroupEffectTerms)
 
   return(predlist)
 }
@@ -215,82 +183,40 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
 
   PoolSizeName <- model$PoolSizeName
 
-  #Get the the random/group effect terms names
-  GroupVarNames <- getGroupVarNames(formula)
-  #Order group terms in order of the number of unique values (i.e. coarsest first)
-  NGroupVars <- length(GroupVarNames)
-
-
-  #set up default re.form list - and if an NA or a single formula wrap in a list
-  switch(class(re.form),
-         NULL = {
-           if(!all(GroupVarNames %in% colnames(newdata))){
-             stop('Cannot calculate random effects for variables ',
-                  paste(setdiff(GroupVarNames, colnames(newdata)),collapse = ', '),
-                  ' as these have not been provided in `newdata`')
-           }
-
-           if(NGroupVars >0){
-             GroupVarNames <- orderByGranularity(newdata,GroupVarNames)
-           }
-
-           if(isNested(newdata,GroupVarNames)){
-             re.form <- c(list(PopulationEffects = NA),
-                          orderedGroupTerms(formula,GroupVarNames))
-           }else{
-             re.form <- list(PopulationEffects = NA)
-           }
-         },
-         list = {},
-         logical = {re.form <- list(PopulationEffects = NA)},
-         formula = {re.form <- list(re.form)},
-         stop('re.form must be a list of random effect formulas, NA (for no random effect terms)')
-  )
-
-  AllTerms <- setdiff(all.vars(formula), all.vars(formula[[2]]))
-  PopTerms <- setdiff(AllTerms,GroupVarNames)
+  GroupEffectTerms <- getGroupEffectTerms(formula, newdata, re.form)
+  PredData <- preparePredictionData(GroupEffectTerms, newdata, formula, PoolSizeName)
 
   predlist <- list()
   #Make predictions based on group effects
-  for(nre in 1:length(re.form)){
-    re <- re.form[[nre]]
-    if(inherits(re, 'formula')){
-      SubGroupVarNames <- all.vars(re)
-    }else{
-      if(is.na(re)){
-        SubGroupVarNames <- NULL
-      }else{
-        stop('re.form must be a list of random effect formulas or NA (for no random effect terms)')
-      }
-    }
-    #We just want to predict for unique combinations of the relevant variables
-    PredDataSub <-  newdata[,unique(c(PopTerms,SubGroupVarNames)),drop = FALSE] %>%
-      dplyr::mutate(.DummyVar = 1) %>% #guarantees that the PredDataSub is non-empty
-      unique
-    rownames(PredDataSub) <- NULL
-    PredDataSub[,PoolSizeName] <- 1
-
+  for(nge in 1:length(GroupEffectTerms)){
+    ge <- GroupEffectTerms[[nge]] #The formula for the group effect(s) at this level
+    PredDataSub <- PredData[[nge]] #Subset of newdata to make preditions on (only unique combinations of inputs relevant to the level of random effects)
     eta <- stats::fitted(model,
                          scale = 'linear',
-                         re_formula = re,
+                         re_formula = ge,
                          newdata = PredDataSub,
                          summary = FALSE)
 
     ndraw <- brms::ndraws(model) #number of MCMC draws
     npoint <- ncol(eta) # number of prediction points
+    #the random/group effect terms that we need to marginalise/integrate over
+    maringal.ge.terms <- retermdiff(formula,ge) #the random/group effect terms that we need to marginalise/integrate over
+
+    #correlation matrices for each grouping variable
     correlations <- lme4::VarCorr(model, summary = FALSE)
-    maringal.re.terms <- retermdiff(formula,re) #the random/group effect terms that we need to marginalise/integrate over
+
+    #the standard deviations of the random/group effects that are being integrated over
+    #Note that the loop adds up the variances so we need to take square roots after
     sds <- matrix(0,ndraw,npoint) #the standard deviations of the random/group effects that are being integrated over. Note that in the general case these are calculate by summing variances and then taking square roots, so we have to take square roots later
-    for(mre in maringal.re.terms){
-      gn <- as.character(mre[3]) #name of grouping variable
-      mm <- stats::model.matrix(stats::reformulate(as.character(mre[2])),PredDataSub) #model matrix for random effects
+    for(mge in maringal.ge.terms){
+      gn <- as.character(mge[3]) #name of grouping variable
+      mm <- stats::model.matrix(stats::reformulate(as.character(mge[2])),PredDataSub) #model matrix for random effects
       Sigma <- correlations[[gn]]$cov #array with first dimension for number of MCMC draws. Each slice is the sampled covariance matrix for random effects for this group (gn)
       if(is.null(Sigma)){#for groups with only a single random effect, no covariance matrix is given so extract sd (and square) instead
         Sigma <- (correlations[[gn]]$sd)^2
         Sigma <- array(Sigma, dim = c(ndraw, 1, 1)) #change for consistency with other case. By default dim would be c(ndraw, 1)
       }
 
-      #Note that the loop adds up the variances so we need to take square roots after
       #sds <- sds + diag(mm %*% Sigma %*% t(mm)) # the goal is to calculate something like this but for every draw of Sigma. Also we can avoid doing the full matrix computation by iterating over rows of mm, since we only need to the diagonal
       for(n in 1:ndraw){
         sigma <- Sigma[n,,]
@@ -301,7 +227,6 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
       }
     }
     sds <- sqrt(sds)
-
     #calculate prevalence from eta and sd (integrating over selected random effects)
     prev <- matrix(0,ndraw, npoint)
     for(n in 1:ndraw){
@@ -314,15 +239,98 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
       apply(2, function(x)quantile(x, probs = 0.5 + c(-level,level)/2)) %>%
       t %>% as.data.frame() %>%
       stats::setNames(c("CrILow", "CrIHigh"))
+    pred <- cbind(PredDataSub[,names(PredDataSub) != PoolSizeName, drop = FALSE],
+                  Estimate = apply(prev, 2, ifelse(robust, median, mean)),
+                  prev.interval)
 
-    predlist[[nre]] <- cbind(PredDataSub[,!names(PredDataSub) %in% c(".DummyVar", PoolSizeName), drop = FALSE],
-                             Estimate = apply(prev, 2, ifelse(robust, median, mean)),
-                             prev.interval)
+    predlist <- c(predlist,list(pred))
   }
 
-  names(predlist) <- names(re.form)
+  names(predlist) <- names(GroupEffectTerms)
 
   return(predlist)
+}
+
+getGroupEffectTerms <- function(formula,d,re.form){
+  # Get the the random/group effect terms names
+  GroupVarNames <- getGroupVarNames(formula)
+  # Number of grouping variables
+  NGroupVars <- length(GroupVarNames)
+
+  #set up default re.form list - and if an NA or a single formula wrap in a list
+  switch(class(re.form),
+         NULL = {
+           if(!all(GroupVarNames %in% colnames(d))){
+             stop('Cannot calculate random effects for variables ',
+                  paste(setdiff(GroupVarNames, colnames(d)),collapse = ', '),
+                  ' as these have not been provided in `newdata`')
+           }
+
+           if(NGroupVars >0){
+             GroupVarNames <- orderByGranularity(d,GroupVarNames)
+           }
+
+           if(isNested(d,GroupVarNames)){
+             group_effects <- c(list(PopulationEffects = NA),
+                          orderedGroupTerms(formula,GroupVarNames))
+           }else{
+             group_effects <- list(PopulationEffects = NA)
+           }
+         },
+         list = {group_effects <- re.form},
+         logical = {group_effects <- list(PopulationEffects = NA)},
+         formula = {group_effects <- list(re.form)},
+         stop('re.form must be a list of random effect formulas, or NA (for no random effect terms)')
+  )
+
+  #checks that group effects are valid
+
+  for(ge in group_effects){
+    if(inherits(ge, 'formula')){
+      #check that grouping variables also exist in original formula
+      if(!all(getGroupVarNames(ge) %in% GroupVarNames)){
+        stop('A grouping factor specified in re.form was not present in original model. Problematic random effect term:',ge)
+      }
+      #check that all random effect terms existed in original model
+      if(length(retermdiff(ge, formula)) > 0){
+        stop('A random effect term specified in re.form was not present in original model: ', retermdiff(ge, formula))
+      }
+    }else{
+      if(!is.na(ge)){
+        stop('re.form must be a list of random effect formulas, or NA (for no random effect terms)')
+      }
+    }
+  }
+  group_effects
+}
+
+preparePredictionData <- function(group_effects, d, formula, PoolSizeName){
+  PredData <- list()
+  for(ge in group_effects){
+    #The variables used in these group effect(s)
+    gev <- if(inherits(ge, 'formula')){
+      all.vars(ge)
+    }else{
+      if(is.na(ge)){
+        NULL
+      }else{
+        stop('re.form must be a list of random effect formulas, or NA (for no random effect terms)')
+      }
+    }
+
+    #Population terms
+    AllTerms <- setdiff(all.vars(formula), all.vars(formula[[2]]))
+    PopTerms <- setdiff(AllTerms,getGroupVarNames(formula))
+
+    #Prepare data for prediction -- just want unique combinations of the relevant variables
+    PredDataSub <-  d
+    PredDataSub[,PoolSizeName] <- 1 #Sets PoolSize variables to 1 (not used in calculations but required to keep stats::fitted happy)
+    PredDataSub <- PredDataSub[,unique(c(PopTerms,gev,PoolSizeName)),drop = FALSE] %>%
+      unique
+    rownames(PredDataSub) <- NULL
+    PredData <- c(PredData, list(PredDataSub))
+  }
+  PredData
 }
 
 orderByGranularity <- function(df,Names = NULL){
@@ -357,10 +365,11 @@ isNested <- function(df, Names){
 getGroupVarNames <- function(formula){
   n <- length(formula)
   stringr::str_match_all(as.character(formula)[[n]],
-                         "\\|\\s*(.*?)\\s*\\)")[[1]][,2] %>%
+                         "\\|([^\\|]*)\\)")[[1]][,2] %>%
     strsplit(split = "[\\/\\+\\:\\*]") %>%
     unlist %>%
-    trimws
+    trimws %>%
+    unique
 }
 
 orderedGroupTerms <- function(formula,vars){
@@ -388,7 +397,11 @@ orderedGroupTerms <- function(formula,vars){
 
 #returns a list of random effect terms that are in f1 but are not in f2
 retermdiff <- function(f1, f2){
-  setdiff(lme4::findbars(f1), lme4::findbars(f2))
+  out <- setdiff(lme4::findbars(f1), lme4::findbars(f2))
+  if(is.null(out)){
+    out <- list()
+  }
+  out
 }
 
 # Function (not exported) to calculate the mean of a link-normal distributed r.v.
