@@ -70,11 +70,11 @@ prior on population prevalence that is approximately distributed as
 beta(0.5,0.5). To set custom priors, use the same nested list format. Any
 omitted parameters will be replaced with the default values and additional
 parameters ignored silently. For example, to change the parameters to be
-equal to the defaults for intercept-only random-effect model in `brms` and
+equal to the defaults for intercept-only random-effect model in
 PoolRegBayes you can use:
 \code{list(individual_sd = TRUE)},
 which puts a prior on each the standard deviations of each of group-level
-effects separately.}
+effects separately, but doesn't change the priors used.}
 
 \item{level}{The confidence level to be used for the confidence and credible
 intervals. Defaults to 0.95 (i.e. 95\% intervals)}
