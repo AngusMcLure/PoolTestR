@@ -29,7 +29,11 @@ addition to the estimates based on population effects only, it will
 estimate at different levels of the nested hierarchical structure in order
 of increasing granularity. For manual control you can set to NA for
 population effects only, or a one-sided formula specifying the form of the
-random effects to include in estimates, or a list of such objects.}
+random effects to include in estimates, or a list of such objects. Any
+random effects omitted will be marginalised out. For automatically detected
+nested hierarchical structures this means that higher level estimates
+marginalise over lower-level random effect; in particular, population level
+estimates will marginalise over all random effects.}
 
 \item{robust}{Currently only relevant for brmsfit objects (returned by
 PoolRegBayes). If \code{FALSE} (default) the point estimate of prevalence
@@ -64,7 +68,9 @@ or link scale we do not use either of these generic functions. Further, when
 the model accounts for the hierarchical structure of the sampling frame (e.g.
 Region/Village/Site), it is common to want to know the predicted values at
 each level of sampling (e.g. Prevalence at each region, village or site) so
-these are calculated automatically.
+these are calculated automatically. Also to calculate population-level
+prevalence from a mixed model, random/group effects need to marginalised out
+to avoid biased estimates. This is performed automatically.
 }
 \examples{
 # Perform logistic-type regression modelling for a synthetic dataset consisting

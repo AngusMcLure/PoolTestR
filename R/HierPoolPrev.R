@@ -33,9 +33,9 @@
 #' @param prior List of parameters specifying the parameters for the the priors
 #'   on the population intercept and standard deviations of group-effect terms.
 #'   The default value (NULL) uses the following parameters:
-#'   `list(intercept = list(nu = 3, mu = 0, sigma = 4),`
-#'         `group_sd  = list(nu = 3, mu = 0, sigma = 2.5),`
-#'         `individual_sd = FALSE)`
+#'   \code{list(intercept = list(nu = 3, mu = 0, sigma = 4.0),
+#'              group_sd  = list(nu = 3, mu = 0, sigma = 2.5),
+#'              individual_sd = FALSE)}
 #'   This models the prior of the linear scale intercept as t-distributed with
 #'   parameters in `intercept` and the standard deviation of the group-level
 #'   effects as truncated (non-negative) t-distribution. `individual_sd = FALSE`
@@ -45,13 +45,11 @@
 #'   beta(0.5,0.5). To set custom priors, use the same nested list format. Any
 #'   omitted parameters will be replaced with the default values and additional
 #'   parameters ignored silently. For example, to change the parameters to be
-#'   equal to the defaults for intercept-only random-effect model in `brms` and
+#'   equal to the defaults for intercept-only random-effect model in
 #'   PoolRegBayes you can use:
-#'   `list(intercept = list(sigma = 2.5),`
-#'         `group_sd  = list(sigma = 2.5),`
-#'         `individual_sd = TRUE)`,
-#'   which changes only the sigma parameters for the two priors and puts a prior
-#'   on each the standard deviations of each of group-level effects separately.
+#'   \code{list(individual_sd = TRUE)},
+#'   which puts a prior on each the standard deviations of each of group-level
+#'   effects separately, but doesn't change the priors used.
 #'
 #' @param level The confidence level to be used for the confidence and credible
 #'   intervals. Defaults to 0.95 (i.e. 95\% intervals)

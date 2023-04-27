@@ -3,7 +3,9 @@
 \name{HierPoolPrev}
 \alias{HierPoolPrev}
 \title{Estimation of prevalence based on presence/absence tests on pooled samples in
-a hierarchical sampling frame}
+a hierarchical sampling frame. Uses an intercept-only random effects model to
+model prevalence at population level. See PoolReg and PoolRegBayes for full
+mixed-effect modelling}
 \usage{
 HierPoolPrev(
   data,
@@ -11,10 +13,7 @@ HierPoolPrev(
   poolSize,
   hierarchy,
   ...,
-  prior.alpha = 0.5,
-  prior.beta = 0.5,
-  prior.absent = 0,
-  hyper.prior.sd = 2,
+  prior = NULL,
   level = 0.95,
   verbose = FALSE,
   cores = NULL,
@@ -51,25 +50,31 @@ combined with the site number to create unique identifiers for each site
 (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in
 village B etc.)}
 
-\item{...}{Optional name(s) of columns with variables to stratify the data by.
-If omitted the complete dataset is used to estimate a single prevalence.
-If included prevalence is estimated separately for each group defined by
-these columns}
+\item{...}{Optional name(s) of columns with variables to stratify the data
+by. If omitted the complete dataset is used to estimate a single
+prevalence. If included prevalence is estimated separately for each group
+defined by these columns}
 
-\item{prior.alpha, prior.beta, prior.absent}{The prior on the prevalence in
-each group takes the form of beta distribution (with parameters alpha and
-beta). The default is \code{prior.alpha = prior.beta = 1/2}. Another popular
-uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e. a uniform
-prior. \code{prior.absent} is included for consistency with \code{PoolPrev},
-but is currently ignored}
-
-\item{hyper.prior.sd}{Scale for the half-Cauchy hyper-prior for standard deviations
-of random/group effect terms. Defaults to 2, which is weakly informative since
-it implies that 50\% of random/group effects terms will be within a order of
-magnitude of each other, and 90\% of random/group effects will be within four
-orders of magnitude of each other. Decrease if you think group differences are
-are smaller than this, and increase if you think group differences may often
-reasonably be larger than this}
+\item{prior}{List of parameters specifying the parameters for the the priors
+on the population intercept and standard deviations of group-effect terms.
+The default value (NULL) uses the following parameters:
+\code{list(intercept = list(nu = 3, mu = 0, sigma = 4.0),
+           group_sd  = list(nu = 3, mu = 0, sigma = 2.5),
+           individual_sd = FALSE)}
+This models the prior of the linear scale intercept as t-distributed with
+parameters in `intercept` and the standard deviation of the group-level
+effects as truncated (non-negative) t-distribution. `individual_sd = FALSE`
+means that this prior is for the root-sum-square of group-effect standard
+deviations for models with multiple grouping levels. The default implies a
+prior on population prevalence that is approximately distributed as
+beta(0.5,0.5). To set custom priors, use the same nested list format. Any
+omitted parameters will be replaced with the default values and additional
+parameters ignored silently. For example, to change the parameters to be
+equal to the defaults for intercept-only random-effect model in `brms` and
+PoolRegBayes you can use:
+\code{list(individual_sd = TRUE)},
+which puts a prior on each the standard deviations of each of group-level
+effects separately.}
 
 \item{level}{The confidence level to be used for the confidence and credible
 intervals. Defaults to 0.95 (i.e. 95\% intervals)}
@@ -79,8 +84,8 @@ Defaults to false (no printing to screen)}
 
 \item{cores}{The number of CPU cores to be used. By default one core is used}
 
-\item{iter, warmup, chains}{MCMC options for passing onto the sampling
-routine. See \link[rstan]{stan} for details.}
+\item{iter, warmup, chains}{MCMC options for passing onto the sampling routine.
+See \link[rstan]{stan} for details.}
 
 \item{control}{A named list of parameters to control the sampler's behaviour.
 Defaults to default values as defined in \link[rstan]{stan}, except for
@@ -94,15 +99,17 @@ A \code{data.frame} with columns:
                  for credible intervals}
            \item{\code{NumberOfPools} -- number of pools}
            \item{\code{NumberPositive} -- the number of positive pools} }
-  If grouping variables are provided in \code{...} there will be an additional
-  column for each grouping variable. When there are no grouping variables
-  (supplied in \code{...}) then the output has only one row with the
-  prevalence estimates for the whole dataset. When grouping variables are
+  If grouping variables are provided in \code{...} there will be an
+  additional column for each grouping variable. When there are no grouping
+  variables (supplied in \code{...}) then the output has only one row with
+  the prevalence estimates for the whole dataset. When grouping variables are
   supplied, then there is a separate row for each group.
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples in
-a hierarchical sampling frame
+a hierarchical sampling frame. Uses an intercept-only random effects model to
+model prevalence at population level. See PoolReg and PoolRegBayes for full
+mixed-effect modelling
 }
 \examples{
 # Calculate prevalence for a synthetic dataset consisting of pools (sizes 1, 5,
@@ -121,6 +128,5 @@ a hierarchical sampling frame
 
 }
 \seealso{
-\code{\link{PoolPrev}},
-     \code{\link{getPrevalence}}
+\code{\link{PoolPrev}}, \code{\link{getPrevalence}}
 }

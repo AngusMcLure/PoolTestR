@@ -96,3 +96,8 @@ A \code{data.frame} with columns:
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples
 }
+\examples{
+examples/Prevalence.R
+     \code{\link{HierPoolPrev}},
+     \code{\link{getPrevalence}}
+}

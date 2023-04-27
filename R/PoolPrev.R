@@ -59,7 +59,7 @@
 #'   prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
 #'
-#' @example examples/Prevalence.R
+#' @examples examples/Prevalence.R
 #'      \code{\link{HierPoolPrev}},
 #'      \code{\link{getPrevalence}}
 
