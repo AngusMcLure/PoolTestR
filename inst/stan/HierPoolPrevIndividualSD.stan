@@ -5,11 +5,16 @@ data {
   int<lower=L> TotalGroups; //Total number of groups across all levels
   int<lower=0, upper=1> Result[N];
   vector<lower=0>[N] PoolSize;
-  //int<lower = 1> G[N,L]; //The group membership of each datapoint at each level
   matrix<lower = 0, upper = 1>[N,TotalGroups] Z; //Model matrix for group effects
-  real<lower=0> PriorAlpha;
-  real<lower=0> PriorBeta;
-  real<lower=0> HyperpriorSD;
+  // Parameters for t-distributed priors for:
+  //     Intercept
+  real<lower=0> InterceptNu;
+  real<lower=0> InterceptMu;
+  real<lower=0> InterceptSigma;
+    //     standard deviations of group effects
+  real<lower=0> GroupSDNu;
+  real<lower=0> GroupSDMu;
+  real<lower=0> GroupSDSigma;
 }
 transformed data{
   int<lower=0, upper=1> FlippedResult[N];
@@ -21,14 +26,15 @@ transformed data{
   Zv = csr_extract_v(Z);
   Zu = csr_extract_u(Z);
 
+  // We can avoid '1 - ' operation later if we predict negative pools rather than positive ones
   for(n in 1:N){
     FlippedResult[n] = 1 - Result[n];
   }
 }
 parameters {
-  real<lower=0, upper=1> p;
+  real Intercept; //
   vector[TotalGroups] u; //standardised group effects
-  vector<lower=0>[L] group_sd;
+  vector<lower=0>[L] group_sd; //sd of group variances
 }
 model{
   int k;
@@ -40,14 +46,22 @@ model{
     k = k + NumGroups[l];
   }
 
-  //vector[N] los; //log odds at the individual level at that site
-  //los = logit(p) + Z * au;
-  //ps = exp(-log1p_exp(logit(p) + Z * au) .* PoolSize);
-  //ps = exp(log1m_inv_logit(logit(p) + Z * au) .* PoolSize);
-  ps = exp(log1m_inv_logit(logit(p) + csr_matrix_times_vector(N,TotalGroups,Zw,Zv,Zu,au)) .* PoolSize);
+  //This code is equvailent way of calculating ps (though less efficient)
 
-  u ~ normal(0, 1);
-  group_sd ~ cauchy(0,HyperpriorSD);
-  p ~ beta(PriorAlpha,PriorBeta);
-  FlippedResult ~ bernoulli(ps);
+  //vector[N] los; //log odds at the individual level at that site
+  //los = Intercept + Z * au;
+  //ps = exp(-log1p_exp(los) .* PoolSize);
+
+  //Also equivalent to
+  //ps = exp(log1m_inv_logit(logit(p) + Z * au) .* PoolSize);
+  ps = exp(log1m_inv_logit(Intercept + csr_matrix_times_vector(N,TotalGroups,Zw,Zv,Zu,au)) .* PoolSize);
+
+  Intercept        ~ student_t(InterceptNu, InterceptMu, InterceptSigma);
+  group_sd         ~ student_t(GroupSDNu, GroupSDMu, GroupSDSigma);
+  u                ~ std_normal();
+  FlippedResult    ~ bernoulli(ps);
+}
+generated quantities{
+  real total_group_sd;
+  total_group_sd = sqrt(dot_self(group_sd));
 }

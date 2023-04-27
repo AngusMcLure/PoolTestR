@@ -117,7 +117,7 @@ PoolPrev <- function(data,result,poolSize,...,
 
     #if any tests are positive or for the Jeffrey's prior case
     if(sum(sdata$Result) | useJefferysPrior){
-      sfit <- rstan::sampling(stanmodels$BayesianPoolScreen,
+      sfit <- rstan::sampling(stanmodels$PoolPrev,
                               data = sdata,
                               pars = c('p'),
                               chains = chains,
@@ -138,12 +138,12 @@ PoolPrev <- function(data,result,poolSize,...,
 
       # calculate maximum likelihood estimate
       # 'optimizing' from stan actually maximizes the joint posterior, not the likelihood,
-      # but if we use a uniform prior they are equivalent
+      # but if we use a uniform prior on prevalence they are equivalent in this case
       MLEdata <- sdata
       MLEdata$PriorAlpha <- 1
       MLEdata$PriorBeta  <- 1
       MLEdata$JeffreysPrior  <- FALSE
-      out$PrevMLE <- rstan::optimizing(stanmodels$BayesianPoolScreen,MLEdata)$par["p"]
+      out$PrevMLE <- rstan::optimizing(stanmodels$PoolPrev,MLEdata)$par["p"]
 
       # log-likelihood difference used to calculate Likelihood ratio confidence intervals
       LogLikDiff <- stats::qchisq(if(reproduce.poolscreen){1 - (1 - level)/2}else{level}, df = 1)/2

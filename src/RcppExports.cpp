@@ -12,12 +12,14 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 
-RcppExport SEXP _rcpp_module_boot_stan_fit4BayesianPoolScreen_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4HierBayesianPoolScreen_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4HierPoolPrevIndividualSD_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4HierPoolPrevTotalSD_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4PoolPrev_mod();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_rcpp_module_boot_stan_fit4BayesianPoolScreen_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4BayesianPoolScreen_mod, 0},
-    {"_rcpp_module_boot_stan_fit4HierBayesianPoolScreen_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4HierBayesianPoolScreen_mod, 0},
+    {"_rcpp_module_boot_stan_fit4HierPoolPrevIndividualSD_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4HierPoolPrevIndividualSD_mod, 0},
+    {"_rcpp_module_boot_stan_fit4HierPoolPrevTotalSD_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4HierPoolPrevTotalSD_mod, 0},
+    {"_rcpp_module_boot_stan_fit4PoolPrev_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4PoolPrev_mod, 0},
     {NULL, NULL, 0}
 };
 
