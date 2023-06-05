@@ -138,7 +138,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                   GroupSDMu      = rplnull(prior$group_sd$mu,0),
                   GroupSDSigma   = rplnull(prior$group_sd$sigma,2.5)
                   )
-    #return(sdata)
+    #print(sdata)
     model <- if(rplnull(prior$inidividual_sd,FALSE)){
       stanmodels$HierPoolPrevIndividualSD
       }else{
