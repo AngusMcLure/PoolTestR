@@ -47,7 +47,7 @@
 #'   'granularity' and extract the prevalence estimates for these random
 #'   effects; e.g. if the random/group effects included are there to account for
 #'   a hierarchical sampling frame with levels 'Village' and 'Site' with a
-#'   formula like \code{Result ~ Cov1 + Cov2 + (1|Village/Site)}, then
+#'   formula like \code{Result ~ Cov1 + Cov2 + (1|Village) + (1|Site)}, then
 #'   getPrevalence will be a list of three data frames: estimates for every
 #'   combination of covariates, estimates for every combination of covariates
 #'   and village, and estimates for every combination of covariates, village,
@@ -56,6 +56,7 @@
 #' @seealso
 #'   \code{\link{PoolReg}},
 #'    \code{\link{PoolRegBayes}}
+#'
 #' @example examples/LogisticRegression.R
 
 getPrevalence <- function(model, newdata = NULL, re.form = NULL, robust = FALSE, level = 0.95){
@@ -186,11 +187,16 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
   GroupEffectTerms <- getGroupEffectTerms(formula, newdata, re.form)
   PredData <- preparePredictionData(GroupEffectTerms, newdata, formula, PoolSizeName)
 
+  #correlation matrices for each grouping variable (only for models with random effects)
+  if(!is.null(lme4::findbars(formula))){
+    correlations <- lme4::VarCorr(model, summary = FALSE)
+  }
+
   predlist <- list()
   #Make predictions based on group effects
   for(nge in 1:length(GroupEffectTerms)){
     ge <- GroupEffectTerms[[nge]] #The formula for the group effect(s) at this level
-    PredDataSub <- PredData[[nge]] #Subset of newdata to make preditions on (only unique combinations of inputs relevant to the level of random effects)
+    PredDataSub <- PredData[[nge]] #Subset of newdata to make predictions on (only unique combinations of inputs relevant to the level of random effects)
     eta <- stats::fitted(model,
                          scale = 'linear',
                          re_formula = ge,
@@ -201,9 +207,6 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
     npoint <- ncol(eta) # number of prediction points
     #the random/group effect terms that we need to marginalise/integrate over
     maringal.ge.terms <- retermdiff(formula,ge) #the random/group effect terms that we need to marginalise/integrate over
-
-    #correlation matrices for each grouping variable
-    correlations <- lme4::VarCorr(model, summary = FALSE)
 
     #the standard deviations of the random/group effects that are being integrated over
     #Note that the loop adds up the variances so we need to take square roots after
@@ -236,11 +239,11 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
     }
 
     prev.interval <- prev %>%
-      apply(2, function(x)quantile(x, probs = 0.5 + c(-level,level)/2)) %>%
+      apply(2, function(x)stats::quantile(x, probs = 0.5 + c(-level,level)/2)) %>%
       t %>% as.data.frame() %>%
       stats::setNames(c("CrILow", "CrIHigh"))
     pred <- cbind(PredDataSub[,names(PredDataSub) != PoolSizeName, drop = FALSE],
-                  Estimate = apply(prev, 2, ifelse(robust, median, mean)),
+                  Estimate = apply(prev, 2, ifelse(robust, stats::median, mean)),
                   prev.interval)
 
     predlist <- c(predlist,list(pred))

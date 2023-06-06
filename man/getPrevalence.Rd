@@ -54,7 +54,7 @@ A \code{list} with at least one field \code{PopulationEffects} and an
   'granularity' and extract the prevalence estimates for these random
   effects; e.g. if the random/group effects included are there to account for
   a hierarchical sampling frame with levels 'Village' and 'Site' with a
-  formula like \code{Result ~ Cov1 + Cov2 + (1|Village/Site)}, then
+  formula like \code{Result ~ Cov1 + Cov2 + (1|Village) + (1|Site)}, then
   getPrevalence will be a list of three data frames: estimates for every
   combination of covariates, estimates for every combination of covariates
   and village, and estimates for every combination of covariates, village,
@@ -87,7 +87,7 @@ Mod <- PoolReg(Result ~ Region + Year,
 summary(Mod)
 
 #accounting hierarchical sampling frame within each region
-HierMod <- PoolReg(Result ~ Region + Year + (1|Village/Site),
+HierMod <- PoolReg(Result ~ Region + Year + (1|Village) + (1|Site),
                    data = SimpleExampleData,
                    poolSize = NumInPool)
 summary(HierMod)
@@ -107,7 +107,7 @@ getPrevalence(HierMod)
   getPrevalence(BayesMod) #Extract fitted prevalence for each combination of region and year
 
   #accounting hierarchical sampling frame within each region
-  BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village/Site),
+  BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village) + (1|Site),
                                data = SimpleExampleData,
                                poolSize = NumInPool)
   summary(BayesHierMod)

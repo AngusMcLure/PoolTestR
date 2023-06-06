@@ -37,7 +37,7 @@ Now it's time to load up data into R using `read.csv()` or a similar function. E
  * the the number of specimens in the pool
  * and the result of the test
 
-Instead of working with real data, for this example we'll be using a simulated dataset called ```SimpleExampleData``` that's included with the package. The synthetic dataset consists of pools (sizes 1, 5, or 10) taken from 4 different regions and 3 different years. Within each region specimens are collected at 4 different villages, and within each village specimens are collected at 8 different sites, i.e. a hierarchical sampling frame. Take a look at the first few rows of the data:
+Instead of working with real data, for this example we'll be using a simulated dataset called ```SimpleExampleData``` that's included with the package. The synthetic dataset consists of pools (sizes 1, 5, or 10) taken from 4 different regions and 3 different years. Within each region 4 villages are selected, and within each selected village 8  sites are selected for the collection of specimens, i.e. a hierarchical sampling frame. Take a look at the first few rows of the data:
 
 ```R
 head(SimpleExampleData)
@@ -93,22 +93,22 @@ The hierarchical counterpart to ```PoolPrev``` is ```HierPoolPrev```, which take
 
 ```R
 PrevByHier <- HierPoolPrev(SimpleExampleData, Result, NumInPool,
-                           c("Region","Village","Site"))
+                           c("Village","Site"))
 PrevByHier
 ```
 
-To also stratify by year
+To also stratify by Year
 
 ```R
 PrevByYearHier <- HierPoolPrev(SimpleExampleData, Result, NumInPool, 
-                               c("Region","Village","Site"), Year)
+                               c("Village","Site"), Year)
 PrevByYearHier
 ```
 
-The same kind of adjustments can be conducted in a regression framework, using mixed effect regression models. The following fits a mixed-effect regression model with Year as a fixed/population effect with a linear trend on the logit scale and Region, Village, and Site as nested random/group effects:
+The same kind of adjustments can be conducted in a regression framework, using mixed effect regression models. The following fits a mixed-effect regression model with Year and Region as fixed/population effects with a linear trend on the logit scale and Village and Site random/group effects:
 
 ```R
-HierModel <- PoolReg(Result ~ Year + (1|Region/Village/Site), SimpleExampleData, NumInPool)
+HierModel <- PoolReg(Result ~ Year + Region + (1|Village) + (1|Site), SimpleExampleData, NumInPool)
 summary(HierModel)
 getPrevalence(HierModel)
 ```

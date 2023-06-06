@@ -59,7 +59,7 @@ Mod <- PoolReg(Result ~ Region + Year,
 summary(Mod)
 
 #accounting hierarchical sampling frame within each region
-HierMod <- PoolReg(Result ~ Region + Year + (1|Village/Site),
+HierMod <- PoolReg(Result ~ Region + Year + (1|Village) + (1|Site),
                    data = SimpleExampleData,
                    poolSize = NumInPool)
 summary(HierMod)
@@ -79,7 +79,7 @@ getPrevalence(HierMod)
   getPrevalence(BayesMod) #Extract fitted prevalence for each combination of region and year
 
   #accounting hierarchical sampling frame within each region
-  BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village/Site),
+  BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village) + (1|Site),
                                data = SimpleExampleData,
                                poolSize = NumInPool)
   summary(BayesHierMod)

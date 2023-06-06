@@ -74,8 +74,9 @@
 #'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
 #'
-#' @example examples/HierPrevalence.R
 #' @seealso \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
+#'
+#' @example examples/HierPrevalence.R
 
 
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
@@ -155,9 +156,11 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                             control = control)
     #return(sfit)
     sfit <- as.matrix(sfit)[,c('Intercept', 'total_group_sd')] %>%
-      as.data.frame %>%
-      dplyr::rowwise() %>%
-      dplyr::mutate(p = meanlinknormal(Intercept,total_group_sd,plogis))
+      as.data.frame
+    sfit$p <- mapply(meanlinknormal,
+                     sfit$Intercept,
+                     sfit$total_group_sd,
+                     list(stats::plogis))
 
     out <- data.frame(PrevBayes = mean(sfit$p))
     out[,'CrILow'] <- stats::quantile(sfit$p,(1-level)/2)

@@ -56,9 +56,12 @@
 #'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
 #'
-#' @examples examples/Prevalence.R
+#' @seealso
 #'      \code{\link{HierPoolPrev}},
 #'      \code{\link{getPrevalence}}
+#'
+#' @example examples/Prevalence.R
+
 
 
 PoolPrev <- function(data,result,poolSize,...,
