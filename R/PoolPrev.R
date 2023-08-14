@@ -18,8 +18,8 @@
 #'   prevalence. If included, prevalence is estimated separately for each group
 #'   defined by these columns
 #' @param bayesian Logical indicating whether Bayesian calculations should be
-#'   calculated. If TRUE (the default) calculates frequentis and Bayesian
-#'   estimates of prevalence, otherwise only calcualtes frequentist estimates
+#'   calculated. If TRUE (the default) calculates frequentist and Bayesian
+#'   estimates of prevalence, otherwise only calculates frequentist estimates
 #'   (MLE and likelihood ratio confidence intervals).
 #' @param prior Prior for prevalence, ignored if \code{bayesian == FALSE}. If
 #'   NULL (the default) the prior for the prevalence is the uninformative
