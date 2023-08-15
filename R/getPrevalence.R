@@ -239,11 +239,11 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
     }
 
     prev.interval <- prev %>%
-      apply(2, function(x)stats::quantile(x, probs = 0.5 + c(-level,level)/2)) %>%
+      apply(2, function(x)stats::quantile(x, probs = 0.5 + c(-level,level)/2, na.rm = TRUE)) %>%
       t %>% as.data.frame() %>%
       stats::setNames(c("CrILow", "CrIHigh"))
     pred <- cbind(PredDataSub[,names(PredDataSub) != PoolSizeName, drop = FALSE],
-                  Estimate = apply(prev, 2, ifelse(robust, stats::median, mean)),
+                  Estimate = apply(prev, 2, ifelse(robust, stats::median, mean),na.rm = TRUE),
                   prev.interval)
 
     predlist <- c(predlist,list(pred))
@@ -417,8 +417,20 @@ meanlinknormal <- function(mu, sigma, invlink){
   } else if(sigma == 0){ #at zero sigma, the link-normal r.v. reduces to a point mass --- no integration required
     invlink(mu)
   } else{
-    stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
-                     lower = -Inf, upper = Inf)$value
+    integral <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
+                                     lower = -Inf, upper = Inf)$value,
+                    silent = TRUE)
+    if(class(integral) == 'try-error'){
+
+      integral <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
+                                       lower = mu - sigma * 10, upper = mu + sigma * 10)$value,
+                      silent = TRUE)
+      if(class(integral) == 'try-error'){
+        warning('integration failed for mu = ', mu, ' and sigma = ', sigma, ', with error: \n',attr(integral, 'condition')$message, '\nResult will be NA')
+        integral <- NA
+      }
+    }
+    integral
   }
 }
 
