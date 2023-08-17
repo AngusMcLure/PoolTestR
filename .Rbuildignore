@@ -9,3 +9,8 @@ cran-comments\.md
 \.DS_Store
 ^CRAN-RELEASE$
 ^CRAN-SUBMISSION$
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^codecov\.yml$

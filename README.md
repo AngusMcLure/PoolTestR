@@ -1,4 +1,10 @@
 # PoolTestR
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/AngusMcLure/PoolTestR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/AngusMcLure/PoolTestR/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/AngusMcLure/PoolTestR/branch/master/graph/badge.svg)](https://app.codecov.io/gh/AngusMcLure/PoolTestR?branch=master)
+<!-- badges: end -->
+
 PoolTestR is an R package with tools for working with pooled or grouped samples, initially inspired by the stand-alone software, 'PoolScreen'. The package can be used to perform the same analyses as PoolScreen i.e. estimate the prevalence of a marker in the population based on tests performed on pooled samples. In our package, the estimates of prevalence can also be adjusted to account for the hierarchical sampling designs that are often used for molecular xenomonitoring studies. Taking this a step further, our package enable users to perform to mixed effect regression to identify covariates associated with the outcome of interest, estimate odds ratios, and predict prevalence. Analyses are available in both frequentist and Bayesian frameworks. 
 
 More features are planned or in the works: spatial mapping; models for combining and comparing results from human-based and vector-based surveillance, adjustments for imperfect test specificity/sensitivity; functions for helping with optimal experimental design; functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time. Suggestions and contributions are welcome.
