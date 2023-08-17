@@ -12,21 +12,31 @@ More features are planned or in the works: spatial mapping; models for combining
 If you find this package helpful, please [let us know](mailto:angus.mclure@anu.edu.au) -- we'd love to hear how it's being used. The details of our package are described in an [article published in Environmental Modelling and Software](https://doi.org/10.1016/j.envsoft.2021.105158). We are happy to share a pdf of this article with you [on request](mailto:angus.mclure@anu.edu.au).
 
 ## Installation
-
-PoolTestR is now available on the official repository of R packages, CRAN, so can now be installed like any standard package; i.e. using the package manager in RStudio or the command:
+### Basic Installation
+To install the latest version of PoolTestR available on CRAN (the official repository for R packages), use the following command in R
 
 ```R
 install.packages("PoolTestR")
 ```
 
-You can also install the most up-to-date version from github:
+This will install an old version of PoolTestR that lacks key features. In particular, Bayesian regression modelling (via function ```PoolRegBayes```) will probably not work.
+
+### Advanced Installation
+To use the full functionality of the package, including running Bayesian regression models, you will need a working version of RTools on your machine and latest versions of two packages, StanHeaders and rstan. Install RTools following the instructions [here](https://cran.r-project.org/bin/windows/Rtools/rtools43/rtools.html). Install the latest versions of StanHeaders and rstan with:
+
+```R
+install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+```
+
+Though PoolTestR is now at v0.2.0 with additional features and bug fixes, this cannot be made available on CRAN until StanHeaders and rstan have been updated on CRAN also. To also install the most up-to-date version of PoolTestR directly from github, in addition to the above steps also run
 
 ```R
 install.packages("devtools") #you can skip this if you already have devtools installed
 devtools::install_github("AngusMcLure/PoolTestR")
 ```
 
-If installing from source (the only option if installing from github) this will probably produce a lot of warning messages in your R console - these are related to the compilation of stan source code and can be safely ignored! If installing from CRAN this shoudn't be an issue.
+If installing from source (the only option if installing from github) this will take some time (really depends on your machine, perhaps up to an hour) and probably produce a lot of text in your R console. The text is related to the compilation of stan source code. If installing from CRAN (basic installation) installation should be very fast and not generate any warning messages. 
 
 Note: In the past, some windows users needed to adjust some settings (in the Makevars file) to install the package correctly, because of issues in other packages on which PoolTestR relies. These other packages have addressed these issues in most cases, so manual adjustments *shouldn't* be needed. However, future updates may break this. Please [let us know](mailto:angus.mclure@anu.edu.au) if you have issues with installation. 
 
