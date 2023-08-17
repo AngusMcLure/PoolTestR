@@ -184,7 +184,7 @@ confint(UnadjustedMean.Region)
 
 #Adjusting now for sampling frame
 AdjustedMean <- PoolLogitRegMixed(Data,
-                                  Result ~ Species + Region + (1|Village/Site), #Adding site sometimes causes convergence issues
+                                  Result ~ Species + Region + (1|Village) + (1|Site), #Adding site sometimes causes convergence issues
                                   PoolSize)
 summary(AdjustedMean)
 plogis(coef(AdjustedMean)$Region$`(Intercept)`)
@@ -193,7 +193,7 @@ confint(AdjustedMean) ## THIS SHOULD WORK BUT DOESN'T
 library(lme4)
 #This should be the same as above, but for some reason confint doesn't work on the above
 memPool <- glmer(data = Data,
-                 formula = Result ~ Species + Region + (1|Village/Site),
+                 formula = Result ~ Species + Region + (1|Village) + (1|Site),
                  family = binomial(PoolLink(Data$PoolSize)))
 summary(memPool)
 confint(memPool)
@@ -249,10 +249,10 @@ pred
 pkgbuild::compile_dll()
 roxygen2::roxygenize()
 
-Moda <- PoolRegBayes(Data, Result ~ Species + Region + (1|Village/Site), PoolSize)
-ModaBC <- PoolRegBayes(Data %>% subset(Region != "A"), Result ~ Species + Region + (1|Village/Site), PoolSize)
-ModaY <- PoolRegBayes(Data %>% subset(Species == "Y"), Result ~ Region + (1|Village/Site), PoolSize)
-Modb <- PoolRegBayes(Data, Result ~ Species + (1|Region/Village/Site), PoolSize)
+Moda <- PoolRegBayes(Data, Result ~ Species + Region + (1|Village) + (1|Site), PoolSize)
+ModaBC <- PoolRegBayes(Data %>% subset(Region != "A"), Result ~ Species + Region + (1|Village) + (1|Site), PoolSize)
+ModaY <- PoolRegBayes(Data %>% subset(Species == "Y"), Result ~ Region + (1|Village) + (1|Site), PoolSize)
+Modb <- PoolRegBayes(Data, Result ~ Species + (1|Region) + (1|Village) + (1|Site), PoolSize)
 Modc <- PoolRegBayes(Data, Result ~ Species + Village + (1|Site), PoolSize,iter = 5000,warmup = 1000)
 Modd <- PoolRegBayes(Data, Result ~ Species + Site, PoolSize)
 Mode <- PoolRegBayes(Data, Result ~ Species + Region + (1|Village), PoolSize) # ignore the use of different sites
@@ -260,7 +260,7 @@ Mode <- PoolRegBayes(Data, Result ~ Species + Region + (1|Village), PoolSize) # 
 Modf <- PoolRegBayes(Data %>% subset(Region == "A" & Species == "X"), Result ~  1 + (1|Village/Site), PoolSize)
 
 Modg <- Data %>% group_by(Region, Species) %>%
-  group_map(function(x,...){PoolRegBayes(x,Result ~  1 + (1|Village/Site), PoolSize)})
+  group_map(function(x,...){PoolRegBayes(x,Result ~  1 + (1|Village) + (1|Site), PoolSize)})
 
 
 pa <- getPrevalence(Moda)

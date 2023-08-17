@@ -1,5 +1,7 @@
 #' Estimation of prevalence based on presence/absence tests on pooled samples in
-#' a hierarchical sampling frame
+#' a hierarchical sampling frame. Uses an intercept-only random effects model to
+#' model prevalence at population level. See PoolReg and PoolRegBayes for full
+#' mixed-effect modelling
 #'
 #' @export
 #' @param data A \code{data.frame} with one row for each pooled sampled and
@@ -24,30 +26,38 @@
 #'   combined with the site number to create unique identifiers for each site
 #'   (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in
 #'   village B etc.)
-#' @param ... Optional name(s) of columns with variables to stratify the data by.
-#'   If omitted the complete dataset is used to estimate a single prevalence.
-#'   If included prevalence is estimated separately for each group defined by
-#'   these columns
-#' @param prior.alpha,prior.beta,prior.absent The prior on the prevalence in
-#'   each group takes the form of beta distribution (with parameters alpha and
-#'   beta). The default is \code{prior.alpha = prior.beta = 1/2}. Another popular
-#'   uninformative choice is \code{prior.alpha = prior.beta = 1}, i.e. a uniform
-#'   prior. \code{prior.absent} is included for consistency with \code{PoolPrev},
-#'   but is currently ignored
-#' @param hyper.prior.sd Scale for the half-Cauchy hyper-prior for standard deviations
-#'  of random/group effect terms. Defaults to 2, which is weakly informative since
-#'  it implies that 50\% of random/group effects terms will be within a order of
-#'  magnitude of each other, and 90\% of random/group effects will be within four
-#'  orders of magnitude of each other. Decrease if you think group differences are
-#'  are smaller than this, and increase if you think group differences may often
-#'  reasonably be larger than this
+#' @param ... Optional name(s) of columns with variables to stratify the data
+#'   by. If omitted the complete dataset is used to estimate a single
+#'   prevalence. If included prevalence is estimated separately for each group
+#'   defined by these columns
+#' @param prior List of parameters specifying the parameters for the the priors
+#'   on the population intercept and standard deviations of group-effect terms.
+#'   The default value (NULL) uses the following parameters:
+#'   \code{list(intercept = list(nu = 3, mu = 0, sigma = 4.0),
+#'              group_sd  = list(nu = 3, mu = 0, sigma = 2.5),
+#'              individual_sd = FALSE)}
+#'   This models the prior of the linear scale intercept as t-distributed with
+#'   parameters in `intercept` and the standard deviation of the group-level
+#'   effects as truncated (non-negative) t-distribution. `individual_sd = FALSE`
+#'   means that this prior is for the root-sum-square of group-effect standard
+#'   deviations for models with multiple grouping levels. The default implies a
+#'   prior on population prevalence that is approximately distributed as
+#'   beta(0.5,0.5). To set custom priors, use the same nested list format. Any
+#'   omitted parameters will be replaced with the default values and additional
+#'   parameters ignored silently. For example, to change the parameters to be
+#'   equal to the defaults for intercept-only random-effect model in
+#'   PoolRegBayes you can use:
+#'   \code{list(individual_sd = TRUE)},
+#'   which puts a prior on each the standard deviations of each of group-level
+#'   effects separately, but doesn't change the priors used.
+#'
 #' @param level The confidence level to be used for the confidence and credible
 #'   intervals. Defaults to 0.95 (i.e. 95\% intervals)
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen)
 #' @param cores The number of CPU cores to be used. By default one core is used
-#' @param iter,warmup,chains MCMC options for passing onto the sampling
-#'   routine. See \link[rstan]{stan} for details.
+#' @param iter,warmup,chains MCMC options for passing onto the sampling routine.
+#'   See \link[rstan]{stan} for details.
 #' @param control A named list of parameters to control the sampler's behaviour.
 #'   Defaults to default values as defined in \link[rstan]{stan}, except for
 #'   \code{adapt_delta} which is set to the more conservative value of 0.9. See
@@ -58,22 +68,20 @@
 #'                  for credible intervals}
 #'            \item{\code{NumberOfPools} -- number of pools}
 #'            \item{\code{NumberPositive} -- the number of positive pools} }
-#'   If grouping variables are provided in \code{...} there will be an additional
-#'   column for each grouping variable. When there are no grouping variables
-#'   (supplied in \code{...}) then the output has only one row with the
-#'   prevalence estimates for the whole dataset. When grouping variables are
+#'   If grouping variables are provided in \code{...} there will be an
+#'   additional column for each grouping variable. When there are no grouping
+#'   variables (supplied in \code{...}) then the output has only one row with
+#'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
 #'
+#' @seealso \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
+#'
 #' @example examples/HierPrevalence.R
-#' @seealso
-#'      \code{\link{PoolPrev}},
-#'      \code{\link{getPrevalence}}
 
 
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
-                         prior.alpha = 0.5, prior.beta = 0.5,
-                         prior.absent = 0, hyper.prior.sd = 2,
-                         level = 0.95, verbose = FALSE,cores = NULL,
+                         prior = NULL,
+                         level = 0.95, verbose = FALSE, cores = NULL,
                          iter = 2000, warmup = iter/2,
                          chains = 4, control = list(adapt_delta = 0.9)){
   result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
@@ -111,6 +119,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     for (n in 1:nrow(data)){
       Z[n,G[n,]] = 1
     }
+    rplnull <- function(x,replacement){if(is.null(x)){replacement}else{x}}
     sdata <- list(N = nrow(data), #number of datapoints (pools)
                   L = length(hierarchy), #number of levels of hierarchy
                   NumGroups = array(NumGroups), #Number of groups at each level of hierarchy
@@ -120,14 +129,25 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                   PoolSize = dplyr::select(data, !! poolSize)[,1] %>% as.matrix %>% array,
                   #G = G, #The group membership for each data point and level of hierarchy
                   Z = Z,
-                  PriorAlpha = prior.alpha,
-                  PriorBeta = prior.beta,
-                  HyperpriorSD = hyper.prior.sd
+                  # Parameters for t-distributed priors for:
+                    #  Intercept
+                  InterceptNu    = rplnull(prior$intercept$nu,3),
+                  InterceptMu    = rplnull(prior$intercept$mu,0),
+                  InterceptSigma = rplnull(prior$intercept$sigma,4),
+                    # Standard deviations of group-effects
+                  GroupSDNu      = rplnull(prior$group_sd$nu,3),
+                  GroupSDMu      = rplnull(prior$group_sd$mu,0),
+                  GroupSDSigma   = rplnull(prior$group_sd$sigma,2.5)
                   )
-    #return(sdata)
-    sfit <- rstan::sampling(stanmodels$HierBayesianPoolScreen,
+    #print(sdata)
+    model <- if(rplnull(prior$inidividual_sd,FALSE)){
+      stanmodels$HierPoolPrevIndividualSD
+      }else{
+        stanmodels$HierPoolPrevTotalSD
+      }
+    sfit <- rstan::sampling(model,
                             data = sdata,
-                            pars = c('p'),
+                            pars = c('Intercept', 'total_group_sd'),
                             chains = chains,
                             iter = iter,
                             warmup = warmup,
@@ -135,17 +155,21 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                             cores = cores,
                             control = control)
     #return(sfit)
-    sfit <- as.matrix(sfit)[,"p"]
+    sfit <- as.matrix(sfit)[,c('Intercept', 'total_group_sd')] %>%
+      as.data.frame
+    sfit$p <- mapply(meanlinknormal,
+                     sfit$Intercept,
+                     sfit$total_group_sd,
+                     list(stats::plogis))
 
-    out <- data.frame(mean = mean(sfit))
-    out[,'CrILow'] <- stats::quantile(sfit,(1-level)/2)
-    out[,'CrIHigh'] <- stats::quantile(sfit,(1+level)/2)
+    out <- data.frame(PrevBayes = mean(sfit$p))
+    out[,'CrILow'] <- stats::quantile(sfit$p,(1-level)/2)
+    out[,'CrIHigh'] <- stats::quantile(sfit$p,(1+level)/2)
 
     out[,'NumberOfPools'] <- sdata$N
     out[,'NumberPositive'] <- sum(sdata$Result)
 
     out <- out %>%
-      dplyr::rename('PrevBayes' = mean) %>%
       dplyr::select('PrevBayes',
                     'CrILow','CrIHigh',
                     'NumberOfPools', 'NumberPositive')
@@ -157,18 +181,18 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     nGroups <- dplyr::n_groups(data)
     ProgBar <- progress::progress_bar$new(format = "[:bar] :current/:total (:percent)", total = nGroups)
     ProgBar$tick(-1)
-    out <- data %>% dplyr::group_modify(function(x,...){
-      ProgBar$tick(1)
-      HierPoolPrev(x,!! result,!! poolSize,
-                   hierarchy,
-                   prior.alpha = prior.alpha,
-                   prior.beta = prior.beta,
-                   prior.absent = prior.absent,
-                   level = level,
-                   verbose = verbose,
-                   cores = cores,
-                   iter = iter, warmup = warmup,
-                   chains = chains, control = control)}) %>%
+    out <- data %>%
+      dplyr::group_modify(function(x,...){
+        ProgBar$tick(1)
+        HierPoolPrev(x,!! result,!! poolSize,
+                     hierarchy,
+                     prior = prior,
+                     level = level,
+                     verbose = verbose,
+                     cores = cores,
+                     iter = iter, warmup = warmup,
+                     chains = chains, control = control)
+      }) %>%
       as.data.frame()
     ProgBar$tick(1)
   }

@@ -1,7 +1,7 @@
 library(dplyr)
 set.seed(as.numeric(as.Date("2020/10/22")))
-RegionPrevs <- c(A = 0.5, B = 2, C = 4)/100 #Prevalence in each region
-NumRegions <- length(RegionPrevs)
+LogitRegionPrevs <- qlogis(c(A = 0.5, B = 2, C = 4)/100) #Logit-scale prevalence value for each region at baseline. Rough prevalence in each region are 1.25 times 0.5%, 2%, 4%
+NumRegions <- length(LogitRegionPrevs)
 NumVillages <- 10 #Villages per Region
 NumSites <- 10 #Sites per village
 MeanCatch <- 200 #Mean and dispersion of mosquito catch sizes (neg binomial distributed)
@@ -17,9 +17,17 @@ Years <- 0:2
 GrowthRate <- log(0.8)
 
 
+#Calculate True Prevalence at Region Level (Doing in separate loop first to avoid changing the order of random number generation)
+RegionTruePrev <- expand.grid(Region = names(LogitRegionPrevs),
+                              Year = Years) %>%
+  rowwise() %>%
+  mutate(PrevalenceRegion = PoolTestR:::meanlinknormal(LogitRegionPrevs[[Region]] + Year * GrowthRate,
+                                                       sqrt(VillageSD^2 + SiteSD^2 + Year^2 * (VillageSDTrend^2 + SiteSDTrend^2)),
+                                                       plogis))
 
+#Calculate True Prevalence at each Village and Site and random catch sizes (all involves RNG)
 ExampleData <- data.frame()
-for(R in names(RegionPrevs)){
+for(R in names(LogitRegionPrevs)){
   for(V in 1:NumVillages){
     #Difference of village prevalence from the region prevalence on log-odds scale
     VillageDeviate <- rnorm(1, mean = 0, sd = VillageSD)
@@ -28,10 +36,11 @@ for(R in names(RegionPrevs)){
       #Difference of site prevalence from the village prevalence on log-odds scale
       SiteDeviate <- rnorm(1, mean = 0, sd = SiteSD)
       SiteDeviateTrend <- rnorm(1, mean = 0, sd = SiteSDTrend)
-
       for(Y in Years){
-        VillageTruePrev <- plogis(qlogis(RegionPrevs[[R]]) + VillageDeviate + Y * (GrowthRate + VillageDeviateTrend))
-        SiteTruePrev <- plogis(qlogis(RegionPrevs[[R]]) + VillageDeviate + SiteDeviate + Y * (GrowthRate + VillageDeviateTrend + SiteDeviateTrend))
+        VillageTruePrev <- PoolTestR:::meanlinknormal(LogitRegionPrevs[[R]] + VillageDeviate + Y * (GrowthRate + VillageDeviateTrend),
+                                                      sqrt(SiteSD^2 + Y^2 * SiteSDTrend^2),
+                                                      plogis)
+        SiteTruePrev <- plogis(LogitRegionPrevs[[R]] + VillageDeviate + SiteDeviate + Y * (GrowthRate + VillageDeviateTrend + SiteDeviateTrend))
         #Generate catch sizes from zero-truncated negative binomial distribution. 're-roll' sizes == 0 to guarantee at least one mossie
         Catch <- 0
         while(Catch<=0){
@@ -42,13 +51,12 @@ for(R in names(RegionPrevs)){
         if(NumBigPools){
           ExampleData <- rbind(ExampleData,
                                data.frame(Year = Y,
-                                                 Region = R,
-                                                 Village = paste(R,V,sep = "-"),
-                                                 Site = paste(R,V,S,sep = "-"),
-                                                 NumInPool = rep(MaxPoolSize,NumBigPools),
-                                                 PrevalenceSite = SiteTruePrev,
-                                                 PrevalenceVillage = VillageTruePrev,
-                                                 PrevalenceRegion = plogis(qlogis(RegionPrevs[[R]]) + GrowthRate * Y)))
+                                          Region = R,
+                                          Village = paste(R,V,sep = "-"),
+                                          Site = paste(R,V,S,sep = "-"),
+                                          NumInPool = rep(MaxPoolSize,NumBigPools),
+                                          PrevalenceSite = SiteTruePrev,
+                                          PrevalenceVillage = VillageTruePrev))
         }
         SizeSmallPool <- Catch %% MaxPoolSize
         if(SizeSmallPool){
@@ -59,23 +67,25 @@ for(R in names(RegionPrevs)){
                                           Site = paste(R,V,S,sep = "-"),
                                           NumInPool = SizeSmallPool,
                                           PrevalenceSite = SiteTruePrev,
-                                          PrevalenceVillage = VillageTruePrev,
-                                          PrevalenceRegion = plogis(qlogis(RegionPrevs[[R]]) + GrowthRate * Y)))
+                                          PrevalenceVillage = VillageTruePrev))
         }
       }
     }
   }
 }
+#Generate random test results on pooled samples
 ExampleData$Result <- with(ExampleData,as.numeric(runif(nrow(ExampleData)) < (1-(1-PrevalenceSite)^NumInPool)))
 
 TruePrev <- ExampleData %>%
+  merge(RegionTruePrev) %>%
   select(Year, Site, Village, Region,
-         PrevalenceSite,PrevalenceVillage,PrevalenceRegion) %>%
+         PrevalenceSite,PrevalenceVillage, PrevalenceRegion) %>%
   unique
+
 rownames(TruePrev) <- NULL
 usethis::use_data(TruePrev, overwrite = TRUE)
 
-ExampleData <- ExampleData %>% select(-c(PrevalenceSite,PrevalenceVillage,PrevalenceRegion))
+ExampleData <- ExampleData %>% select(-c(PrevalenceSite,PrevalenceVillage))
 usethis::use_data(ExampleData, overwrite = TRUE)
 
 

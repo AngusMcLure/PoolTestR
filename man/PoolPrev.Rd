@@ -9,9 +9,8 @@ PoolPrev(
   result,
   poolSize,
   ...,
-  prior.alpha = NULL,
-  prior.beta = NULL,
-  prior.absent = 0,
+  bayesian = TRUE,
+  prior = NULL,
   level = 0.95,
   reproduce.poolscreen = FALSE,
   verbose = FALSE,
@@ -43,56 +42,92 @@ by. If omitted the complete dataset is used to estimate a single
 prevalence. If included, prevalence is estimated separately for each group
 defined by these columns}
 
-\item{prior.alpha, prior.beta, prior.absent}{The default prior for the
-prevalence is the uninformative Jeffrey's prior, however you can also
-specify a custom prior with a beta distribution (with parameters
-prior.alpha and prior.beta) modified to have a point mass of zero i.e.
-allowing for some prior probability that the true prevalence is exactly
-zero (prior.absent). Another popular uninformative choice is
-\code{prior.alpha = 1, prior.beta = 1, prior.absent = 0}, i.e. a uniform
-prior.}
+\item{bayesian}{Logical indicating whether Bayesian calculations should be
+calculated. If TRUE (the default) calculates frequentist and Bayesian
+estimates of prevalence, otherwise only calculates frequentist estimates
+(MLE and likelihood ratio confidence intervals).}
+
+\item{prior}{Prior for prevalence, ignored if \code{bayesian == FALSE}. If
+NULL (the default) the prior for the prevalence is the uninformative
+Jeffrey's prior. The only alternative prior is a possibly zero-inflated
+beta distribution. Zero inflation allows for some prior (and posterior)
+probability that the marker of interest is totally absent from the
+population. The parameters for this are specified with a list with three
+numeric non-negative entries named alpha, beta, and absent. For instance, a
+uniform prior with no probability of true absence can be specified as
+\code{prior = list(alpha = 1, beta = 1, absent = 0}.}
 
 \item{level}{Defines the confidence level to be used for the confidence and
 credible intervals. Defaults to 0.95 (i.e. 95\% intervals)}
 
-\item{reproduce.poolscreen}{(defaults to FALSE). If TRUE this changes the
-way that likelihood ratio confidence intervals are computed to be somewhat
+\item{reproduce.poolscreen}{(defaults to FALSE). If TRUE this changes the way
+that likelihood ratio confidence intervals are computed to be somewhat
 wider and more closely match those returned by Poolscreen. We recommend
 using the default (FALSE). However setting to TRUE can help to make
 comparisons between PoolPrev and Poolscreen.}
 
 \item{verbose}{Logical indicating whether to print progress to screen.
-Defaults to false (no printing to screen).}
+Defaults to false (no printing to screen). Ignored if \code{bayesian ==
+FALSE}.}
 
-\item{cores}{The number of CPU cores to be used. By default one core is used}
+\item{cores}{The number of CPU cores to be used. By default one core is used.
+Ignored if \code{bayesian == FALSE}.}
 
-\item{iter, warmup, chains}{MCMC options for passing onto the sampling
-routine. See \link[rstan]{stan} for details.}
+\item{iter, warmup, chains}{MCMC options for passing onto the sampling routine.
+See \link[rstan]{stan} for details. Ignored if \code{bayesian == FALSE}.}
 
 \item{control}{A named list of parameters to control the sampler's behaviour.
 Defaults to default values as defined in \link[rstan]{stan}, except for
 \code{adapt_delta} which is set to the more conservative value of 0.9. See
-\link[rstan]{stan} for details.}
+\link[rstan]{stan} for details. Ignored if \code{bayesian == FALSE}.}
 }
 \value{
 A \code{data.frame} with columns:
-  \itemize{\item{\code{PrevMLE} (the Maximum Likelihood Estimate of prevalence)}
-           \item{\code{CILow} and \code{CIHigh} - lower and upper confidence
-                 intervals using the likelihood ratio method}
-           \item{\code{PrevBayes} the (Bayesian) posterior expectation}
-           \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds
-                 for credible intervals}
-           \item{\code{ProbAbsent} the posterior probability that prevalence
-                 is exactly 0 (i.e. disease marker is absent). NA if using
-                 default Jeffrey's prior or if prior.absent = 0.}
-           \item{\code{NumberOfPools} -- number of pools}
-           \item{\code{NumberPositive} -- the number of positive pools} }
-  If grouping variables are provided in \code{...} there will be an additional
-  column for each grouping variable. When there are no grouping variables
-  (supplied in \code{...}) then the output has only one row with the
-  prevalence estimates for the whole dataset. When grouping variables are
+  \itemize{
+    \item{\code{PrevMLE} (the Maximum Likelihood Estimate of prevalence)}
+    \item{\code{CILow} and \code{CIHigh} - lower and upper confidence intervals using the likelihood
+          ratio method}
+     \item{\code{PrevBayes} the (Bayesian) posterior expectation. Omitted if \code{bayesian == FALSE}.}
+     \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds for
+           credible intervals. Omitted if \code{bayesian == FALSE}.}
+     \item{\code{ProbAbsent} the posterior probability that prevalence is
+           exactly 0 (i.e. disease marker is absent). NA if using default
+           Jeffrey's prior or if prior$absent = 0. Omitted if \code{bayesian
+           == FALSE}.}
+     \item{\code{NumberOfPools} -- number of pools}
+     \item{\code{NumberPositive} -- the number of positive pools} }
+  If grouping variables are provided in \code{...} there will be an
+  additional column for each grouping variable. When there are no grouping
+  variables (supplied in \code{...}) then the output has only one row with
+  the prevalence estimates for the whole dataset. When grouping variables are
   supplied, then there is a separate row for each group.
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples
+}
+\examples{
+#Try out on a synthetic dataset consisting of pools (sizes 1, 5, or 10) taken
+#from 4 different regions and 3 different years. Within each region specimens
+#are collected at 4 different villages, and within each village specimens are
+#collected at 8 different sites.
+
+# Start by calculate frequentist estimates only (much faster)
+
+#Prevalence across the whole (synthetic) dataset
+PoolPrev(SimpleExampleData, Result, NumInPool, bayesian = FALSE)
+#Prevalence in each Region
+PoolPrev(SimpleExampleData, Result, NumInPool, Region, bayesian = FALSE)
+#Prevalence for each year
+PoolPrev(SimpleExampleData, Result, NumInPool, Year, bayesian = FALSE)
+#Prevalence for each combination of region and year
+PoolPrev(SimpleExampleData, Result, NumInPool, Region, Year, bayesian = FALSE)
+
+\donttest{
+  #Prevalence across the whole (synthetic) dataset, also including Bayesian Estimates - slower
+  PoolPrev(SimpleExampleData, Result, NumInPool)
+}
+
+}
+\seealso{
+\code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
 }

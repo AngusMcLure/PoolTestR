@@ -29,7 +29,11 @@ addition to the estimates based on population effects only, it will
 estimate at different levels of the nested hierarchical structure in order
 of increasing granularity. For manual control you can set to NA for
 population effects only, or a one-sided formula specifying the form of the
-random effects to include in estimates, or a list of such objects.}
+random effects to include in estimates, or a list of such objects. Any
+random effects omitted will be marginalised out. For automatically detected
+nested hierarchical structures this means that higher level estimates
+marginalise over lower-level random effect; in particular, population level
+estimates will marginalise over all random effects.}
 
 \item{robust}{Currently only relevant for brmsfit objects (returned by
 PoolRegBayes). If \code{FALSE} (default) the point estimate of prevalence
@@ -50,7 +54,7 @@ A \code{list} with at least one field \code{PopulationEffects} and an
   'granularity' and extract the prevalence estimates for these random
   effects; e.g. if the random/group effects included are there to account for
   a hierarchical sampling frame with levels 'Village' and 'Site' with a
-  formula like \code{Result ~ Cov1 + Cov2 + (1|Village/Site)}, then
+  formula like \code{Result ~ Cov1 + Cov2 + (1|Village) + (1|Site)}, then
   getPrevalence will be a list of three data frames: estimates for every
   combination of covariates, estimates for every combination of covariates
   and village, and estimates for every combination of covariates, village,
@@ -64,7 +68,9 @@ or link scale we do not use either of these generic functions. Further, when
 the model accounts for the hierarchical structure of the sampling frame (e.g.
 Region/Village/Site), it is common to want to know the predicted values at
 each level of sampling (e.g. Prevalence at each region, village or site) so
-these are calculated automatically.
+these are calculated automatically. Also to calculate population-level
+prevalence from a mixed model, random/group effects need to marginalised out
+to avoid biased estimates. This is performed automatically.
 }
 \examples{
 # Perform logistic-type regression modelling for a synthetic dataset consisting
@@ -81,7 +87,7 @@ Mod <- PoolReg(Result ~ Region + Year,
 summary(Mod)
 
 #accounting hierarchical sampling frame within each region
-HierMod <- PoolReg(Result ~ Region + Year + (1|Village/Site),
+HierMod <- PoolReg(Result ~ Region + Year + (1|Village) + (1|Site),
                    data = SimpleExampleData,
                    poolSize = NumInPool)
 summary(HierMod)
@@ -101,7 +107,7 @@ getPrevalence(HierMod)
   getPrevalence(BayesMod) #Extract fitted prevalence for each combination of region and year
 
   #accounting hierarchical sampling frame within each region
-  BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village/Site),
+  BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village) + (1|Site),
                                data = SimpleExampleData,
                                poolSize = NumInPool)
   summary(BayesHierMod)

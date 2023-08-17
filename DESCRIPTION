@@ -1,6 +1,6 @@
 Package: PoolTestR
 Title: Prevalence and Regression for Pool-Tested (Group-Tested) Data
-Version: 0.1.3
+Version: 0.2.0
 Authors@R: person(given = "Angus",
            family = "McLure",
            role = c("aut", "cre"),
@@ -29,24 +29,26 @@ Biarch: true
 Depends: 
     R (>= 3.4.0)
 Imports: 
-    dplyr,
-    methods,
-    Rcpp (>= 0.12.0),
-    rstan (>= 2.18.1),
-    rstantools (>= 2.0.0),
     brms,
-    stats,
+    dplyr,
     lme4,
-    stringr,
-    progress
+    methods,
+    progress,
+    Rcpp (>= 0.12.0),
+    RcppParallel (>= 5.0.1),
+    rstan (>= 2.18.1),
+    rstantools (>= 2.3.1.1),
+    stats,
+    stringr
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
     RcppEigen (>= 0.3.3.3.0),
+    RcppParallel (>= 5.0.1),
     rstan (>= 2.18.1),
     StanHeaders (>= 2.18.0)
 SystemRequirements: GNU make
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Language: en-AU
 Suggests: 
     covr

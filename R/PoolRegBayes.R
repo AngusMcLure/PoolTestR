@@ -118,7 +118,7 @@ PoolRegBayes <- function (formula, data, poolSize,
                             block = "functions")
 
   if(is.null(prior)){
-    prior <- brms::set_prior("normal(0,100)", class = "b",
+    prior <- brms::set_prior("student_t(6, 0, 1.5)", class = "b",
                              nlpar = "")
   }
 
@@ -135,6 +135,7 @@ PoolRegBayes <- function (formula, data, poolSize,
                      cores = cores,
                      prior = prior,
                      stanvars = stanvars,
+                     save_pars = brms::save_pars(all = TRUE),
                      ...)
   model$link <- link
   model$PoolSizeName <- PoolSizeName

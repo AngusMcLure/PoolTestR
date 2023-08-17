@@ -17,55 +17,65 @@
 #'   by. If omitted the complete dataset is used to estimate a single
 #'   prevalence. If included, prevalence is estimated separately for each group
 #'   defined by these columns
-#' @param prior.alpha,prior.beta,prior.absent The default prior for the
-#'   prevalence is the uninformative Jeffrey's prior, however you can also
-#'   specify a custom prior with a beta distribution (with parameters
-#'   prior.alpha and prior.beta) modified to have a point mass of zero i.e.
-#'   allowing for some prior probability that the true prevalence is exactly
-#'   zero (prior.absent). Another popular uninformative choice is
-#'   \code{prior.alpha = 1, prior.beta = 1, prior.absent = 0}, i.e. a uniform
-#'   prior.
+#' @param bayesian Logical indicating whether Bayesian calculations should be
+#'   calculated. If TRUE (the default) calculates frequentist and Bayesian
+#'   estimates of prevalence, otherwise only calculates frequentist estimates
+#'   (MLE and likelihood ratio confidence intervals).
+#' @param prior Prior for prevalence, ignored if \code{bayesian == FALSE}. If
+#'   NULL (the default) the prior for the prevalence is the uninformative
+#'   Jeffrey's prior. The only alternative prior is a possibly zero-inflated
+#'   beta distribution. Zero inflation allows for some prior (and posterior)
+#'   probability that the marker of interest is totally absent from the
+#'   population. The parameters for this are specified with a list with three
+#'   numeric non-negative entries named alpha, beta, and absent. For instance, a
+#'   uniform prior with no probability of true absence can be specified as
+#'   \code{prior = list(alpha = 1, beta = 1, absent = 0}.
 #' @param level Defines the confidence level to be used for the confidence and
 #'   credible intervals. Defaults to 0.95 (i.e. 95\% intervals)
-#' @param reproduce.poolscreen (defaults to FALSE). If TRUE this changes the
-#'   way that likelihood ratio confidence intervals are computed to be somewhat
+#' @param reproduce.poolscreen (defaults to FALSE). If TRUE this changes the way
+#'   that likelihood ratio confidence intervals are computed to be somewhat
 #'   wider and more closely match those returned by Poolscreen. We recommend
 #'   using the default (FALSE). However setting to TRUE can help to make
 #'   comparisons between PoolPrev and Poolscreen.
 #' @param verbose Logical indicating whether to print progress to screen.
-#'   Defaults to false (no printing to screen).
-#' @param iter,warmup,chains MCMC options for passing onto the sampling
-#'   routine. See \link[rstan]{stan} for details.
-#' @param cores The number of CPU cores to be used. By default one core is used
+#'   Defaults to false (no printing to screen). Ignored if \code{bayesian ==
+#'   FALSE}.
+#' @param iter,warmup,chains MCMC options for passing onto the sampling routine.
+#'   See \link[rstan]{stan} for details. Ignored if \code{bayesian == FALSE}.
+#' @param cores The number of CPU cores to be used. By default one core is used.
+#'   Ignored if \code{bayesian == FALSE}.
 #' @param control A named list of parameters to control the sampler's behaviour.
 #'   Defaults to default values as defined in \link[rstan]{stan}, except for
 #'   \code{adapt_delta} which is set to the more conservative value of 0.9. See
-#'   \link[rstan]{stan} for details.
+#'   \link[rstan]{stan} for details. Ignored if \code{bayesian == FALSE}.
 #' @return A \code{data.frame} with columns:
-#'   \itemize{\item{\code{PrevMLE} (the Maximum Likelihood Estimate of prevalence)}
-#'            \item{\code{CILow} and \code{CIHigh} - lower and upper confidence
-#'                  intervals using the likelihood ratio method}
-#'            \item{\code{PrevBayes} the (Bayesian) posterior expectation}
-#'            \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds
-#'                  for credible intervals}
-#'            \item{\code{ProbAbsent} the posterior probability that prevalence
-#'                  is exactly 0 (i.e. disease marker is absent). NA if using
-#'                  default Jeffrey's prior or if prior.absent = 0.}
-#'            \item{\code{NumberOfPools} -- number of pools}
-#'            \item{\code{NumberPositive} -- the number of positive pools} }
-#'   If grouping variables are provided in \code{...} there will be an additional
-#'   column for each grouping variable. When there are no grouping variables
-#'   (supplied in \code{...}) then the output has only one row with the
-#'   prevalence estimates for the whole dataset. When grouping variables are
+#'   \itemize{
+#'     \item{\code{PrevMLE} (the Maximum Likelihood Estimate of prevalence)}
+#'     \item{\code{CILow} and \code{CIHigh} - lower and upper confidence intervals using the likelihood
+#'           ratio method}
+#'      \item{\code{PrevBayes} the (Bayesian) posterior expectation. Omitted if \code{bayesian == FALSE}.}
+#'      \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds for
+#'            credible intervals. Omitted if \code{bayesian == FALSE}.}
+#'      \item{\code{ProbAbsent} the posterior probability that prevalence is
+#'            exactly 0 (i.e. disease marker is absent). NA if using default
+#'            Jeffrey's prior or if prior$absent = 0. Omitted if \code{bayesian
+#'            == FALSE}.}
+#'      \item{\code{NumberOfPools} -- number of pools}
+#'      \item{\code{NumberPositive} -- the number of positive pools} }
+#'   If grouping variables are provided in \code{...} there will be an
+#'   additional column for each grouping variable. When there are no grouping
+#'   variables (supplied in \code{...}) then the output has only one row with
+#'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
 #'
+#' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
+#'
 #' @example examples/Prevalence.R
-#'      \code{\link{HierPoolPrev}},
-#'      \code{\link{getPrevalence}}
+
 
 
 PoolPrev <- function(data,result,poolSize,...,
-                     prior.alpha = NULL, prior.beta = NULL, prior.absent = 0,
+                     bayesian = TRUE, prior = NULL,
                      level = 0.95, reproduce.poolscreen = FALSE,
                      verbose = FALSE, cores = NULL,
                      iter = 2000, warmup = iter/2,
@@ -74,10 +84,27 @@ PoolPrev <- function(data,result,poolSize,...,
   poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
   groupVar <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
-  useJefferysPrior <- is.null(prior.alpha) & is.null(prior.beta)
-  if(is.null(prior.alpha) != is.null(prior.beta)){
-    stop("prior.alpha and prior.beta must either both be specified or both left blank. The latter uses the default Jeffrey's prior")
+  useJefferysPrior <- is.null(prior)
+  if(bayesian){
+    if(!useJefferysPrior && (is.null(prior$alpha) || is.null(prior$beta) || is.null(prior$beta))){
+      stop("If not using the default prior (NULL), prior$alpha, prior$beta, and prior$absent must all be specified.")
+    }
+    if(!useJefferysPrior && (length(prior$alpha) != 1 ||
+                             length(prior$beta)  != 1 ||
+                             !is.numeric(prior$alpha) ||
+                             !is.numeric(prior$beta) ||
+                             prior$alpha <= 0 ||
+                             prior$beta  <= 0)){
+      stop('If not using the default prior (NULL), prior$alpha and prior$beta must each be a single non-negative number.')
+    }
+    if(!useJefferysPrior && (length(prior$absent) != 1 ||
+                             !is.numeric(prior$absent) ||
+                             prior$absent < 0 ||
+                             prior$absent >= 1)){
+      stop('If not using the default prior (NULL), prior$absent must be a single number between 0 (no prior probability of absence) and 1.')
+    }
   }
+
 
   # log-likelihood function
   LogLikPrev = function(p,result,poolSize,goal=0){
@@ -103,21 +130,21 @@ PoolPrev <- function(data,result,poolSize,...,
       }
     }
     #if(!is.integer(cores)){stop("Number of cores must be numeric")}
-
+    rplnull <- function(x,replacement){if(is.null(x)){replacement}else{x}}
     sdata <- list(N = nrow(data),
                   #Result = array(data$Result), #PERHAPS TRY REMOVING COLUMN NAMES?
                   Result = dplyr::select(data, !! result)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
                   PoolSize = dplyr::select(data, !! poolSize)[,1] %>% as.matrix %>% array,
-                  PriorAlpha = ifelse(is.null(prior.alpha),0,prior.alpha),
-                  PriorBeta = ifelse(is.null(prior.beta),0,prior.beta),
+                  PriorAlpha = rplnull(prior$alpha,0),
+                  PriorBeta = rplnull(prior$beta,0),
                   JeffreysPrior = useJefferysPrior
     )
 
     #When prior is beta and all tests are negative Bayesian inference has an analytic solution. Otherwise we do MCMC
 
     #if any tests are positive or for the Jeffrey's prior case
-    if(sum(sdata$Result) | useJefferysPrior){
-      sfit <- rstan::sampling(stanmodels$BayesianPoolScreen,
+    if(bayesian & (sum(sdata$Result) | useJefferysPrior)){
+      sfit <- rstan::sampling(stanmodels$PoolPrev,
                               data = sdata,
                               pars = c('p'),
                               chains = chains,
@@ -129,97 +156,114 @@ PoolPrev <- function(data,result,poolSize,...,
       sfit <- as.matrix(sfit)[,"p"]
     }
 
+    #initialise output object
+    out <- data.frame(NumberOfPools = sdata$N,
+                      NumberPositive = sum(sdata$Result))
+
     #if there is at least one positive and one negative result
     if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){
-      out <- data.frame(mean = mean(sfit))
-      out[,'CrILow'] <- stats::quantile(sfit,(1-level)/2)
-      out[,'CrIHigh'] <- stats::quantile(sfit,(1+level)/2)
-      out$ProbAbsent <- ifelse(prior.absent & !useJefferysPrior,0,NA)
 
       # calculate maximum likelihood estimate
       # 'optimizing' from stan actually maximizes the joint posterior, not the likelihood,
-      # but if we use a uniform prior they are equivalent
+      # but if we use a uniform prior on prevalence they are equivalent in this case
       MLEdata <- sdata
       MLEdata$PriorAlpha <- 1
       MLEdata$PriorBeta  <- 1
       MLEdata$JeffreysPrior  <- FALSE
-      out$PrevMLE <- rstan::optimizing(stanmodels$BayesianPoolScreen,MLEdata)$par["p"]
+      out$PrevMLE <- rstan::optimizing(stanmodels$PoolPrev,MLEdata)$par["p"]
 
       # log-likelihood difference used to calculate Likelihood ratio confidence intervals
       LogLikDiff <- stats::qchisq(if(reproduce.poolscreen){1 - (1 - level)/2}else{level}, df = 1)/2
-      out[,'CILow'] <- stats::uniroot(LogLikPrev,
-                                      c(0,out$PrevMLE),
-                                      goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff,
-                                      result= sdata$Result,
-                                      poolSize= sdata$PoolSize,
-                                      tol = 1e-10)$root
-      out[,'CIHigh'] <- stats::uniroot(LogLikPrev,
-                                       c(out$PrevMLE,1),
-                                       goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff,
-                                       result= sdata$Result,
-                                       poolSize= sdata$PoolSize,
-                                       tol = 1e-10)$root
+      out$CILow <- stats::uniroot(LogLikPrev,
+                                  c(0,out$PrevMLE),
+                                  goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff,
+                                  result= sdata$Result,
+                                  poolSize= sdata$PoolSize,
+                                  tol = 1e-10)$root
+      out$CIHigh <- stats::uniroot(LogLikPrev,
+                                   c(out$PrevMLE,1),
+                                   goal = LogLikPrev(out$PrevMLE,sdata$Result,sdata$PoolSize) - LogLikDiff,
+                                   result= sdata$Result,
+                                   poolSize= sdata$PoolSize,
+                                   tol = 1e-10)$root
+
+      if(bayesian){
+        out$mean <- mean(sfit)
+        out$CrILow <- stats::quantile(sfit,(1-level)/2)
+        out$CrIHigh <- stats::quantile(sfit,(1+level)/2)
+        out$ProbAbsent <- ifelse(!useJefferysPrior && prior$absent,0,NA)
+      }
     }
     #If all tests are positive
     else if(all(as.logical(sdata$Result))){
-      out <- data.frame(mean = mean(sfit))
-      out[,'CrILow'] <- stats::quantile(sfit,1-level)
-      out[,'CrIHigh'] <- 1
-      out$ProbAbsent <- ifelse(prior.absent & !useJefferysPrior ,0,NA)
       out$PrevMLE <- 1
       LogLikDiff <- stats::qchisq(level, df = 1)/2
-      out[,'CILow'] <- stats::uniroot(LogLikPrev,
-                                      c(0,1),
-                                      goal = -LogLikDiff,
-                                      result= sdata$Result,
-                                      poolSize= sdata$PoolSize,
-                                      tol = 1e-10)$root
-      out[,'CIHigh'] <- 1
+      out$CILow <- stats::uniroot(LogLikPrev,
+                                  c(0,1),
+                                  goal = -LogLikDiff,
+                                  result= sdata$Result,
+                                  poolSize= sdata$PoolSize,
+                                  tol = 1e-10)$root
+      out$CIHigh <- 1
+
+      if(bayesian){
+        out$mean = mean(sfit)
+        out$CrILow <- stats::quantile(sfit,1-level)
+        out$CrIHigh <- 1
+        out$ProbAbsent <- ifelse(!useJefferysPrior && prior$absent,0,NA)
+      }
+
     }
     #if all tests are negative
     else{
-      if(useJefferysPrior){
-        out <- data.frame(mean = mean(sfit))
-        out[,'CrILow'] <- 0
-        out[,'CrIHigh'] <- stats::quantile(sfit,level)
-        out[,'ProbAbsent'] <- NA
-      }else{
-        ProbAbsent <- 1/(1 + (1/prior.absent - 1) * beta(prior.alpha, prior.beta + sum(sdata$PoolSize))/beta(prior.alpha, prior.beta))
-
-        #This is the quantile we need to extract from the posterior of the beta-binomial posterior dist to get the credible interval
-        q <- (level - ProbAbsent)/(1 - ProbAbsent)
-
-        out <- data.frame(mean = prior.alpha/(prior.alpha + prior.beta + sum(sdata$PoolSize))*(1-ProbAbsent))
-        out[,'CrILow'] <- 0
-        out[,'CrIHigh'] <- ifelse(q<0, #i.e. if the probability that the disease is absent exceeds the desired size of the credible interval
-                                  0,
-                                  stats::qbeta(q,prior.alpha, prior.beta + sum(sdata$PoolSize)))
-        out[,'ProbAbsent'] <- ifelse(prior.absent,
-                                     ProbAbsent,
-                                     NA)
-      }
       out$PrevMLE <- 0
-      out[,'CILow'] <- 0
+      out$CILow <- 0
       LogLikDiff <- stats::qchisq(level, df = 1)/2
-      out[,'CIHigh'] <- stats::uniroot(LogLikPrev,
-                                       c(0,1),
-                                       goal = -LogLikDiff,
-                                       result= sdata$Result,
-                                       poolSize= sdata$PoolSize,
-                                       tol = 1e-10)$root
+      out$CIHigh <- stats::uniroot(LogLikPrev,
+                                   c(0,1),
+                                   goal = -LogLikDiff,
+                                   result= sdata$Result,
+                                   poolSize= sdata$PoolSize,
+                                   tol = 1e-10)$root
+      if(bayesian){
+        if(useJefferysPrior){
+          out$mean <- mean(sfit)
+          out$CrILow <- 0
+          out$CrIHigh <- stats::quantile(sfit,level)
+          out$ProbAbsent <- NA
+        }else{
+          ProbAbsent <- 1/(1 + (1/prior$absent - 1) * beta(prior$alpha, prior$beta + sum(sdata$PoolSize))/beta(prior$alpha, prior$beta))
+          #This is the quantile we need to extract from the posterior of the beta-binomial posterior dist to get the credible interval
+          q <- (level - ProbAbsent)/(1 - ProbAbsent)
+          out$mean <- prior$alpha/(prior$alpha + prior$beta + sum(sdata$PoolSize))*(1-ProbAbsent)
+          out$CrILow <- 0
+          out$CrIHigh <- ifelse(q<0, #i.e. if the probability that the disease is absent exceeds the desired size of the credible interval
+                                0,
+                                stats::qbeta(q,prior$alpha, prior$beta + sum(sdata$PoolSize)))
+          out$ProbAbsent <- ifelse(prior$absent,
+                                   ProbAbsent,
+                                   NA)
+        }
+      }
     }
 
-    out[,'NumberOfPools'] <- sdata$N
-    out[,'NumberPositive'] <- sum(sdata$Result)
+    if(bayesian){
+      out <- out %>%
+        dplyr::rename('PrevBayes' = mean) %>%
+        dplyr::select('PrevMLE',
+                      'CILow', 'CIHigh',
+                      'PrevBayes',
+                      'CrILow','CrIHigh',
+                      'ProbAbsent',
+                      'NumberOfPools', 'NumberPositive')
+    }else{
+      out <- out %>%
+        dplyr::select('PrevMLE',
+                      'CILow', 'CIHigh',
+                      'NumberOfPools', 'NumberPositive')
+    }
 
-    out <- out %>%
-      dplyr::rename('PrevBayes' = mean) %>%
-      dplyr::select('PrevMLE',
-                    'CILow', 'CIHigh',
-                    'PrevBayes',
-                    'CrILow','CrIHigh',
-                    'ProbAbsent',
-                    'NumberOfPools', 'NumberPositive')
+
 
     out
   }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
@@ -232,9 +276,7 @@ PoolPrev <- function(data,result,poolSize,...,
       ProgBar$tick(1)
       PoolPrev(x,!! result,!! poolSize,
                level=level,verbose = verbose,
-               prior.alpha = prior.alpha,
-               prior.beta = prior.beta,
-               prior.absent = prior.absent,
+               bayesian = bayesian, prior = prior,
                reproduce.poolscreen = reproduce.poolscreen,
                cores = cores,
                iter = iter,
