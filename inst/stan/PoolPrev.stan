@@ -1,6 +1,6 @@
 data {
   int<lower=1> N;
-  int<lower=0, upper=1> Result[N];
+  array[N] int<lower=0, upper=1> Result;
   vector<lower=0>[N] PoolSize;
   real<lower=0> PriorAlpha;
   real<lower=0> PriorBeta;
@@ -10,7 +10,7 @@ parameters {
   real<lower=0, upper=1> p;
 }
 transformed parameters{
-  real<lower=0, upper=1> ps[N];
+  array[N] real<lower=0, upper=1> ps;
   real q;
   q = 1-p;
   for(n in 1:N){

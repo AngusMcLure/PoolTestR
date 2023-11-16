@@ -1,9 +1,9 @@
 data {
   int<lower=1> N; //Number of data points
   int<lower=1> L; // Number of levels or grouping variables
-  int<lower=1> NumGroups[L]; //Number of groups for each level of grouping variable
+  array[L] int<lower=1> NumGroups; //Number of groups for each level of grouping variable
   int<lower=L> TotalGroups; //Total number of groups across all levels
-  int<lower=0, upper=1> Result[N];
+  array[N] int<lower=0, upper=1> Result;
   vector<lower=0>[N] PoolSize;
   matrix<lower = 0, upper = 1>[N,TotalGroups] Z; //Model matrix for group effects
   // Parameters for t-distributed priors for:
@@ -17,11 +17,11 @@ data {
   real<lower=0> GroupSDSigma;
 }
 transformed data{
-  int<lower=0, upper=1> FlippedResult[N];
+  array[N] int<lower=0, upper=1> FlippedResult;
   //Get a sparse version of the model matrix for group effects (Z)
   vector[L*N] Zw;
-  int Zv[L*N];
-  int Zu[N+1];
+  array[L*N] int Zv;
+  array[N+1] int Zu;
   Zw = csr_extract_w(Z);
   Zv = csr_extract_v(Z);
   Zu = csr_extract_u(Z);
