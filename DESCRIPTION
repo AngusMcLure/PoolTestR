@@ -31,7 +31,7 @@ Depends:
 Imports: 
     brms,
     dplyr,
-    lme4,
+    lme4 (>= 1.1-35.1),
     methods,
     progress,
     Rcpp (>= 0.12.0),

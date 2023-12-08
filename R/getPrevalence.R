@@ -415,22 +415,21 @@ meanlinknormal <- function(mu, sigma, invlink){
   if(sigma < 0){
     stop('sigma (sd of normal distribution) must be non-negative')
   } else if(sigma == 0){ #at zero sigma, the link-normal r.v. reduces to a point mass --- no integration required
-    invlink(mu)
+    return(invlink(mu))
   } else{
     integral <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
                                      lower = -Inf, upper = Inf)$value,
                     silent = TRUE)
-    if(class(integral) == 'try-error'){
-
+    if(inherits(integral,'try-error')){
       integral <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
                                        lower = mu - sigma * 10, upper = mu + sigma * 10)$value,
                       silent = TRUE)
-      if(class(integral) == 'try-error'){
+      if(inherits(integral,'try-error')){
         warning('integration failed for mu = ', mu, ' and sigma = ', sigma, ', with error: \n',attr(integral, 'condition')$message, '\nResult will be NA')
         integral <- NA
       }
     }
-    integral
+    return(integral)
   }
 }
 

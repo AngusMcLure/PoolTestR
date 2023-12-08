@@ -76,7 +76,7 @@ stan::math::profile_map profiles__;
 static int current_statement__= 0;
 static const std::vector<string> locations_array__ = {" (found before start of program)",
                                                       " (in 'string', line 10, column 2 to column 27)",
-                                                      " (in 'string', line 13, column 2 to column 31)",
+                                                      " (in 'string', line 13, column 2 to column 37)",
                                                       " (in 'string', line 14, column 2 to column 9)",
                                                       " (in 'string', line 15, column 2 to column 10)",
                                                       " (in 'string', line 17, column 4 to column 26)",
@@ -96,14 +96,14 @@ static const std::vector<string> locations_array__ = {" (found before start of p
                                                       " (in 'string', line 22, column 2 to line 32, column 3)",
                                                       " (in 'string', line 33, column 2 to column 25)",
                                                       " (in 'string', line 2, column 2 to column 17)",
-                                                      " (in 'string', line 3, column 31 to column 32)",
-                                                      " (in 'string', line 3, column 2 to column 34)",
+                                                      " (in 'string', line 3, column 8 to column 9)",
+                                                      " (in 'string', line 3, column 2 to column 40)",
                                                       " (in 'string', line 4, column 18 to column 19)",
                                                       " (in 'string', line 4, column 2 to column 30)",
                                                       " (in 'string', line 5, column 2 to column 27)",
                                                       " (in 'string', line 6, column 2 to column 26)",
                                                       " (in 'string', line 7, column 2 to column 38)",
-                                                      " (in 'string', line 13, column 28 to column 29)"};
+                                                      " (in 'string', line 13, column 8 to column 9)"};
 #include <stan_meta_header.hpp>
 class model_PoolPrev final : public model_base_crtp<model_PoolPrev> {
 private:

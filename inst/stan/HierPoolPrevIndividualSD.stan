@@ -53,7 +53,7 @@ model{
   //ps = exp(-log1p_exp(los) .* PoolSize);
 
   //Also equivalent to
-  //ps = exp(log1m_inv_logit(logit(p) + Z * au) .* PoolSize);
+  //ps = exp(log1m_inv_logit(Intercept + Z * au) .* PoolSize);
   ps = exp(log1m_inv_logit(Intercept + csr_matrix_times_vector(N,TotalGroups,Zw,Zv,Zu,au)) .* PoolSize);
 
   Intercept        ~ student_t(InterceptNu, InterceptMu, InterceptSigma);

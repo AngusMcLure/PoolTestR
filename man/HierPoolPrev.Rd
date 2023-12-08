@@ -113,16 +113,16 @@ mixed-effect modelling
 }
 \examples{
 # Calculate prevalence for a synthetic dataset consisting of pools (sizes 1, 5,
-# or 10) taken from 4 different regions and 3 different years. Within each
-# region specimens are collected at 4 different villages, and within each
-# village specimens are collected at 8 different sites.
+# or 10) taken from 3 different years. Specimens are collected at 16 different
+# villages, and within each village specimens are collected at 8 different
+# sites.
 
 \donttest{
-  #Prevalence for each combination of region and year:
-  #ignoring hierarchical sampling frame within each region
-  PoolPrev(SimpleExampleData, Result, NumInPool, Region, Year)
+  #Prevalence for each year:
+  #ignoring hierarchical sampling frame be:
+  PoolPrev(SimpleExampleData, Result, NumInPool, Year)
   #accounting hierarchical sampling frame within each region
-  HierPoolPrev(SimpleExampleData, Result, NumInPool, c("Village","Site"), Region, Year)
+  HierPoolPrev(SimpleExampleData, Result, NumInPool, c("Village","Site"), Year)
 }
 
 

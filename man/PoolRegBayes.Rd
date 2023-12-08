@@ -76,10 +76,6 @@ HierMod <- PoolReg(Result ~ Region + Year + (1|Village) + (1|Site),
                    data = SimpleExampleData,
                    poolSize = NumInPool)
 summary(HierMod)
-#Extract fitted prevalence for each combination of region and year and then at
-#each level of the hierarchical sampling frame (i.e. for each village in each
-#region and  each site in each village)
-getPrevalence(HierMod)
 
 
 ### Models in a Bayesian framework with default (non-informative) priors
@@ -89,35 +85,35 @@ getPrevalence(HierMod)
                            data = SimpleExampleData,
                            poolSize = NumInPool)
   summary(BayesMod)
-  getPrevalence(BayesMod) #Extract fitted prevalence for each combination of region and year
 
-  #accounting hierarchical sampling frame within each region
-  BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village) + (1|Site),
-                               data = SimpleExampleData,
-                               poolSize = NumInPool)
-  summary(BayesHierMod)
-  getPrevalence(BayesHierMod)
+  #we could also account for hierarchical sampling frame within each region but
+  #note that this is more complex and slower)
+
+  # BayesHierMod <- PoolRegBayes(Result ~ Region + Year + (1|Village) + (1|Site),
+  #                              data = SimpleExampleData,
+  #                              poolSize = NumInPool)
 }
 
 ### Calculate adjusted estimates of prevalence
 # We use the same function for all four models, but the outputs are slightly different
 
-# Extract fitted prevalence for each combination of region and year
-getPrevalence(Mod)
+#For models without hierarchical sampling structure there is an estimate of
+#prevalence for every combination of population (fixed) effects: e.g. Region and
+#Year
+getPrevalence(Mod) #Frequentist model
 \donttest{
-  getPrevalence(BayesMod)
+  getPrevalence(BayesMod) #Bayesian model
 }
 
-#Extract fitted prevalence for each combination of region and year and then at
-#each level of the hierarchical sampling frame (i.e. for each village in each
-#region and  each site in each village)
+#For models without hierarchical sampling structure, there is a prevalence
+#estimate for each combination of region and year and then at each level of the
+#hierarchical sampling frame (i.e. for each village in each region and each site
+#in each village)
 getPrevalence(HierMod)
-\donttest{
-  getPrevalence(BayesHierMod)
-}
 
-# You can also use getPrevalence to predict at prevalence for other values of
-# the covariates (e.g. predict prevalence in year 4)
+# You can also use getPrevalence to predict prevalence for other values of the
+# covariates (e.g. predict prevalence in year 4 based on linear trend on the
+# logit scale)
 
 #Making a data frame containing data make predict on
 DataFuture <- unique(data.frame(Region = SimpleExampleData$Region,
@@ -127,10 +123,6 @@ DataFuture <- unique(data.frame(Region = SimpleExampleData$Region,
 
 getPrevalence(Mod, newdata = DataFuture)
 getPrevalence(HierMod, newdata = DataFuture)
-\donttest{
-  getPrevalence(BayesMod, newdata = DataFuture)
-  getPrevalence(BayesHierMod, newdata = DataFuture)
-}
 }
 \references{
 Clark RG, Barr M: A blended link approach to relative risk regression.
