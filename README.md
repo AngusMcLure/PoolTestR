@@ -33,6 +33,7 @@ Though PoolTestR is now at v0.2.0 with additional features and bug fixes, this c
 
 ```R
 install.packages("devtools") #you can skip this if you already have devtools installed
+options(timeout = 300) #increases time-limit for downloading the package to 300 seconds. Useful for slow connections.
 devtools::install_github("AngusMcLure/PoolTestR")
 ```
 
