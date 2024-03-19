@@ -20,7 +20,8 @@ HierPoolPrev(
   iter = 2000,
   warmup = iter/2,
   chains = 4,
-  control = list(adapt_delta = 0.9)
+  control = list(adapt_delta = 0.9),
+  all.negative.pools = "consistent"
 )
 }
 \arguments{
@@ -57,24 +58,7 @@ defined by these columns}
 
 \item{prior}{List of parameters specifying the parameters for the the priors
 on the population intercept and standard deviations of group-effect terms.
-The default value (NULL) uses the following parameters:
-\code{list(intercept = list(nu = 3, mu = 0, sigma = 4.0),
-           group_sd  = list(nu = 3, mu = 0, sigma = 2.5),
-           individual_sd = FALSE)}
-This models the prior of the linear scale intercept as t-distributed with
-parameters in `intercept` and the standard deviation of the group-level
-effects as truncated (non-negative) t-distribution. `individual_sd = FALSE`
-means that this prior is for the root-sum-square of group-effect standard
-deviations for models with multiple grouping levels. The default implies a
-prior on population prevalence that is approximately distributed as
-beta(0.5,0.5). To set custom priors, use the same nested list format. Any
-omitted parameters will be replaced with the default values and additional
-parameters ignored silently. For example, to change the parameters to be
-equal to the defaults for intercept-only random-effect model in
-PoolRegBayes you can use:
-\code{list(individual_sd = TRUE)},
-which puts a prior on each the standard deviations of each of group-level
-effects separately, but doesn't change the priors used.}
+See details.}
 
 \item{level}{The confidence level to be used for the confidence and credible
 intervals. Defaults to 0.95 (i.e. 95\% intervals)}
@@ -91,6 +75,12 @@ See \link[rstan]{stan} for details.}
 Defaults to default values as defined in \link[rstan]{stan}, except for
 \code{adapt_delta} which is set to the more conservative value of 0.9. See
 \link[rstan]{stan} for details.}
+
+\item{all.negative.pools}{The kind of point estimate and interval to use when
+all pools are negative. If 'consistent' (default) result is the same as for
+the case where at least one pool is positive. If 'zero' uses 0 as the point
+estimate and lower bound for the interval and \code{level} posterior
+quantile the upper bound of the interval.}
 }
 \value{
 A \code{data.frame} with columns:
@@ -110,6 +100,26 @@ Estimation of prevalence based on presence/absence tests on pooled samples in
 a hierarchical sampling frame. Uses an intercept-only random effects model to
 model prevalence at population level. See PoolReg and PoolRegBayes for full
 mixed-effect modelling
+}
+\details{
+When using the default value of the \code{prior} argument (NULL), the model
+uses the following prior:
+  \code{list(intercept = list(nu = 3, mu = 0, sigma = 4.0),
+             group_sd  = list(nu = 3, mu = 0, sigma = 2.5),
+             individual_sd = FALSE)}
+This models the prior of the linear scale intercept as t-distributed with
+parameters in `intercept` and the standard deviation of the group-level
+effects as truncated (non-negative) t-distribution. `individual_sd = FALSE`
+means that this prior is for the root-sum-square of group-effect standard
+deviations for models with multiple grouping levels. The default implies a
+prior on population prevalence that is approximately distributed as
+beta(0.5,0.5). To set custom priors, use the same nested list format. Any
+omitted parameters will be replaced with the default values and additional
+parameters ignored silently. For example, to change the parameters to be
+equal to the defaults for intercept-only random-effect model in PoolRegBayes
+you can use: \code{list(individual_sd = TRUE)}, which puts a prior on each
+the standard deviations of each of group-level effects separately, but
+doesn't change the priors used.
 }
 \examples{
 # Calculate prevalence for a synthetic dataset consisting of pools (sizes 1, 5,

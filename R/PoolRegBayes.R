@@ -50,14 +50,11 @@
 #'
 #'
 
-
-
-
 PoolRegBayes <- function (formula, data, poolSize,
                           link = 'logit', prior = NULL, cores = NULL, ...){
-  poolSize <- dplyr::enquo(poolSize)
+  poolSize <- enquo(poolSize)
   AllVars <- all.vars(formula)
-  PoolSizeName <- dplyr::as_label(poolSize)
+  PoolSizeName <- as_label(poolSize)
 
   # Ideally I would like to:
   # Set number of cores to use (use all the cores! BUT when checking R
@@ -117,9 +114,11 @@ PoolRegBayes <- function (formula, data, poolSize,
                                            stop('Invalid link function. Options are logit, log, loglogit, or cloglog')),
                             block = "functions")
 
-  if(is.null(prior)){
-    prior <- brms::set_prior("student_t(6, 0, 1.5)", class = "b",
-                             nlpar = "")
+  if(is.null(prior) | !("b" %in% prior$class)){ #if there is no supplied prior on the population-level ('fixed') effects
+    if("b" %in% brms::get_prior(formula, data, family)$class){ #if there are population-level ('fixed') effects in the model
+      prior <- brms::set_prior("student_t(6, 0, 1.5)", class = "b",
+                               nlpar = "")
+    }
   }
 
   code <- brms::make_stancode(bform,

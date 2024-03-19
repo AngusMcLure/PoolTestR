@@ -2,46 +2,60 @@
 % Please edit documentation in R/getPrevalence.R
 \name{getPrevalence}
 \alias{getPrevalence}
+\alias{getPrevalence.glm}
+\alias{getPrevalence.glmerMod}
+\alias{getPrevalence.brmsfit}
 \title{Predicting Prevalence from a Mixed or Fixed Effect Logistic Regression with
 Presence/Absence Tests on Pooled Samples}
 \usage{
-getPrevalence(
+getPrevalence(model, ...)
+
+\method{getPrevalence}{glm}(model, newdata = NULL, level = 0.95, ...)
+
+\method{getPrevalence}{glmerMod}(
+  model,
+  newdata = NULL,
+  re.form = NULL,
+  all.negative.pools = "consistent",
+  ...
+)
+
+\method{getPrevalence}{brmsfit}(
   model,
   newdata = NULL,
   re.form = NULL,
   robust = FALSE,
-  level = 0.95
+  level = 0.95,
+  all.negative.pools = "consistent",
+  ...
 )
 }
 \arguments{
 \item{model}{An object returned by [PoolReg()] or [PoolRegBayes()]}
 
+\item{...}{Arguments passed to methods for each class}
+
 \item{newdata}{The data for which prevalence needs to be estimated/predicted.
 If not provided, defaults to using the data used to train the model (i.e.
 returns the fitted values of the prevalence)}
 
-\item{re.form}{A description of which random effects to include in the
-prediction. If omitted, getPrevalence automatically tests to see if there
-are any random effect terms. If not, it just returns the estimates based on
-population effects. If there are random effects, it tests to see if the
-random effect variables form a nested hierarchical structure. If so, in
-addition to the estimates based on population effects only, it will
-estimate at different levels of the nested hierarchical structure in order
-of increasing granularity. For manual control you can set to NA for
-population effects only, or a one-sided formula specifying the form of the
-random effects to include in estimates, or a list of such objects. Any
-random effects omitted will be marginalised out. For automatically detected
-nested hierarchical structures this means that higher level estimates
-marginalise over lower-level random effect; in particular, population level
-estimates will marginalise over all random effects.}
-
-\item{robust}{Currently only relevant for brmsfit objects (returned by
-PoolRegBayes). If \code{FALSE} (default) the point estimate of prevalence
-is the mean over the posterior. If \code{TRUE}, the median over the
-posterior is used instead.}
-
 \item{level}{Defines the confidence level to be used for the confidence and
 credible intervals. Defaults to 0.95 (i.e. 95\% intervals).}
+
+\item{re.form}{A description of which random effects to include in the
+prediction. If omitted, an attempt is made to infer from model and data
+structure.}
+
+\item{all.negative.pools}{The kind of point estimate and interval to use when
+all pools are negative. Typically ignored unless newdata is NULL. If
+'consistent' (default) result is the same as for the case where at least
+one pool is positive. If 'zero' uses 0 as the point estimate and lower
+bound for the interval and \code{level} posterior quantile the upper bound
+of the interval.}
+
+\item{robust}{If \code{FALSE} (default) the point estimate of prevalence is
+the mean over the posterior. If \code{TRUE}, the median over the posterior
+is used instead.}
 }
 \value{
 A \code{list} with at least one field \code{PopulationEffects} and an
@@ -71,6 +85,23 @@ each level of sampling (e.g. Prevalence at each region, village or site) so
 these are calculated automatically. Also to calculate population-level
 prevalence from a mixed model, random/group effects need to marginalised out
 to avoid biased estimates. This is performed automatically.
+}
+\details{
+If \code{re.form} is omitted (probably the most common use case)
+\code{getPrevalence} will test to see if there are any random effect terms in
+the model formula extracted from the \code{model} object. If not, it just
+returns the estimates based on population effects. If there are random
+effects, it tests to see if the random effect variables form a nested
+hierarchical structure in the data provided. If so, in addition to the
+estimates based on population effects only, it will estimate at different
+levels of the nested hierarchical structure in order of increasing
+granularity. For manual control you can set to NA for population effects
+only, or a one-sided formula specifying the form of the random effects to
+include in estimates, or a list of such objects. Any random effects omitted
+will be marginalised out. For automatically detected nested hierarchical
+structures this means that higher level estimates marginalise over
+lower-level random effect; in particular, population level estimates will
+marginalise over all random effects.
 }
 \examples{
 # Perform logistic-type regression modelling for a synthetic dataset consisting
@@ -130,7 +161,7 @@ getPrevalence(HierMod)
 # covariates (e.g. predict prevalence in year 4 based on linear trend on the
 # logit scale)
 
-#Making a data frame containing data make predict on
+#Making a data frame containing data make predictions on
 DataFuture <- unique(data.frame(Region = SimpleExampleData$Region,
                                 Village = SimpleExampleData$Village,
                                 Site = SimpleExampleData$Site,
@@ -140,6 +171,5 @@ getPrevalence(Mod, newdata = DataFuture)
 getPrevalence(HierMod, newdata = DataFuture)
 }
 \seealso{
-\code{\link{PoolReg}},
-   \code{\link{PoolRegBayes}}
+\code{\link{PoolReg}}, \code{\link{PoolRegBayes}}
 }

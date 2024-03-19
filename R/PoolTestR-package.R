@@ -16,7 +16,7 @@
 #' @name PoolTestR-package
 #' @aliases PoolTestR
 #' @useDynLib PoolTestR, .registration = TRUE
-#' @importFrom dplyr %>%
+#' @import dplyr
 #' @import methods
 #' @import Rcpp
 #' @import rstan

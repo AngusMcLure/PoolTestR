@@ -14,29 +14,24 @@
 #'
 #' @export
 #' @param model An object returned by [PoolReg()] or [PoolRegBayes()]
+#' @param ... Arguments passed to methods for each class
 #' @param newdata The data for which prevalence needs to be estimated/predicted.
 #'   If not provided, defaults to using the data used to train the model (i.e.
 #'   returns the fitted values of the prevalence)
 #' @param re.form A description of which random effects to include in the
-#'   prediction. If omitted, getPrevalence automatically tests to see if there
-#'   are any random effect terms. If not, it just returns the estimates based on
-#'   population effects. If there are random effects, it tests to see if the
-#'   random effect variables form a nested hierarchical structure. If so, in
-#'   addition to the estimates based on population effects only, it will
-#'   estimate at different levels of the nested hierarchical structure in order
-#'   of increasing granularity. For manual control you can set to NA for
-#'   population effects only, or a one-sided formula specifying the form of the
-#'   random effects to include in estimates, or a list of such objects. Any
-#'   random effects omitted will be marginalised out. For automatically detected
-#'   nested hierarchical structures this means that higher level estimates
-#'   marginalise over lower-level random effect; in particular, population level
-#'   estimates will marginalise over all random effects.
-#' @param robust Currently only relevant for brmsfit objects (returned by
-#'   PoolRegBayes). If \code{FALSE} (default) the point estimate of prevalence
-#'   is the mean over the posterior. If \code{TRUE}, the median over the
-#'   posterior is used instead.
+#'   prediction. If omitted, an attempt is made to infer from model and data
+#'   structure.
+#' @param robust If \code{FALSE} (default) the point estimate of prevalence is
+#'   the mean over the posterior. If \code{TRUE}, the median over the posterior
+#'   is used instead.
 #' @param level Defines the confidence level to be used for the confidence and
 #'   credible intervals. Defaults to 0.95 (i.e. 95\% intervals).
+#' @param all.negative.pools The kind of point estimate and interval to use when
+#'   all pools are negative. Typically ignored unless newdata is NULL. If
+#'   'consistent' (default) result is the same as for the case where at least
+#'   one pool is positive. If 'zero' uses 0 as the point estimate and lower
+#'   bound for the interval and \code{level} posterior quantile the upper bound
+#'   of the interval.
 #' @return A \code{list} with at least one field \code{PopulationEffects} and an
 #'   additional field for every random/group effect variable. The field
 #'   \code{PopulationEffects} contains a \code{data.frame} with the prevalence
@@ -53,23 +48,36 @@
 #'   and village, and estimates for every combination of covariates, village,
 #'   and site.
 #'
-#' @seealso
-#'   \code{\link{PoolReg}},
-#'    \code{\link{PoolRegBayes}}
+#' @details
+#'
+#' If \code{re.form} is omitted (probably the most common use case)
+#' \code{getPrevalence} will test to see if there are any random effect terms in
+#' the model formula extracted from the \code{model} object. If not, it just
+#' returns the estimates based on population effects. If there are random
+#' effects, it tests to see if the random effect variables form a nested
+#' hierarchical structure in the data provided. If so, in addition to the
+#' estimates based on population effects only, it will estimate at different
+#' levels of the nested hierarchical structure in order of increasing
+#' granularity. For manual control you can set to NA for population effects
+#' only, or a one-sided formula specifying the form of the random effects to
+#' include in estimates, or a list of such objects. Any random effects omitted
+#' will be marginalised out. For automatically detected nested hierarchical
+#' structures this means that higher level estimates marginalise over
+#' lower-level random effect; in particular, population level estimates will
+#' marginalise over all random effects.
+#'
+#' @seealso \code{\link{PoolReg}}, \code{\link{PoolRegBayes}}
 #'
 #' @example examples/LogisticRegression.R
 
-getPrevalence <- function(model, newdata = NULL, re.form = NULL, robust = FALSE, level = 0.95){
-  #I should just make this a proper generic function
-  out <- switch(class(model)[1],
-                brmsfit = getPrevalence.brmsfit(model, newdata, re.form, robust, level),
-                glm = getPrevalence.glm(model, newdata, level),
-                glmerMod = getPrevalence.glmerMod(model, newdata, re.form),
-                stop('The provided model must be the output of either PoolReg or PoolRegBayes'))
-  out
+
+getPrevalence <- function(model,...){
+  UseMethod('getPrevalence')
 }
 
-getPrevalence.glm <- function(model, newdata = NULL, level = 0.95){
+#' @rdname getPrevalence
+#' @export
+getPrevalence.glm <- function(model, newdata = NULL, level = 0.95,...){
   # if newdata is not specified, use the data used to fit the model
   if(is.null(newdata)){
     newdata <- model$data
@@ -110,8 +118,9 @@ getPrevalence.glm <- function(model, newdata = NULL, level = 0.95){
   return(predlist)
 }
 
-
-getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
+#' @rdname getPrevalence
+#' @export
+getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL, all.negative.pools = 'consistent',...){
 
   if(is.null(newdata)){
     newdata <- attr(model,'frame')
@@ -159,10 +168,14 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
     }
     sds <- sqrt(sds)
 
-    Prev <- data.frame(Estimate = Vectorize(meanlinknormal)(eta, sds, list(invlink)))
+    Prev <- data.frame(Estimate = Vectorize(meanlinknormal)(eta, sds, list(invlink))) %>%
+      rowwise() %>%
+      mutate(..zeroest = all.negative.pools == 'zero' && .data$..allnegative)
 
-    pred <- cbind(PredDataSub[,!names(PredDataSub) %in% c("DummyVar", PoolSizeName), drop = FALSE],
-                  Prev)
+    pred <- PredDataSub %>%
+      bind_cols(Prev) %>%
+      mutate(Estimate = ifelse(.data$..zeroest, 0, .data$Estimate)) %>%
+      select(-any_of(c('..zeroest', '..allnegative', PoolSizeName)))
     predlist <- c(predlist, list(pred))
   }
 
@@ -171,10 +184,15 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL){
   return(predlist)
 }
 
+#' @rdname getPrevalence
+#' @export
 getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
-                                  robust = FALSE, level = 0.95){
+                                  robust = FALSE, level = 0.95,
+                                  all.negative.pools = 'consistent',...){
   if(is.null(newdata)){
     newdata <- model$data
+  }else{
+    all.negative.pools = 'consistent'
   }
 
   formula <- model$formula$formula
@@ -209,7 +227,7 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
     maringal.ge.terms <- retermdiff(formula,ge) #the random/group effect terms that we need to marginalise/integrate over
 
     #the standard deviations of the random/group effects that are being integrated over
-    #Note that the loop adds up the variances so we need to take square roots after
+    #Note that the loop adds up the VARIANCES so we need to take square roots after
     sds <- matrix(0,ndraw,npoint) #the standard deviations of the random/group effects that are being integrated over. Note that in the general case these are calculate by summing variances and then taking square roots, so we have to take square roots later
     for(mge in maringal.ge.terms){
       gn <- as.character(mge[3]) #name of grouping variable
@@ -220,7 +238,12 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
         Sigma <- array(Sigma, dim = c(ndraw, 1, 1)) #change for consistency with other case. By default dim would be c(ndraw, 1)
       }
 
-      #sds <- sds + diag(mm %*% Sigma %*% t(mm)) # the goal is to calculate something like this but for every draw of Sigma. Also we can avoid doing the full matrix computation by iterating over rows of mm, since we only need to the diagonal
+      #sds <- sds + diag(mm %*% Sigma %*% t(mm))
+
+      #the goal is to calculate like the above commented out code something like
+      #this but for every draw from Sigma. Also we can avoid doing the full
+      #matrix computation by iterating over rows of mm, since we only need the
+      #diagonal
       for(n in 1:ndraw){
         sigma <- Sigma[n,,]
         for(m in 1:npoint){
@@ -238,13 +261,25 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
       }
     }
 
-    prev.interval <- prev %>%
-      apply(2, function(x)stats::quantile(x, probs = 0.5 + c(-level,level)/2, na.rm = TRUE)) %>%
-      t %>% as.data.frame() %>%
-      stats::setNames(c("CrILow", "CrIHigh"))
-    pred <- cbind(PredDataSub[,names(PredDataSub) != PoolSizeName, drop = FALSE],
-                  Estimate = apply(prev, 2, ifelse(robust, stats::median, mean),na.rm = TRUE),
-                  prev.interval)
+    pred <- PredDataSub %>%
+      select(-all_of(PoolSizeName)) %>%
+      rowwise() %>%
+      mutate(..zeroest = all.negative.pools == 'zero' && .data$..allnegative)
+    pred$..prev <- t(prev)
+    pred <- pred %>%
+      mutate(Estimate = ifelse(.data$..zeroest,
+                                      0,
+                                      ifelse(robust,
+                                             stats::median(.data$..prev, na.rm = TRUE),
+                                             mean(..prev, na.rm = TRUE))),
+                    CrILow = ifelse(.data$..zeroest,
+                                    0,
+                                    stats::quantile(..prev, 0.5 - level/2)),
+                    CrIHigh = ifelse(.data$..zeroest,
+                                     stats::quantile(..prev, level),
+                                     stats::quantile(..prev, 0.5 + level/2))) %>%
+      select(-c("..allnegative","..prev","..zeroest")) %>%
+      ungroup()
 
     predlist <- c(predlist,list(pred))
   }
@@ -307,8 +342,9 @@ getGroupEffectTerms <- function(formula,d,re.form){
   group_effects
 }
 
-preparePredictionData <- function(group_effects, d, formula, PoolSizeName){
+preparePredictionData <- function(group_effects, data, formula, poolsizename){
   PredData <- list()
+  response <- all.vars(stats::update(formula, . ~ 1))[1]
   for(ge in group_effects){
     #The variables used in these group effect(s)
     gev <- if(inherits(ge, 'formula')){
@@ -322,15 +358,29 @@ preparePredictionData <- function(group_effects, d, formula, PoolSizeName){
     }
 
     #Population terms
-    AllTerms <- setdiff(all.vars(formula), all.vars(formula[[2]]))
+    AllTerms <- setdiff(all.vars(formula), response)
     PopTerms <- setdiff(AllTerms,getGroupVarNames(formula))
 
     #Prepare data for prediction -- just want unique combinations of the relevant variables
-    PredDataSub <-  d
-    PredDataSub[,PoolSizeName] <- 1 #Sets PoolSize variables to 1 (not used in calculations but required to keep stats::fitted happy)
-    PredDataSub <- PredDataSub[,unique(c(PopTerms,gev,PoolSizeName)),drop = FALSE] %>%
-      unique
-    rownames(PredDataSub) <- NULL
+    PredDataSub <- data
+    PredDataSub[,poolsizename] <- 1 #Sets the pool size variable to 1 (not used in calculations but required to keep stats::fitted happy)
+
+    PredDataSub <- PredDataSub %>%
+      group_by(pick(c(PopTerms,gev,poolsizename))) #grouping by poolsize (which are all 1) guarantees there is at least one row after summarise
+
+    #select unique combinations of predictor variables
+
+    if(response %in% colnames(data)){#if the response is included in the dataset then additionally annotate whether all responses are negative for the rows of each unique combinations of predictors. Useful if all.negative.pools = 'zero' and newdata = NULL
+      PredDataSub$..response <- PredDataSub[,response]
+      PredDataSub <- summarise(PredDataSub,
+                                      ..allnegative = sum(.data$..response) == 0)
+    }else{
+      PredDataSub <- summarise(PredDataSub,
+                                      ..allnegative = NA)
+    }
+
+    PredDataSub <- ungroup(PredDataSub)
+
     PredData <- c(PredData, list(PredDataSub))
   }
   PredData
@@ -420,11 +470,11 @@ meanlinknormal <- function(mu, sigma, invlink){
     integral <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
                                      lower = -Inf, upper = Inf)$value,
                     silent = TRUE)
-    if(inherits(integral,'try-error')){
+    if(inherits(integral,'try-error') || integral * 10 < invlink(mu)){
       integral <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
                                        lower = mu - sigma * 10, upper = mu + sigma * 10)$value,
                       silent = TRUE)
-      if(inherits(integral,'try-error')){
+      if(inherits(integral,'try-error') || integral * 10 < invlink(mu)){
         warning('integration failed for mu = ', mu, ' and sigma = ', sigma, ', with error: \n',attr(integral, 'condition')$message, '\nResult will be NA')
         integral <- NA
       }

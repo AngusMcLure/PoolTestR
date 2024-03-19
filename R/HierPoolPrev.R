@@ -32,27 +32,14 @@
 #'   defined by these columns
 #' @param prior List of parameters specifying the parameters for the the priors
 #'   on the population intercept and standard deviations of group-effect terms.
-#'   The default value (NULL) uses the following parameters:
-#'   \code{list(intercept = list(nu = 3, mu = 0, sigma = 4.0),
-#'              group_sd  = list(nu = 3, mu = 0, sigma = 2.5),
-#'              individual_sd = FALSE)}
-#'   This models the prior of the linear scale intercept as t-distributed with
-#'   parameters in `intercept` and the standard deviation of the group-level
-#'   effects as truncated (non-negative) t-distribution. `individual_sd = FALSE`
-#'   means that this prior is for the root-sum-square of group-effect standard
-#'   deviations for models with multiple grouping levels. The default implies a
-#'   prior on population prevalence that is approximately distributed as
-#'   beta(0.5,0.5). To set custom priors, use the same nested list format. Any
-#'   omitted parameters will be replaced with the default values and additional
-#'   parameters ignored silently. For example, to change the parameters to be
-#'   equal to the defaults for intercept-only random-effect model in
-#'   PoolRegBayes you can use:
-#'   \code{list(individual_sd = TRUE)},
-#'   which puts a prior on each the standard deviations of each of group-level
-#'   effects separately, but doesn't change the priors used.
-#'
+#'   See details.
 #' @param level The confidence level to be used for the confidence and credible
 #'   intervals. Defaults to 0.95 (i.e. 95\% intervals)
+#' @param all.negative.pools The kind of point estimate and interval to use when
+#'   all pools are negative. If 'consistent' (default) result is the same as for
+#'   the case where at least one pool is positive. If 'zero' uses 0 as the point
+#'   estimate and lower bound for the interval and \code{level} posterior
+#'   quantile the upper bound of the interval.
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen)
 #' @param cores The number of CPU cores to be used. By default one core is used
@@ -77,16 +64,39 @@
 #' @seealso \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
 #'
 #' @example examples/HierPrevalence.R
+#'
+#' @details
+#'
+#' When using the default value of the \code{prior} argument (NULL), the model
+#' uses the following prior:
+#'   \code{list(intercept = list(nu = 3, mu = 0, sigma = 4.0),
+#'              group_sd  = list(nu = 3, mu = 0, sigma = 2.5),
+#'              individual_sd = FALSE)}
+#' This models the prior of the linear scale intercept as t-distributed with
+#' parameters in `intercept` and the standard deviation of the group-level
+#' effects as truncated (non-negative) t-distribution. `individual_sd = FALSE`
+#' means that this prior is for the root-sum-square of group-effect standard
+#' deviations for models with multiple grouping levels. The default implies a
+#' prior on population prevalence that is approximately distributed as
+#' beta(0.5,0.5). To set custom priors, use the same nested list format. Any
+#' omitted parameters will be replaced with the default values and additional
+#' parameters ignored silently. For example, to change the parameters to be
+#' equal to the defaults for intercept-only random-effect model in PoolRegBayes
+#' you can use: \code{list(individual_sd = TRUE)}, which puts a prior on each
+#' the standard deviations of each of group-level effects separately, but
+#' doesn't change the priors used.
+#'
 
 
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                          prior = NULL,
                          level = 0.95, verbose = FALSE, cores = NULL,
                          iter = 2000, warmup = iter/2,
-                         chains = 4, control = list(adapt_delta = 0.9)){
-  result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
-  poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
-  groupVar <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
+                         chains = 4, control = list(adapt_delta = 0.9),
+                         all.negative.pools = 'consistent'){
+  result <- enquo(result) #The name of column with the result of each test on each pooled sample
+  poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
+  groupVar <- enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
   # Ideally I would like to:
   # Set number of cores to use (use all the cores! BUT when checking R
@@ -110,9 +120,9 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
 
     #Make the model matrix for the group effects - there might be a simpler way of doing this...
     G <- data[,hierarchy,drop = FALSE] %>%
-      dplyr::mutate_all(as.factor) %>%
+      mutate_all(as.factor) %>%
       droplevels %>%
-      dplyr::mutate_all(as.integer)
+      mutate_all(as.integer)
     NumGroups <- G %>% sapply(max)
     G <- t(t(G) + cumsum(NumGroups) - NumGroups)
     Z <- matrix(0,nrow = nrow(data), ncol = sum(NumGroups))
@@ -125,8 +135,8 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                   NumGroups = array(NumGroups), #Number of groups at each level of hierarchy
                   TotalGroups = sum(NumGroups),
                   #Result = array(data$Result), #PERHAPS TRY REMOVING COLUMN NAMES?
-                  Result = dplyr::select(data, !! result)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
-                  PoolSize = dplyr::select(data, !! poolSize)[,1] %>% as.matrix %>% array,
+                  Result = select(data, !! result)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
+                  PoolSize = select(data, !! poolSize)[,1] %>% as.matrix %>% array,
                   #G = G, #The group membership for each data point and level of hierarchy
                   Z = Z,
                   # Parameters for t-distributed priors for:
@@ -162,27 +172,45 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                      sfit$total_group_sd,
                      list(stats::plogis))
 
-    out <- data.frame(PrevBayes = mean(sfit$p))
-    out[,'CrILow'] <- stats::quantile(sfit$p,(1-level)/2)
-    out[,'CrIHigh'] <- stats::quantile(sfit$p,(1+level)/2)
+    if(all.negative.pools == 'zero' & sum(sdata$Result) == 0){
+      estimate.type <- 'zero'
+    }else if(!(all.negative.pools %in% c('zero', 'consistent'))){
+      stop(all.negative.pools, ' is not a valid option for `all.negative.pools`')
+    } else{
+      estimate.type = 'consistent'
+    }
+
+    out <- data.frame(PrevBayes =
+                        switch(estimate.type,
+                               consistent = mean(sfit$p),
+                               zero = 0)
+                      )
+    out[,'CrILow'] <- switch(estimate.type,
+                             consistent = stats::quantile(sfit$p,(1-level)/2),
+                             zero = 0)
+
+    out[,'CrIHigh'] <-  switch(estimate.type,
+                               consistent = stats::quantile(sfit$p,(1+level)/2),
+                               zero = stats::quantile(sfit$p,level))
+
 
     out[,'NumberOfPools'] <- sdata$N
     out[,'NumberPositive'] <- sum(sdata$Result)
 
     out <- out %>%
-      dplyr::select('PrevBayes',
+      select('PrevBayes',
                     'CrILow','CrIHigh',
                     'NumberOfPools', 'NumberPositive')
 
     out
   }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
     data <- data %>%
-      dplyr::group_by(!!! groupVar)
-    nGroups <- dplyr::n_groups(data)
+      group_by(!!! groupVar)
+    nGroups <- n_groups(data)
     ProgBar <- progress::progress_bar$new(format = "[:bar] :current/:total (:percent)", total = nGroups)
     ProgBar$tick(-1)
     out <- data %>%
-      dplyr::group_modify(function(x,...){
+      group_modify(function(x,...){
         ProgBar$tick(1)
         HierPoolPrev(x,!! result,!! poolSize,
                      hierarchy,
@@ -191,11 +219,12 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                      verbose = verbose,
                      cores = cores,
                      iter = iter, warmup = warmup,
-                     chains = chains, control = control)
+                     chains = chains, control = control,
+                     all.negative.pools = all.negative.pools)
       }) %>%
       as.data.frame()
     ProgBar$tick(1)
   }
-  dplyr::tibble(out)
+  tibble(out)
 }
 

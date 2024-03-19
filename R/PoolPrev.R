@@ -80,9 +80,9 @@ PoolPrev <- function(data,result,poolSize,...,
                      verbose = FALSE, cores = NULL,
                      iter = 2000, warmup = iter/2,
                      chains = 4, control = list(adapt_delta = 0.9)){
-  result <- dplyr::enquo(result) #The name of column with the result of each test on each pooled sample
-  poolSize <- dplyr::enquo(poolSize) #The name of the column with number of bugs in each pool
-  groupVar <- dplyr::enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
+  result <- enquo(result) #The name of column with the result of each test on each pooled sample
+  poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
+  groupVar <- enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
 
   useJefferysPrior <- is.null(prior)
   if(bayesian){
@@ -133,8 +133,8 @@ PoolPrev <- function(data,result,poolSize,...,
     rplnull <- function(x,replacement){if(is.null(x)){replacement}else{x}}
     sdata <- list(N = nrow(data),
                   #Result = array(data$Result), #PERHAPS TRY REMOVING COLUMN NAMES?
-                  Result = dplyr::select(data, !! result)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
-                  PoolSize = dplyr::select(data, !! poolSize)[,1] %>% as.matrix %>% array,
+                  Result = select(data, !! result)[,1] %>% as.matrix %>% as.numeric %>% array, #This seems a rather obscene way to select a column, but other more sensible methods have inexplicible errors when passed to rstan::sampling
+                  PoolSize = select(data, !! poolSize)[,1] %>% as.matrix %>% array,
                   PriorAlpha = rplnull(prior$alpha,0),
                   PriorBeta = rplnull(prior$beta,0),
                   JeffreysPrior = useJefferysPrior
@@ -249,8 +249,8 @@ PoolPrev <- function(data,result,poolSize,...,
 
     if(bayesian){
       out <- out %>%
-        dplyr::rename('PrevBayes' = mean) %>%
-        dplyr::select('PrevMLE',
+        rename('PrevBayes' = mean) %>%
+        select('PrevMLE',
                       'CILow', 'CIHigh',
                       'PrevBayes',
                       'CrILow','CrIHigh',
@@ -258,7 +258,7 @@ PoolPrev <- function(data,result,poolSize,...,
                       'NumberOfPools', 'NumberPositive')
     }else{
       out <- out %>%
-        dplyr::select('PrevMLE',
+        select('PrevMLE',
                       'CILow', 'CIHigh',
                       'NumberOfPools', 'NumberPositive')
     }
@@ -268,11 +268,11 @@ PoolPrev <- function(data,result,poolSize,...,
     out
   }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
     data <- data %>%
-      dplyr::group_by(!!! groupVar)
-    nGroups <- dplyr::n_groups(data)
+      group_by(!!! groupVar)
+    nGroups <- n_groups(data)
     ProgBar <- progress::progress_bar$new(format = "[:bar] :current/:total (:percent)", total = nGroups)
     ProgBar$tick(-1)
-    out <- data %>% dplyr::group_modify(function(x,...){
+    out <- data %>% group_modify(function(x,...){
       ProgBar$tick(1)
       PoolPrev(x,!! result,!! poolSize,
                level=level,verbose = verbose,
@@ -286,6 +286,6 @@ PoolPrev <- function(data,result,poolSize,...,
       as.data.frame()
     ProgBar$tick(1)
   }
-  dplyr::tibble(out)
+  tibble(out)
 }
 

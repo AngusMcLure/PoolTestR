@@ -75,7 +75,7 @@ getPrevalence(HierMod)
 # covariates (e.g. predict prevalence in year 4 based on linear trend on the
 # logit scale)
 
-#Making a data frame containing data make predict on
+#Making a data frame containing data make predictions on
 DataFuture <- unique(data.frame(Region = SimpleExampleData$Region,
                                 Village = SimpleExampleData$Village,
                                 Site = SimpleExampleData$Site,
