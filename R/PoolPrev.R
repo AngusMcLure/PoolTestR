@@ -157,8 +157,8 @@ PoolPrev <- function(data,result,poolSize,...,
     }
 
     #initialise output object
-    out <- data.frame(NumberOfPools = sdata$N,
-                      NumberPositive = sum(sdata$Result))
+    out <- tibble::tibble(NumberOfPools = sdata$N,
+                          NumberPositive = sum(sdata$Result))
 
     #if there is at least one positive and one negative result
     if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){
@@ -282,10 +282,9 @@ PoolPrev <- function(data,result,poolSize,...,
                iter = iter,
                warmup = warmup,
                chains = chains,
-               control = control)}) %>%
-      as.data.frame()
+               control = control)})
     ProgBar$tick(1)
   }
-  tibble(out)
+  ungroup(out) 
 }
 

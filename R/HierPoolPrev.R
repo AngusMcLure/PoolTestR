@@ -114,7 +114,6 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
       cores <- 1L
     }
   }
-  #if(!is.integer(cores)){stop("Number of cores must be numeric")}
 
   if(length(groupVar) == 0){ #if there are no grouping variables
 
@@ -157,7 +156,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
       }
     sfit <- rstan::sampling(model,
                             data = sdata,
-                            pars = c('Intercept', 'total_group_sd'),
+                            pars = c('Intercept', 'total_group_sd','group_sd'),
                             chains = chains,
                             iter = iter,
                             warmup = warmup,
@@ -165,12 +164,20 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                             cores = cores,
                             control = control)
     #return(sfit)
-    sfit <- as.matrix(sfit)[,c('Intercept', 'total_group_sd')] %>%
-      as.data.frame
-    sfit$p <- mapply(meanlinknormal,
-                     sfit$Intercept,
-                     sfit$total_group_sd,
-                     list(stats::plogis))
+    sfit <- extract(sfit) %>% as_tibble() %>% rowwise()
+
+    prevICC <- sfit %>%
+      transmute(prev = meanlinknormal(Intercept,
+                                      total_group_sd,
+                                      stats::plogis),
+                ICC = t(ICC(Intercept[1],
+                            group_sd,
+                            .mean = prev,
+                            link = 'logit',
+                            method = 'approx')))
+    prev <- prevICC$prev
+    ICC <- prevICC$ICC
+    colnames(ICC) <- hierarchy
 
     if(all.negative.pools == 'zero' & sum(sdata$Result) == 0){
       estimate.type <- 'zero'
@@ -180,28 +187,26 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
       estimate.type = 'consistent'
     }
 
-    out <- data.frame(PrevBayes =
+    out <- tibble::tibble(PrevBayes =
                         switch(estimate.type,
-                               consistent = mean(sfit$p),
+                               consistent = mean(prev),
                                zero = 0)
                       )
-    out[,'CrILow'] <- switch(estimate.type,
-                             consistent = stats::quantile(sfit$p,(1-level)/2),
+    out$CrILow <- switch(estimate.type,
+                             consistent = stats::quantile(prev,(1-level)/2),
                              zero = 0)
 
-    out[,'CrIHigh'] <-  switch(estimate.type,
-                               consistent = stats::quantile(sfit$p,(1+level)/2),
-                               zero = stats::quantile(sfit$p,level))
+    out$CrIHigh <-  switch(estimate.type,
+                               consistent = stats::quantile(prev,(1+level)/2),
+                               zero       = stats::quantile(prev,   level   ))
 
+    out$NumberOfPools <- sdata$N
+    out$NumberPositive <- sum(sdata$Result)
 
-    out[,'NumberOfPools'] <- sdata$N
-    out[,'NumberPositive'] <- sum(sdata$Result)
-
-    out <- out %>%
-      select('PrevBayes',
-                    'CrILow','CrIHigh',
-                    'NumberOfPools', 'NumberPositive')
-
+    out$ICC <- ICC %>% apply(2, mean) %>% t()
+    out$ICC_CrILow  <- ICC %>% apply(2, stats::quantile, probs = (1-level)/2) %>% t()
+    out$ICC_CrIHigh <- ICC %>% apply(2, stats::quantile, probs = (1+level)/2) %>% t()
+    
     out
   }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
     data <- data %>%
@@ -222,9 +227,10 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                      chains = chains, control = control,
                      all.negative.pools = all.negative.pools)
       }) %>%
-      as.data.frame()
+      ungroup
     ProgBar$tick(1)
   }
-  tibble(out)
+  colnames(out$ICC) <- colnames(out$ICC_CrILow) <- colnames(out$ICC_CrIHigh) <- hierarchy
+  out
 }
 
