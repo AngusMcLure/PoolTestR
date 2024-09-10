@@ -203,7 +203,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     out$NumberOfPools <- sdata$N
     out$NumberPositive <- sum(sdata$Result)
 
-    out$ICC <- ICC %>% apply(2, mean) %>% t()
+    out$ICC <- ICC %>% apply(2, median) %>% t()
     out$ICC_CrILow  <- ICC %>% apply(2, stats::quantile, probs = (1-level)/2) %>% t()
     out$ICC_CrIHigh <- ICC %>% apply(2, stats::quantile, probs = (1+level)/2) %>% t()
     

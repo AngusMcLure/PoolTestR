@@ -49,4 +49,16 @@ tibble(mu = .mu, sigma = rnorm(n * 1) * sigma1) %>%
          expICC  = ICC(.mu, c(sigma1, sigma2), method = 'approx', link = 'logit')[1]
          )
 
+## Check the approximate method for ICC
+
+d_approx <- tibble(mu = seq(0,-20, by =-0.1),sigma = t(c(2,2/5))) %>%
+  rowwise() %>%
+  mutate(nested = list(ICC(mu, sigma, 'logit', method = 'nested')),
+         approx = list(ICC(mu, sigma, 'logit', method = 'approx'))) %>%
+  pivot_longer(c(nested, approx),names_to = 'method', values_to = 'ICC') %>%
+  unnest_longer(ICC, indices_to = 'level')
+d_approx
+d_approx %>% ggplot(aes(x = mu, y = ICC, color = method)) +
+  geom_line() +
+  facet_grid(~level)
             

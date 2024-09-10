@@ -468,11 +468,11 @@ meanlinknormal <- function(mu, sigma, invlink){
     return(invlink(mu))
   } else{
     .mean <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
-                                     lower = -Inf, upper = Inf)$value,
+                                     lower = -Inf, upper = Inf, abs.tol =  -1)$value,
                     silent = TRUE)
     if(inherits(.mean,'try-error') || .mean * 10 < invlink(mu)){
       .mean <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
-                                       lower = mu - sigma * 10, upper = mu + sigma * 10)$value,
+                                       lower = mu - sigma * 5, upper = mu + sigma * 5, abs.tol = -1)$value,
                       silent = TRUE)
       if(inherits(.mean,'try-error') || .mean * 10 < invlink(mu)){
         warning('integration failed for mu = ', mu, ' and sigma = ', sigma, ', with error: \n',attr(.mean, 'condition')$message, '\nResult will be NA')
@@ -492,7 +492,7 @@ meanvarlinknormal <- function(mu, sigma, invlink){
 
 cloglog_inv <- function(x){-expm1(-exp(x))}
 
-ICC <- function(mu, sigma, link, .mean = NULL, method = 'triple'){
+ICC <- function(mu, sigma, link, .mean = NULL, method = 'nested'){
   
   if(!is.character(link)){stop('link should be a name of a link function; either logit or cloglog')}
   
@@ -510,17 +510,17 @@ ICC <- function(mu, sigma, link, .mean = NULL, method = 'triple'){
   #prevalence -- possible to provide to avoid recalculation if already calculated
   if(is.null(.mean)){
     .mean <- meanlinknormal(mu, sigma_tot, invlink) 
-    
   }
   
   #variance of group-level prevalence at each level ...
   .var <- numeric(L)
-  #...starting with highest
+  #...starting with lowest...
   .var[L] <- meanlinknormal(mu, sigma_tot, \(x){(invlink(x) - .mean)^2}) 
   if(L > 1){
     for(l in 1:(L-1)){ #...then the remaining levels
       sigma_l <- sqrt(sum(sigma[(l+1):L]^2)) # sqrt of total variance at lower levels
       sigma_h <- sqrt(sum(sigma[1:l]^2))     # sqrt of total variance at higher levels
+
       # if(method == 'triple'){
       #   sgm <- c(sigma_l, sigma_l, sigma_h)
       #   .var[l] <- cubature::hcubature(\(x){
@@ -539,9 +539,9 @@ ICC <- function(mu, sigma, link, .mean = NULL, method = 'triple'){
         # similar to 'nested' except the mean of link normal is approximated by
         # function related to the link with a scaling. Calculating the scaling
         # requires computing the mean link normal once, but avoids repeated
-        # computations. This approximation is brilliant for logitnormal, but
+        # computations. This approximation is reasonable for logitnormal, but
         # pretty poor for cloglog. See test/ApproximatingMeanLinkNormal.R for a
-        # more complicated approximation which works well for cloglog and logit
+        # more complicated approximation which works ok for cloglog and logit
         
         linkf <- switch(link,
                        'logit' = stats::qlogis,
@@ -553,6 +553,25 @@ ICC <- function(mu, sigma, link, .mean = NULL, method = 'triple'){
       }
     }
   }
-  .var/ (.mean * (1 - .mean))
+  icc <- .var/ (.mean * (1 - .mean))
+  if(any(icc<0) | any(icc>1) | is.unsorted(icc)){ #check for numerical issues
+    if(method == 'approx'){# if using the approx method try using
+      return(ICC(mu, sigma, link, .mean, method = 'nested'))
+    }else{
+      wrng <- paste('There has been a numeric integration error.',
+                    ' The calculated ICC =', paste(icc, collapse = ', '), ' for inputs',
+                    ' mu = ', mu,
+                    ' sigma = ', paste(sigma, collapse = ', '),
+                    ' and link = ', link)
+      if(any(icc<0) | any(icc>1)){
+        wrng <- paste0(wrng, '. ICC must be 0<=ICC<=1.')
+      }
+      if(is.unsorted(icc)){
+        wrng <- paste0(wrng, '. ICC must increase as you move from higher to lower sampling levels.')
+      }
+      warning(wrng)
+    }
+  }
+  icc
 }
 
