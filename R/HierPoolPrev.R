@@ -237,8 +237,9 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
 new_HierPoolPrevOutput <- function(x = tbl()) {
   stopifnot(is.tbl(x))
   
+  prev_class <- class(PrevByRegionYearHier)
   structure(x,
-            class = "HierPoolPrevOutput"
+            class = c("HierPoolPrevOutput", prev_class)
   )
 }
 
