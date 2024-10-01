@@ -234,3 +234,11 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
   out
 }
 
+new_HierPoolPrevOutput <- function(x = tbl()) {
+  stopifnot(is.tbl(x))
+  
+  structure(x,
+            class = "HierPoolPrevOutput"
+  )
+}
+
