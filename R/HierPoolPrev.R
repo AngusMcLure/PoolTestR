@@ -207,6 +207,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     out$ICC_CrILow  <- ICC %>% apply(2, stats::quantile, probs = (1-level)/2) %>% t()
     out$ICC_CrIHigh <- ICC %>% apply(2, stats::quantile, probs = (1+level)/2) %>% t()
     
+    out <- new_HierPoolPrevOutput(out)
     out
   }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
     data <- data %>%
@@ -231,6 +232,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     ProgBar$tick(1)
   }
   colnames(out$ICC) <- colnames(out$ICC_CrILow) <- colnames(out$ICC_CrIHigh) <- hierarchy
+  out <- new_HierPoolPrevOutput(out)
   out
 }
 
@@ -242,4 +244,5 @@ new_HierPoolPrevOutput <- function(x = tbl()) {
             class = c("HierPoolPrevOutput", prev_class)
   )
 }
+
 
