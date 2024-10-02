@@ -1,4 +1,5 @@
 #' Print method for HierPoolPrevOutput objects
+#' S3 method
 #' 
 #' @param object An object of class "HierPoolPrevOutput" as returned by HierPoolPrev().
 #'
@@ -8,8 +9,7 @@
 #' 
 #' @export print.HierPoolPrevOutput
 #' 
-#' @rdname print
-#'
+#' @noRd
 print.HierPoolPrevOutput <- function(x, ...) {
   # This function reformats HierPoolPrevOutput into a human-readable tibble
   icc_names <- attr(x$ICC, "dimnames")[[2]]
