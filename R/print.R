@@ -4,37 +4,39 @@
 #'
 #' @return A \code{data.frame} output by HierPoolPrev, in a human readable format
 #'
-#' @seealso \code{\link{HierPoolPrev}}, \code{\link{print}}
+#' @seealso \code{\link{HierPoolPrev}}
 #' 
 #' @export print.HierPoolPrevOutput
 #' 
 #' @rdname print
 #'
-
 print.HierPoolPrevOutput <- function(x, ...) {
   # This function reformats HierPoolPrevOutput into a human-readable tibble
   icc_names <- attr(x$ICC, "dimnames")[[2]]
   trimmed_object <- x %>% 
     select(grep("ICC", names(x), value = T, invert = T))
-  icc_tbls <- lapply(1:length(icc_names), extract_matrix_column_ICC, icc_names, x)
+  icc_tbls <- lapply(icc_names, extract_matrix_column_ICC, x)
   formatted_output <- as_tibble(bind_cols(trimmed_object, icc_tbls))
   print(formatted_output)
   return(invisible(formatted_output))
 }
 
-#' Extract the correlation for a single clustering variable
-#' @param i an integer
-#' @param cluster_vars the clustering variables (i.e., the names of the matrix-columns)
+#' Extract the correlation columns for a single clustering variable
+#' Internal function
+#' 
+#' @param cluster_var a single clustering variable (i.e., the name of the one matrix-column)
 #' @param x an object of class "HierPoolPrevOutput"
-#' @NoRd
-extract_matrix_column_ICC <- function(i, cluster_vars, x){
-  # This function returns the ICC columns for a single variable in one neat, human-readable data.frame
-  # Input: an integer, the names of the matrix columns, and the HierPoolPrevOutput
-  if (i <= length(cluster_vars)){
+#' 
+#' @noRd
+extract_matrix_column_ICC <- function(cluster_var, x){
+  all_cluster_vars <- attr(x$ICC, "dimnames")[[2]]
+  if (cluster_var %in% all_cluster_vars){
     matrix_cols <- x %>% 
       select(grep("ICC", names(x), value = T))
-    i_cols <- as_tibble(lapply(names(matrix_cols), function(x){matrix_cols[[x]][ , i]}), .name_repair = "minimal")
-    names(i_cols) <- paste0(cluster_vars[i], ".", names(matrix_cols))
+    i_cols <- as_tibble(lapply(names(matrix_cols), 
+                               function(x){matrix_cols[[x]][ , which(all_cluster_vars == cluster_var)]}), 
+                        .name_repair = "minimal")
+    names(i_cols) <- paste0(cluster_var, ".", names(matrix_cols))
     return(i_cols)
   } else {
     return(NULL)
