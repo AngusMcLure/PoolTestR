@@ -22,14 +22,19 @@ print.HierPoolPrevOutput <- function(x, ...) {
   return(invisible(formatted_output))
 }
 
-extract_matrix_column_ICC <- function(i, matrix_col_names, x){
+#' Extract the correlation for a single clustering variable
+#' @param i an integer
+#' @param cluster_vars the clustering variables (i.e., the names of the matrix-columns)
+#' @param x an object of class "HierPoolPrevOutput"
+#' @NoRd
+extract_matrix_column_ICC <- function(i, cluster_vars, x){
   # This function returns the ICC columns for a single variable in one neat, human-readable data.frame
   # Input: an integer, the names of the matrix columns, and the HierPoolPrevOutput
-  if (i <= length(matrix_col_names)){
+  if (i <= length(cluster_vars)){
     matrix_cols <- x %>% 
       select(grep("ICC", names(x), value = T))
     i_cols <- as_tibble(lapply(names(matrix_cols), function(x){matrix_cols[[x]][ , i]}), .name_repair = "minimal")
-    names(i_cols) <- paste0(matrix_col_names[i], ".", names(matrix_cols))
+    names(i_cols) <- paste0(cluster_vars[i], ".", names(matrix_cols))
     return(i_cols)
   } else {
     return(NULL)
