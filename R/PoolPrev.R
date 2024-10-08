@@ -83,7 +83,7 @@ PoolPrev <- function(data,result,poolSize,...,
   result <- enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
   groupVar <- enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
-
+  
   useJefferysPrior <- is.null(prior)
   if(bayesian){
     if(!useJefferysPrior && (is.null(prior$alpha) || is.null(prior$beta) || is.null(prior$beta))){
@@ -104,22 +104,22 @@ PoolPrev <- function(data,result,poolSize,...,
       stop('If not using the default prior (NULL), prior$absent must be a single number between 0 (no prior probability of absence) and 1.')
     }
   }
-
-
+  
+  
   # log-likelihood function
   LogLikPrev = function(p,result,poolSize,goal=0){
     sum(log(result + (-1)^result * (1-p)^poolSize)) - goal
   }
-
+  
   if(length(groupVar) == 0){ #if there are no grouping variables
-
+    
     # Ideally I would like to:
     # Set number of cores to use (use all the cores! BUT when checking R
     # packages they limit you to two cores)
     # However, there appear to be some issues where running in parallel is a
     # lot slower sometimes. So I am setting 1 core as default, but keeping this
     # code here so I change later if I iron out parallel issues
-
+    
     if(is.null(cores)){
       chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
       if (nzchar(chk) && chk == "TRUE") {
@@ -139,9 +139,9 @@ PoolPrev <- function(data,result,poolSize,...,
                   PriorBeta = rplnull(prior$beta,0),
                   JeffreysPrior = useJefferysPrior
     )
-
+    
     #When prior is beta and all tests are negative Bayesian inference has an analytic solution. Otherwise we do MCMC
-
+    
     #if any tests are positive or for the Jeffrey's prior case
     if(bayesian & (sum(sdata$Result) | useJefferysPrior)){
       sfit <- rstan::sampling(stanmodels$PoolPrev,
@@ -155,14 +155,14 @@ PoolPrev <- function(data,result,poolSize,...,
                               control = control)
       sfit <- as.matrix(sfit)[,"p"]
     }
-
+    
     #initialise output object
     out <- tibble::tibble(NumberOfPools = sdata$N,
                           NumberPositive = sum(sdata$Result))
-
+    
     #if there is at least one positive and one negative result
     if(any(as.logical(sdata$Result)) & !all(as.logical(sdata$Result))){
-
+      
       # calculate maximum likelihood estimate
       # 'optimizing' from stan actually maximizes the joint posterior, not the likelihood,
       # but if we use a uniform prior on prevalence they are equivalent in this case
@@ -171,7 +171,7 @@ PoolPrev <- function(data,result,poolSize,...,
       MLEdata$PriorBeta  <- 1
       MLEdata$JeffreysPrior  <- FALSE
       out$PrevMLE <- rstan::optimizing(stanmodels$PoolPrev,MLEdata)$par["p"]
-
+      
       # log-likelihood difference used to calculate Likelihood ratio confidence intervals
       LogLikDiff <- stats::qchisq(if(reproduce.poolscreen){1 - (1 - level)/2}else{level}, df = 1)/2
       out$CILow <- stats::uniroot(LogLikPrev,
@@ -186,7 +186,7 @@ PoolPrev <- function(data,result,poolSize,...,
                                    result= sdata$Result,
                                    poolSize= sdata$PoolSize,
                                    tol = 1e-10)$root
-
+      
       if(bayesian){
         out$mean <- mean(sfit)
         out$CrILow <- stats::quantile(sfit,(1-level)/2)
@@ -205,14 +205,14 @@ PoolPrev <- function(data,result,poolSize,...,
                                   poolSize= sdata$PoolSize,
                                   tol = 1e-10)$root
       out$CIHigh <- 1
-
+      
       if(bayesian){
         out$mean = mean(sfit)
         out$CrILow <- stats::quantile(sfit,1-level)
         out$CrIHigh <- 1
         out$ProbAbsent <- ifelse(!useJefferysPrior && prior$absent,0,NA)
       }
-
+      
     }
     #if all tests are negative
     else{
@@ -246,25 +246,25 @@ PoolPrev <- function(data,result,poolSize,...,
         }
       }
     }
-
+    
     if(bayesian){
       out <- out %>%
         rename('PrevBayes' = mean) %>%
         select('PrevMLE',
-                      'CILow', 'CIHigh',
-                      'PrevBayes',
-                      'CrILow','CrIHigh',
-                      'ProbAbsent',
-                      'NumberOfPools', 'NumberPositive')
+               'CILow', 'CIHigh',
+               'PrevBayes',
+               'CrILow','CrIHigh',
+               'ProbAbsent',
+               'NumberOfPools', 'NumberPositive')
     }else{
       out <- out %>%
         select('PrevMLE',
-                      'CILow', 'CIHigh',
-                      'NumberOfPools', 'NumberPositive')
+               'CILow', 'CIHigh',
+               'NumberOfPools', 'NumberPositive')
     }
-
-
-
+    
+    
+    
     out
   }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
     data <- data %>%
@@ -286,5 +286,50 @@ PoolPrev <- function(data,result,poolSize,...,
     ProgBar$tick(1)
   }
   ungroup(out) 
+  
+  out <- new_PoolPrevOutput(out)
+  out
 }
 
+
+
+
+#' Constructor for PoolPrevOutput class
+#' Allows for nicely-formatted human-readable output using a custom \code{print} method 
+#' Internal function (don't export - users do not need to construct PoolPrevOutput objects)
+#' @param x a tibble output by the \code{\link{PoolPrev}} function
+#' @noRd
+new_PoolPrevOutput <- function(x = tbl()) {
+  stopifnot(is.tbl(x))
+  
+  prev_class <- class(x)
+  structure(x,
+            class = c("PoolPrevOutput", prev_class)
+  )
+}
+
+
+#' Print method for HierPoolPrevOutput objects
+#' S3 method
+#' @param object An object of class "PoolPrevOutput" as returned by \code{PoolPrev()}.
+#' @return A \code{data.frame} output by \code{PoolPrev}, in a human readable format
+#' @seealso \code{\link{PoolPrev}}
+#' @method print PoolPrevOutput
+#' @export
+#' @noRd
+print.PoolPrevOutput <- function(x, ...) {
+  # Reformat PoolPrevOutput into a human-readable data.frame
+  formatted_output <- as.data.frame(
+    ungroup(x) %>% 
+      mutate(PrevMLE = paste0(" ",
+                              format((PrevMLE*100), digits = 2, nsmall = 2),
+                              " (", 
+                              format((CILow*100), digits = 2, nsmall = 2),
+                              " - ", 
+                              format((CIHigh*100), digits = 2, nsmall = 2),
+                              ")"),
+             .keep = "unused")
+  )
+  print(formatted_output)
+  return(invisible(formatted_output))
+}
