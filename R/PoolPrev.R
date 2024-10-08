@@ -292,8 +292,6 @@ PoolPrev <- function(data,result,poolSize,...,
 }
 
 
-
-
 #' Constructor for PoolPrevOutput class
 #' Allows for nicely-formatted human-readable output using a custom \code{print} method 
 #' Internal function (don't export - users do not need to construct PoolPrevOutput objects)
