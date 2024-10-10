@@ -329,5 +329,5 @@ print.PoolPrevOutput <- function(x, ...) {
              .keep = "unused")
   )
   print(formatted_output)
-  return(invisible(formatted_output))
+  return(invisible(x))
 }

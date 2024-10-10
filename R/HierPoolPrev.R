@@ -277,7 +277,7 @@ print.HierPoolPrevOutput <- function(x, ...) {
   icc_tbls <- lapply(icc_names, extract_matrix_column_ICC, x)
   formatted_output <- as.data.frame(bind_cols(trimmed_object, icc_tbls))
   print(formatted_output)
-  return(invisible(formatted_output))
+  return(invisible(x))
 }
 
 
