@@ -326,7 +326,8 @@ print.PoolPrevOutput <- function(x, ...) {
                               " - ", 
                               format((CIHigh*100), digits = 2, nsmall = 2),
                               ")"),
-             .keep = "unused")
+             .keep = "unused")  %>%
+      rename("PrevMLE % " = "PrevMLE")
   )
   print(formatted_output)
   return(invisible(x))

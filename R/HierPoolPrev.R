@@ -272,7 +272,8 @@ print.HierPoolPrevOutput <- function(x, ...) {
                               format((CrIHigh*100), digits = 2, nsmall = 2),
                               ")"),
            .keep = "unused") %>%
-    select(-contains("ICC", ignore.case = TRUE))
+    select(-contains("ICC", ignore.case = TRUE)) %>%
+    rename("PrevBayes % " = "PrevBayes")
   # Reformat matrix columns by clustering variable
   icc_tbls <- lapply(icc_names, extract_matrix_column_ICC, x)
   formatted_output <- as.data.frame(bind_cols(trimmed_object, icc_tbls))
@@ -330,6 +331,6 @@ pretty_format_column <- function(var_df){
     .keep = "none"
   )
   # Rename new column as "ICC.<cluster.name>"
-  names(formatted_df) <- grep("low|high", col_names, ignore.case = T, invert = T, value = T)
+  names(formatted_df) <- paste0(grep("low|high", col_names, ignore.case = T, invert = T, value = T), " % ")
   return(formatted_df)
 }
