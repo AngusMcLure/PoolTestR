@@ -329,6 +329,21 @@ print.PoolPrevOutput <- function(x, ...) {
              .keep = "unused")  %>%
       rename("PrevMLE % " = "PrevMLE")
   )
+  bayes_check <- "PrevBayes" %in% names(x)
+  if (bayes_check == TRUE) {
+    formatted_output <- as.data.frame(
+      formatted_output %>% 
+        mutate(PrevBayes = paste0(" ",
+                                  format((PrevBayes*100), digits = 2, nsmall = 2),
+                                  " (", 
+                                  format((CrILow*100), digits = 2, nsmall = 2),
+                                  " - ", 
+                                  format((CrIHigh*100), digits = 2, nsmall = 2),
+                                  ")"),
+               .keep = "unused")  %>%
+        rename("PrevBayes % " = "PrevBayes")
+    )
+  }
   print(formatted_output)
   return(invisible(x))
 }
