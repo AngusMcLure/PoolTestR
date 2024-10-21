@@ -3,6 +3,8 @@
 S3method(getPrevalence,brmsfit)
 S3method(getPrevalence,glm)
 S3method(getPrevalence,glmerMod)
+S3method(print,HierPoolPrevOutput)
+S3method(print,PoolPrevOutput)
 export(HierPoolPrev)
 export(PoolLink)
 export(PoolPrev)
