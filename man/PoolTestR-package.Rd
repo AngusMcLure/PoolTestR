@@ -39,5 +39,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Angus McLure \email{angus.mclure@anu.edu.au} (\href{https://orcid.org/0000-0003-2551-3059}{ORCID})
 
+Other contributors:
+\itemize{
+  \item Caitlin Cherryh (\href{https://orcid.org/0000-0001-6146-4376}{ORCID}) [contributor]
+}
+
 }
 \keyword{internal}

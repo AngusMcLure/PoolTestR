@@ -1,11 +1,12 @@
 Package: PoolTestR
 Title: Prevalence and Regression for Pool-Tested (Group-Tested) Data
 Version: 0.2.0
-Authors@R: person(given = "Angus",
-           family = "McLure",
-           role = c("aut", "cre"),
-           email = "angus.mclure@anu.edu.au",
-           comment = c(ORCID = "0000-0003-2551-3059"))
+Authors@R: c(
+    person(given = "Angus", family = "McLure", role = c("aut", "cre"),
+      email = "angus.mclure@anu.edu.au",comment = c(ORCID = "0000-0003-2551-3059") ),
+    person(given = "Caitlin", family = "Cherryh", role = c("ctb"),
+      comment = c(ORCID = "0000-0001-6146-4376") )
+    )
 URL: https://github.com/AngusMcLure/PoolTestR
 BugReports: https://github.com/AngusMcLure/PoolTestR
 Description: An easy-to-use tool for working with presence/absence tests on 'pooled'
