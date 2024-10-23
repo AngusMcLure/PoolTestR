@@ -1,4 +1,7 @@
-# PoolTestR v0.2.0 (Release date: 2023-08-XX)
+# PoolTestR v0.2.0 (Release date: 2024-10-XX)
+
+Caitlin Cherryh has joined the development team and has been working on improving readibility of outputs, documentation, and testing.
+
 This update includes an option for PoolPrev to skip the calculation of Bayesian estimates. When using bayesian = FALSE, only MLE and likelihood ratio confidence intervals will be calculated, substantially speeding up this function (perhaps x100).
 
 This updates also removes one source of bias from prevalence estimates returned for any hierarchical models. This effects the results of `HierPoolPrev` and `getPrevalence` applied to models with random effects. Under the update, prevalence estimates will typically slightly increase, though the difference will not be notable if the sample size is large and there is little clustering.
@@ -6,6 +9,11 @@ This updates also removes one source of bias from prevalence estimates returned 
 Previous estimates of prevalence did not marginalise out the random effects when calculating population-level prevalence, but as of this version, random effects are marginalised out. Due to the complexity introduced by this bias-correction we now longer-support specifying nested surveys using `~(1|Layer1/Layer2)` and recommend using the format `~(1|Layer1) + (1|Layer2)` which should be equivalent as long as each level in `Layer2` is unique --- i.e. the format already required for `HierPoolPrev`.
 
 Due to the complexity introduced by this bias-correction, the way of specifying priors for `HierPoolPrev` has been updated. Priors for `HierPoolPrev` are now directly on the real-scale (logit-transformed) parameters, rather than prevalence directly. We have also updated the default priors for `PoolRegBayes` for regression parameters, as we believe the previous priors were too diffuse (`normal(0,100)`). The defaults for the centered predictors are now `student(6,0,1.5)`.
+
+`HierPoolPrev` now has functionality to return estimate of intracluster correlation coefficients (ICC) at one or more levels of clustering
+
+`HierPoolPrev` and `PoolPrev` now have custom output classes (inheriting from tibble, the previous class for these outputs). This has allowed us (Caitlin) to add pretty-print functions these outputs which are much more human readable. Saving the output with `write.csv` or similar will still return a detailed, machine-readible output.
+
 
 
 # PoolTestR v0.1.3 (Release date: 2022-07-XX)
