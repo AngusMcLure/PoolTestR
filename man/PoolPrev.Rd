@@ -84,23 +84,33 @@ Defaults to default values as defined in \link[rstan]{stan}, except for
 \value{
 A \code{data.frame} with columns:
   \itemize{
-    \item{\code{PrevMLE} (the Maximum Likelihood Estimate of prevalence)}
-    \item{\code{CILow} and \code{CIHigh} - lower and upper confidence intervals using the likelihood
+    \item{\code{PrevMLE} -- (the Maximum Likelihood Estimate of prevalence)}
+    \item{\code{CILow} and \code{CIHigh} - lower and upper confidence 
+          intervals using the likelihood
           ratio method}
-     \item{\code{PrevBayes} the (Bayesian) posterior expectation. Omitted if \code{bayesian == FALSE}.}
+     \item{\code{PrevBayes} -- the (Bayesian) posterior expectation. Omitted 
+           if \code{bayesian == FALSE}.}
      \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds for
            credible intervals. Omitted if \code{bayesian == FALSE}.}
-     \item{\code{ProbAbsent} the posterior probability that prevalence is
+     \item{\code{ProbAbsent} -- the posterior probability that prevalence is
            exactly 0 (i.e. disease marker is absent). NA if using default
            Jeffrey's prior or if prior$absent = 0. Omitted if \code{bayesian
            == FALSE}.}
      \item{\code{NumberOfPools} -- number of pools}
      \item{\code{NumberPositive} -- the number of positive pools} }
+     
   If grouping variables are provided in \code{...} there will be an
   additional column for each grouping variable. When there are no grouping
   variables (supplied in \code{...}) then the output has only one row with
   the prevalence estimates for the whole dataset. When grouping variables are
   supplied, then there is a separate row for each group.
+  
+  The custom print method summarises the output data frame by representing 
+  the prevalence and credible intervals as a single column in the form 
+  \code{"Prev (CLow - CHigh)"} where \code{Prev} is the prevalence, 
+  \code{CLow} is the lower confidence/credible interval and \code{CHigh} is 
+  the upper confidence/credible interval. In the print method, prevalence is 
+  represented as a percentage (i.e., per 100 units)
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples

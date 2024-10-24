@@ -50,16 +50,37 @@
 #'   \code{adapt_delta} which is set to the more conservative value of 0.9. See
 #'   \link[rstan]{stan} for details.
 #' @return A \code{data.frame} with columns:
-#'   \itemize{\item{\code{PrevBayes} the (Bayesian) posterior expectation}
+#'   \itemize{\item{\code{PrevBayes} -- the (Bayesian) posterior expectation}
 #'            \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds
 #'                  for credible intervals}
 #'            \item{\code{NumberOfPools} -- number of pools}
-#'            \item{\code{NumberPositive} -- the number of positive pools} }
+#'            \item{\code{NumberPositive} -- the number of positive pools}
+#'            \item{\code{ICC} -- the estimated intra-cluster correlation 
+#'                  coefficient}
+#'            \item{\code{ICC_CrILow} and \code{ICC_CrIHigh} -- lower and upper
+#'                  bounds for credible intervals of the estimated ICC} }
+#'                  
+#'   The three ICC columns (\code{ICC}, \code{ICC_CrILow} and 
+#'   \code{ICC_CrIHigh}) are matrix columns. These contain one column for each
+#'   variable included in the \code{hierarchy}. E.g., if the input hierarchy is
+#'   \code{c("Village", "Site")}, each of the three ICC matrix columns will 
+#'   contain one column with results for \code{Village} and one column with 
+#'   results for \code{Site}.
+#'   
 #'   If grouping variables are provided in \code{...} there will be an
 #'   additional column for each grouping variable. When there are no grouping
 #'   variables (supplied in \code{...}) then the output has only one row with
 #'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
+#'   
+#'   The custom print method summarises the output data frame by representing 
+#'   output variables with credible intervals (i.e., \code{PrevBayes}, 
+#'   \code{ICC}) as a single column in the form \code{"X (CrILow - CrIHigh)"} 
+#'   where \code{X} is the variable, \code{CrILow} is the lower credible 
+#'   interval and \code{CrIHigh} is the upper credible interval. In the print 
+#'   method,  prevalence \code{PrevBayes} is represented as a percentage (i.e., 
+#'   per 100 units).
+#'   
 #'
 #' @seealso \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
 #'
