@@ -259,9 +259,13 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
 
 
 #' Constructor for HierPoolPrevOutput class
-#' Allows for nicely-formatted human-readable output using a custom \code{print} method 
-#' Internal function (don't export - users do not need to construct HierPoolPrevOutput objects)
+#' Allows for nicely-formatted human-readable output using a custom \code{print}
+#' method 
+#' Don't export - users do not need to construct HierPoolPrevOutput objects
+#' 
 #' @param x a tibble output by the \code{\link{HierPoolPrev}} function
+#' 
+#' @keywords internal
 #' @noRd
 new_HierPoolPrevOutput <- function(x = tbl()) {
   stopifnot(is.tbl(x))
@@ -275,9 +279,15 @@ new_HierPoolPrevOutput <- function(x = tbl()) {
 
 #' Print method for HierPoolPrevOutput objects
 #' S3 method
-#' @param object An object of class "HierPoolPrevOutput" as returned by \code{\link{HierPoolPrev}}.
-#' @return A \code{data.frame} output by  \code{HierPoolPrev}, in a human readable format
+#' 
+#' @param object An object of class "HierPoolPrevOutput" as returned by 
+#' \code{\link{HierPoolPrev}}.
+#' 
+#' @return A \code{data.frame} output by  \code{HierPoolPrev}, in a human 
+#' readable format
+#' 
 #' @seealso \code{\link{HierPoolPrev}}
+#' 
 #' @method print HierPoolPrevOutput
 #' @export
 #' @noRd
@@ -304,9 +314,12 @@ print.HierPoolPrevOutput <- function(x, ...) {
 
 
 #' Extract the correlation columns for a single clustering variable
-#' Internal function
-#' @param cluster_var a single clustering variable (i.e., the name of the one matrix-column)
+#' 
+#' @param cluster_var a single clustering variable (i.e., the name of the one 
+#'  matrix-column)
 #' @param x an object of class "HierPoolPrevOutput"
+#' 
+#' @keywords internal
 #' @noRd
 extract_matrix_column_ICC <- function(cluster_var, x){
   all_cluster_vars <- attr(x$ICC, "dimnames")[[2]]
@@ -318,22 +331,27 @@ extract_matrix_column_ICC <- function(cluster_var, x){
                                      function(x){matrix_cols[[x]][ , which(all_cluster_vars == cluster_var)]}), 
                               .name_repair = "minimal")
     names(cluster_cols) <- paste0(cluster_var, ".", names(matrix_cols))
-    formatted_cluster_cols <- pretty_format_column(cluster_cols) # Pretty print
+    formatted_cluster_cols <- pretty_format_ICC_column(cluster_cols) # Pretty print
     return(formatted_cluster_cols)
   } else {
     return(NULL)
   }
 }
 
-#' Take a column and its confidence/credibility intervals and format into pretty, human-readable format
-#' Internal function
+#' Take a column and its confidence/credibility intervals and format into 
+#'  pretty, human-readable format
+#'
 #' @param var_df a \code{data.frame} with three columns:
-#'   \itemize{\item Parameter estimate (e.g., PrevMLE, PrevBayes, ICC)
-#'            \item Lower confidence interval (e.g., CILow) or credibility interval (e.g., CrILow)
-#'            \item Upper confidence interval (e.g., CIHigh) or credibility interval (e.g., CrIHigh)
+#'   \itemize{\item{Parameter estimate (e.g., PrevMLE, PrevBayes, ICC)}
+#'            \item{Lower confidence interval (e.g., CILow) or credibility 
+#'              interval (e.g., CrILow)}
+#'            \item{Upper confidence interval (e.g., CIHigh) or credibility 
+#'              interval (e.g., CrIHigh)}
 #'            }
+#'            
+#' @keywords internal
 #' @noRd
-pretty_format_column <- function(var_df){
+pretty_format_ICC_column <- function(var_df){
   # Record original column names
   col_names <- names(var_df)
   # Set new column names
@@ -343,15 +361,36 @@ pretty_format_column <- function(var_df){
   # Create formatted output column
   formatted_df <- var_df %>% mutate(
     output = paste0(" ",
-                    format( (param*100), digits = 2, nsmall = 2), 
+                    custom_round(param), 
                     " (", 
-                    format( (low*100), digits = 2, nsmall = 2), 
+                    custom_round(low), 
                     " - ", 
-                    format( (high*100), digits = 2, nsmall = 2), 
+                    custom_round(high), 
                     ")"),
     .keep = "none"
   )
   # Rename new column as "ICC.<cluster.name>"
-  names(formatted_df) <- paste0(grep("low|high", col_names, ignore.case = T, invert = T, value = T), " % ")
+  names(formatted_df) <- 
+    grep("low|high", col_names, ignore.case = T, invert = T, value = T)
   return(formatted_df)
+}
+
+#' Custom round for ICC columns - maintain 4 sig figs across different
+#' magnitudes of values
+#' 
+#' @keywords internal
+#' @noRd
+custom_round <- function(x) {
+  min_x <- min(x)
+  # Get absolute value of greatest magnitude in column 
+  #   (e.g., for 0.01, magnitude = -2 and absolute magnitude = 2)
+  biggest_mag <- max(abs(round(log10(x))))
+  if (biggest_mag <= 3){
+    # Round to 4dp
+    x_formatted <- sprintf(paste0("%.", 3, "f"), round(x, 3) )
+  } else {
+    # Scientific format
+    x_formatted <- sprintf(paste0("%.", (3 - 1), "e"), signif(x, 3) )
+  }
+  return(x_formatted)
 }
