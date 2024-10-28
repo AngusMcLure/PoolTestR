@@ -298,23 +298,11 @@ PoolPrev <- function(data,result,poolSize,...,
   }
   ungroup(out) 
   
-  out <- new_PoolPrevOutput(out)
-  out
-}
-
-
-#' Constructor for PoolPrevOutput class
-#' Allows for nicely-formatted human-readable output using a custom \code{print} method 
-#' Internal function (don't export - users do not need to construct PoolPrevOutput objects)
-#' @param x a tibble output by the \code{\link{PoolPrev}} function
-#' @noRd
-new_PoolPrevOutput <- function(x = tbl()) {
-  stopifnot(is.tbl(x))
-  
-  prev_class <- class(x)
-  structure(x,
-            class = c("PoolPrevOutput", prev_class)
+  out <- structure(
+    out, 
+    class = c("PoolPrevOutput", class(out))
   )
+  out
 }
 
 

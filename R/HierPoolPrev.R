@@ -253,27 +253,12 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     ProgBar$tick(1)
   }
   colnames(out$ICC) <- colnames(out$ICC_CrILow) <- colnames(out$ICC_CrIHigh) <- hierarchy
-  out <- new_HierPoolPrevOutput(out)
-  out
-}
-
-
-#' Constructor for HierPoolPrevOutput class
-#' Allows for nicely-formatted human-readable output using a custom \code{print}
-#' method 
-#' Don't export - users do not need to construct HierPoolPrevOutput objects
-#' 
-#' @param x a tibble output by the \code{\link{HierPoolPrev}} function
-#' 
-#' @keywords internal
-#' @noRd
-new_HierPoolPrevOutput <- function(x = tbl()) {
-  stopifnot(is.tbl(x))
   
-  prev_class <- class(x)
-  structure(x,
-            class = c("HierPoolPrevOutput", prev_class)
+  out <- structure(
+    out, 
+    class = c("HierPoolPrevOutput", class(out))
   )
+  out
 }
 
 
