@@ -87,7 +87,7 @@ getPrevalence.glm <- function(model, newdata = NULL, level = 0.95,...){
   # define the inverse link function based on the link function used in the model
   invlink <- switch(attr(model,'link'),
                     logit = stats::plogis,
-                    cloglog = function(x){-expm1(-exp(x))})
+                    cloglog = cloglog_inv)
 
   # compute the t-distribution quantile at the specified level of confidence -- used to calculate confidence intervals later
   s <- stats::qt((1-level)/2, df = stats::df.residual(model), lower.tail = FALSE)
@@ -128,7 +128,7 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL, all.ne
 
   invlink <- switch(attr(model,"link"),
                     logit = stats::plogis,
-                    cloglog = function(x){-expm1(-exp(x))})
+                    cloglog = cloglog_inv)
 
   formula <- attr(model,'call')$formula
   PoolSizeName <- attr(model,'PoolSizeName')
@@ -198,7 +198,7 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
   formula <- model$formula$formula
   invlink <- switch(model$link,
                     logit = stats::plogis,
-                    cloglog = function(x){-expm1(-exp(x))})
+                    cloglog = cloglog_inv)
 
   PoolSizeName <- model$PoolSizeName
 
@@ -467,19 +467,111 @@ meanlinknormal <- function(mu, sigma, invlink){
   } else if(sigma == 0){ #at zero sigma, the link-normal r.v. reduces to a point mass --- no integration required
     return(invlink(mu))
   } else{
-    integral <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
-                                     lower = -Inf, upper = Inf)$value,
+    .mean <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
+                                     lower = -Inf, upper = Inf, abs.tol =  -1)$value,
                     silent = TRUE)
-    if(inherits(integral,'try-error') || integral * 10 < invlink(mu)){
-      integral <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
-                                       lower = mu - sigma * 10, upper = mu + sigma * 10)$value,
+    if(inherits(.mean,'try-error') || .mean * 10 < invlink(mu)){
+      .mean <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
+                                       lower = mu - sigma * 5, upper = mu + sigma * 5, abs.tol = -1)$value,
                       silent = TRUE)
-      if(inherits(integral,'try-error') || integral * 10 < invlink(mu)){
-        warning('integration failed for mu = ', mu, ' and sigma = ', sigma, ', with error: \n',attr(integral, 'condition')$message, '\nResult will be NA')
-        integral <- NA
+      if(inherits(.mean,'try-error') || .mean * 10 < invlink(mu)){
+        warning('integration failed for mu = ', mu, ' and sigma = ', sigma, ', with error: \n',attr(.mean, 'condition')$message, '\nResult will be NA')
+        .mean <- NA
       }
     }
-    return(integral)
+    return(.mean)
   }
+}
+
+
+meanvarlinknormal <- function(mu, sigma, invlink){
+  .mean <- meanlinknormal(mu, sigma, invlink)
+  .var <- meanlinknormal(mu, sigma, \(x){(invlink(x) - .mean)^2})
+  return(c(mean = .mean, var = .var))
+}
+
+cloglog_inv <- function(x){-expm1(-exp(x))}
+
+ICC <- function(mu, sigma, link, .mean = NULL, method = 'nested'){
+  
+  if(!is.character(link)){stop('link should be a name of a link function; either logit or cloglog')}
+  
+  invlink <- switch(link,
+                    'logit' = stats::plogis,
+                    'cloglog' = cloglog_inv,
+                    stop(link, ' is not a supported link'))
+  
+  #sigma (sd of random effect on linear scale) are assumed ordered from biggest
+  #group to smallest. Output ICCs are returned in the same order
+  
+  sigma_tot <- sqrt(sum(sigma^2))
+  L <- length(sigma) # Number of levels in clustering
+  
+  #prevalence -- possible to provide to avoid recalculation if already calculated
+  if(is.null(.mean)){
+    .mean <- meanlinknormal(mu, sigma_tot, invlink) 
+  }
+  
+  #variance of group-level prevalence at each level ...
+  .var <- numeric(L)
+  #...starting with lowest...
+  .var[L] <- meanlinknormal(mu, sigma_tot, \(x){(invlink(x) - .mean)^2}) 
+  if(L > 1){
+    for(l in 1:(L-1)){ #...then the remaining levels
+      sigma_l <- sqrt(sum(sigma[(l+1):L]^2)) # sqrt of total variance at lower levels
+      sigma_h <- sqrt(sum(sigma[1:l]^2))     # sqrt of total variance at higher levels
+
+      # if(method == 'triple'){
+      #   sgm <- c(sigma_l, sigma_l, sigma_h)
+      #   .var[l] <- cubature::hcubature(\(x){
+      #     invlink(x[1] + x[3] + mu) *
+      #       invlink(x[2] + x[3] + mu) *
+      #       prod(stats::dnorm(x,sd = sgm))},
+      #     lowerLimit = sgm * -10,
+      #     upperLimit = sgm * 10
+      #   )$integral - .mean^2
+      # }
+      if(method == 'nested'){
+        .var[l] <- meanlinknormal(0, sigma_h,
+                                  \(x){(Vectorize(meanlinknormal, 'mu')(mu + x, sigma_l,invlink) - .mean)^2})
+      }
+      if(method == 'approx'){
+        # similar to 'nested' except the mean of link normal is approximated by
+        # function related to the link with a scaling. Calculating the scaling
+        # requires computing the mean link normal once, but avoids repeated
+        # computations. This approximation is reasonable for logitnormal, but
+        # pretty poor for cloglog. See test/ApproximatingMeanLinkNormal.R for a
+        # more complicated approximation which works ok for cloglog and logit
+        
+        linkf <- switch(link,
+                       'logit' = stats::qlogis,
+                       stop(link, " is not a supported link for method = 'approx'"))                       
+        
+        scaling <- linkf(meanlinknormal(sigma_l, sigma_l, invlink))/sigma_l
+        .var[l] <- meanlinknormal(0, sigma_h,
+                                  \(x){(invlink((mu + x) * scaling) - .mean)^2})
+      }
+    }
+  }
+  icc <- .var/ (.mean * (1 - .mean))
+  if(any(icc<0) | any(icc>1) | is.unsorted(icc)){ #check for numerical issues
+    if(method == 'approx'){# if using the approx method try using
+      return(ICC(mu, sigma, link, .mean, method = 'nested'))
+    }else{
+      wrng <- paste('There has been a numeric integration error.',
+                    ' The calculated ICC =', paste(icc, collapse = ', '), ' for inputs',
+                    ' mu = ', mu,
+                    ' sigma = ', paste(sigma, collapse = ', '),
+                    ' and link = ', link)
+      if(any(icc<0) | any(icc>1)){
+        wrng <- paste0(wrng, '. ICC must be 0<=ICC<=1.')
+      }
+      if(is.unsorted(icc)){
+        wrng <- paste0(wrng, '. ICC must increase as you move from higher to lower sampling levels.')
+      }
+      warning(wrng)
+    }
+  }
+  icc
 }
 

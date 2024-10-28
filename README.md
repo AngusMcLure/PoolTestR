@@ -9,7 +9,9 @@ PoolTestR is an R package with tools for working with pooled or grouped samples,
 
 More features are planned or in the works: spatial mapping; models for combining and comparing results from human-based and vector-based surveillance, adjustments for imperfect test specificity/sensitivity; functions for helping with optimal experimental design; functions for inferring whether a disease has been locally eliminated from a series of pooled tests over time. Suggestions and contributions are welcome.
 
-If you find this package helpful, please [let us know](mailto:angus.mclure@anu.edu.au) -- we'd love to hear how it's being used. The details of our package are described in an [article published in Environmental Modelling and Software](https://doi.org/10.1016/j.envsoft.2021.105158). We are happy to share a pdf of this article with you [on request](mailto:angus.mclure@anu.edu.au).
+The details of our package are described in an [article published in Environmental Modelling and Software](https://doi.org/10.1016/j.envsoft.2021.105158). We are happy to share a pdf of this article with you [on request](mailto:angus.mclure@anu.edu.au).
+
+If you find this package helpful, please [let us know](mailto:angus.mclure@anu.edu.au) -- we'd love to hear how it's being used.
 
 ## Installation
 ### Basic Installation
@@ -22,24 +24,48 @@ install.packages("PoolTestR")
 This will install an old version of PoolTestR that lacks key features. In particular, Bayesian regression modelling (via function ```PoolRegBayes```) will probably not work.
 
 ### Advanced Installation
-To use the full functionality of the package, including running Bayesian regression models, you will need a working version of RTools on your machine and latest versions of two packages, StanHeaders and rstan. Install RTools following the instructions [here](https://cran.r-project.org/bin/windows/Rtools/rtools43/rtools.html). Install the latest versions of StanHeaders and rstan with:
+To use the full functionality of the package, including running Bayesian regression models, you will need either `RTools` (for Windows) or `macrtools` (for Mac OS). You will also need the latest versions of two packages, `StanHeaders` and `rstan`.  
 
+#### 1. Install necessary software
+Download the necessary software for your operating system:
+
+  - **Windows:** 
+    - Install `RTools` following the instructions [here](https://cran.r-project.org/bin/windows/Rtools/rtools43/rtools.html). 
+  - **Mac OS:** 
+    - Install the R package `macrtools` following the instructions [here](https://github.com/coatless-mac/macrtools?#quick-start)
+```R
+## From macrtools documentation, retrived 18/10/2024
+# install.packages("remotes")
+remotes::install_github("coatless-mac/macrtools")
+```
+    - Use `macrtools` to install the required components (XCode CLI, gfortran, and R Development binaries from the Recipes project) following the instructions [here](https://github.com/coatless-mac/macrtools?#quick-start)
+```R
+## From macrtools documentation, retrived 18/10/2024
+macrtools::macos_rtools_install()
+```
+
+#### 2. Install `Stanheaders` and `rstan`
+Install latest version of `Stanheaders` and `rstan` with:
 ```R
 install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
-Though PoolTestR is now at v0.2.0 with additional features and bug fixes, this cannot be made available on CRAN until StanHeaders and rstan have been updated on CRAN also. To also install the most up-to-date version of PoolTestR directly from github, in addition to the above steps also run
-
+#### 3. Install the current version of `PoolTestR`.
+Though PoolTestR is now at v0.2.0 with additional features and bug fixes, this cannot be made available on CRAN until `StanHeaders` and `rstan` have been updated on CRAN also. To also install the most up-to-date version of `PoolTestR` directly from GitHub, in addition to the above steps also run:
 ```R
-install.packages("devtools") #you can skip this if you already have devtools installed
-options(timeout = 300) #increases time-limit for downloading the package to 300 seconds. Useful for slow connections.
+install.packages("devtools") # you can skip this if you already have devtools installed
+options(timeout = 300) # increases time-limit for downloading package to 300 seconds (for slow connections)
 devtools::install_github("AngusMcLure/PoolTestR")
 ```
+If installing from source (the only option if installing from GitHub) this will take some time (really depends on your machine, perhaps up to an hour) and probably produce a lot of text in your R console. The text is related to the compilation of stan source code. 
 
-If installing from source (the only option if installing from github) this will take some time (really depends on your machine, perhaps up to an hour) and probably produce a lot of text in your R console. The text is related to the compilation of stan source code. If installing from CRAN (basic installation) installation should be very fast and not generate any warning messages. 
+If installing from CRAN (basic installation) installation should be very fast and not generate any warning messages. 
 
-Note: In the past, some windows users needed to adjust some settings (in the Makevars file) to install the package correctly, because of issues in other packages on which PoolTestR relies. These other packages have addressed these issues in most cases, so manual adjustments *shouldn't* be needed. However, future updates may break this. Please [let us know](mailto:angus.mclure@anu.edu.au) if you have issues with installation. 
+**Note:** In the past, some Windows users needed to adjust some settings (in the `Makevars` file) to install the package correctly, because of issues in other packages on which PoolTestR relies. These other packages have addressed these issues in most cases, so manual adjustments *shouldn't* be needed. However, future updates may break this. 
+
+**Please [let us know](mailto:angus.mclure@anu.edu.au) if you have issues with installation.**
+
 
 ## Usage
 

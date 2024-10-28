@@ -50,16 +50,37 @@
 #'   \code{adapt_delta} which is set to the more conservative value of 0.9. See
 #'   \link[rstan]{stan} for details.
 #' @return A \code{data.frame} with columns:
-#'   \itemize{\item{\code{PrevBayes} the (Bayesian) posterior expectation}
+#'   \itemize{\item{\code{PrevBayes} -- the (Bayesian) posterior expectation}
 #'            \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds
 #'                  for credible intervals}
 #'            \item{\code{NumberOfPools} -- number of pools}
-#'            \item{\code{NumberPositive} -- the number of positive pools} }
+#'            \item{\code{NumberPositive} -- the number of positive pools}
+#'            \item{\code{ICC} -- the estimated intra-cluster correlation 
+#'                  coefficient}
+#'            \item{\code{ICC_CrILow} and \code{ICC_CrIHigh} -- lower and upper
+#'                  bounds for credible intervals of the estimated ICC} }
+#'                  
+#'   The three ICC columns (\code{ICC}, \code{ICC_CrILow} and 
+#'   \code{ICC_CrIHigh}) are matrix columns. These contain one column for each
+#'   variable included in the \code{hierarchy}. E.g., if the input hierarchy is
+#'   \code{c("Village", "Site")}, each of the three ICC matrix columns will 
+#'   contain one column with results for \code{Village} and one column with 
+#'   results for \code{Site}.
+#'   
 #'   If grouping variables are provided in \code{...} there will be an
 #'   additional column for each grouping variable. When there are no grouping
 #'   variables (supplied in \code{...}) then the output has only one row with
 #'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
+#'   
+#'   The custom print method summarises the output data frame by representing 
+#'   output variables with credible intervals (i.e., \code{PrevBayes}, 
+#'   \code{ICC}) as a single column in the form \code{"X (CrILow - CrIHigh)"} 
+#'   where \code{X} is the variable, \code{CrILow} is the lower credible 
+#'   interval and \code{CrIHigh} is the upper credible interval. In the print 
+#'   method,  prevalence \code{PrevBayes} is represented as a percentage (i.e., 
+#'   per 100 units).
+#'   
 #'
 #' @seealso \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
 #'
@@ -97,14 +118,14 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
   result <- enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
   groupVar <- enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
-
+  
   # Ideally I would like to:
   # Set number of cores to use (use all the cores! BUT when checking R
   # packages they limit you to two cores)
   # However, there appear to be some issues where running in parallel is a
   # lot slower sometimes. So I am setting 1 core as default, but keeping this
   # code here so I change later if I iron out parallel issues
-
+  
   if(is.null(cores)){
     chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
     if (nzchar(chk) && chk == "TRUE") {
@@ -114,10 +135,9 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
       cores <- 1L
     }
   }
-  #if(!is.integer(cores)){stop("Number of cores must be numeric")}
-
+  
   if(length(groupVar) == 0){ #if there are no grouping variables
-
+    
     #Make the model matrix for the group effects - there might be a simpler way of doing this...
     G <- data[,hierarchy,drop = FALSE] %>%
       mutate_all(as.factor) %>%
@@ -140,24 +160,24 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                   #G = G, #The group membership for each data point and level of hierarchy
                   Z = Z,
                   # Parameters for t-distributed priors for:
-                    #  Intercept
+                  #  Intercept
                   InterceptNu    = rplnull(prior$intercept$nu,3),
                   InterceptMu    = rplnull(prior$intercept$mu,0),
                   InterceptSigma = rplnull(prior$intercept$sigma,4),
-                    # Standard deviations of group-effects
+                  # Standard deviations of group-effects
                   GroupSDNu      = rplnull(prior$group_sd$nu,3),
                   GroupSDMu      = rplnull(prior$group_sd$mu,0),
                   GroupSDSigma   = rplnull(prior$group_sd$sigma,2.5)
-                  )
+    )
     #print(sdata)
     model <- if(rplnull(prior$inidividual_sd,FALSE)){
       stanmodels$HierPoolPrevIndividualSD
-      }else{
-        stanmodels$HierPoolPrevTotalSD
-      }
+    }else{
+      stanmodels$HierPoolPrevTotalSD
+    }
     sfit <- rstan::sampling(model,
                             data = sdata,
-                            pars = c('Intercept', 'total_group_sd'),
+                            pars = c('Intercept', 'total_group_sd','group_sd'),
                             chains = chains,
                             iter = iter,
                             warmup = warmup,
@@ -165,13 +185,21 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                             cores = cores,
                             control = control)
     #return(sfit)
-    sfit <- as.matrix(sfit)[,c('Intercept', 'total_group_sd')] %>%
-      as.data.frame
-    sfit$p <- mapply(meanlinknormal,
-                     sfit$Intercept,
-                     sfit$total_group_sd,
-                     list(stats::plogis))
-
+    sfit <- extract(sfit) %>% as_tibble() %>% rowwise()
+    
+    prevICC <- sfit %>%
+      transmute(prev = meanlinknormal(Intercept,
+                                      total_group_sd,
+                                      stats::plogis),
+                ICC = t(ICC(Intercept[1],
+                            group_sd,
+                            .mean = prev,
+                            link = 'logit',
+                            method = 'approx')))
+    prev <- prevICC$prev
+    ICC <- prevICC$ICC
+    colnames(ICC) <- hierarchy
+    
     if(all.negative.pools == 'zero' & sum(sdata$Result) == 0){
       estimate.type <- 'zero'
     }else if(!(all.negative.pools %in% c('zero', 'consistent'))){
@@ -179,29 +207,28 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     } else{
       estimate.type = 'consistent'
     }
-
-    out <- data.frame(PrevBayes =
-                        switch(estimate.type,
-                               consistent = mean(sfit$p),
-                               zero = 0)
-                      )
-    out[,'CrILow'] <- switch(estimate.type,
-                             consistent = stats::quantile(sfit$p,(1-level)/2),
-                             zero = 0)
-
-    out[,'CrIHigh'] <-  switch(estimate.type,
-                               consistent = stats::quantile(sfit$p,(1+level)/2),
-                               zero = stats::quantile(sfit$p,level))
-
-
-    out[,'NumberOfPools'] <- sdata$N
-    out[,'NumberPositive'] <- sum(sdata$Result)
-
-    out <- out %>%
-      select('PrevBayes',
-                    'CrILow','CrIHigh',
-                    'NumberOfPools', 'NumberPositive')
-
+    
+    out <- tibble::tibble(PrevBayes =
+                            switch(estimate.type,
+                                   consistent = mean(prev),
+                                   zero = 0)
+    )
+    out$CrILow <- switch(estimate.type,
+                         consistent = stats::quantile(prev,(1-level)/2),
+                         zero = 0)
+    
+    out$CrIHigh <-  switch(estimate.type,
+                           consistent = stats::quantile(prev,(1+level)/2),
+                           zero       = stats::quantile(prev,   level   ))
+    
+    out$NumberOfPools <- sdata$N
+    out$NumberPositive <- sum(sdata$Result)
+    
+    out$ICC <- ICC %>% apply(2, median) %>% t()
+    out$ICC_CrILow  <- ICC %>% apply(2, stats::quantile, probs = (1-level)/2) %>% t()
+    out$ICC_CrIHigh <- ICC %>% apply(2, stats::quantile, probs = (1+level)/2) %>% t()
+    
+    out <- new_HierPoolPrevOutput(out)
     out
   }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
     data <- data %>%
@@ -222,9 +249,148 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                      chains = chains, control = control,
                      all.negative.pools = all.negative.pools)
       }) %>%
-      as.data.frame()
+      ungroup
     ProgBar$tick(1)
   }
-  tibble(out)
+  colnames(out$ICC) <- colnames(out$ICC_CrILow) <- colnames(out$ICC_CrIHigh) <- hierarchy
+  out <- new_HierPoolPrevOutput(out)
+  out
 }
 
+
+#' Constructor for HierPoolPrevOutput class
+#' Allows for nicely-formatted human-readable output using a custom \code{print}
+#' method 
+#' Don't export - users do not need to construct HierPoolPrevOutput objects
+#' 
+#' @param x a tibble output by the \code{\link{HierPoolPrev}} function
+#' 
+#' @keywords internal
+#' @noRd
+new_HierPoolPrevOutput <- function(x = tbl()) {
+  stopifnot(is.tbl(x))
+  
+  prev_class <- class(x)
+  structure(x,
+            class = c("HierPoolPrevOutput", prev_class)
+  )
+}
+
+
+#' Print method for HierPoolPrevOutput objects
+#' S3 method
+#' 
+#' @param object An object of class "HierPoolPrevOutput" as returned by 
+#' \code{\link{HierPoolPrev}}.
+#' 
+#' @return A \code{data.frame} output by  \code{HierPoolPrev}, in a human 
+#' readable format
+#' 
+#' @seealso \code{\link{HierPoolPrev}}
+#' 
+#' @method print HierPoolPrevOutput
+#' @export
+#' @noRd
+print.HierPoolPrevOutput <- function(x, ...) {
+  # Reformat HierPoolPrevOutput into a human-readable data.frame
+  icc_names <- attr(x$ICC, "dimnames")[[2]]
+  trimmed_object <- x %>% 
+    mutate(PrevBayes = paste0(" ",
+                              format((PrevBayes*100), digits = 2, nsmall = 2),
+                              " (", 
+                              format((CrILow*100), digits = 2, nsmall = 2),
+                              " - ", 
+                              format((CrIHigh*100), digits = 2, nsmall = 2),
+                              ")"),
+           .keep = "unused") %>%
+    select(-contains("ICC", ignore.case = TRUE)) %>%
+    rename("PrevBayes % " = "PrevBayes")
+  # Reformat matrix columns by clustering variable
+  icc_tbls <- lapply(icc_names, extract_matrix_column_ICC, x)
+  formatted_output <- as.data.frame(bind_cols(trimmed_object, icc_tbls))
+  print(formatted_output)
+  return(invisible(x))
+}
+
+
+#' Extract the correlation columns for a single clustering variable
+#' 
+#' @param cluster_var a single clustering variable (i.e., the name of the one 
+#'  matrix-column)
+#' @param x an object of class "HierPoolPrevOutput"
+#' 
+#' @keywords internal
+#' @noRd
+extract_matrix_column_ICC <- function(cluster_var, x){
+  all_cluster_vars <- attr(x$ICC, "dimnames")[[2]]
+  if (cluster_var %in% all_cluster_vars){
+    # Extract only the columns for this clustering variable
+    matrix_cols <- x %>% 
+      select(grep("ICC", names(x), value = T))
+    cluster_cols <- as_tibble(lapply(names(matrix_cols), 
+                                     function(x){matrix_cols[[x]][ , which(all_cluster_vars == cluster_var)]}), 
+                              .name_repair = "minimal")
+    names(cluster_cols) <- paste0(cluster_var, ".", names(matrix_cols))
+    formatted_cluster_cols <- pretty_format_ICC_column(cluster_cols) # Pretty print
+    return(formatted_cluster_cols)
+  } else {
+    return(NULL)
+  }
+}
+
+#' Take a column and its confidence/credibility intervals and format into 
+#'  pretty, human-readable format
+#'
+#' @param var_df a \code{data.frame} with three columns:
+#'   \itemize{\item{Parameter estimate (e.g., PrevMLE, PrevBayes, ICC)}
+#'            \item{Lower confidence interval (e.g., CILow) or credibility 
+#'              interval (e.g., CrILow)}
+#'            \item{Upper confidence interval (e.g., CIHigh) or credibility 
+#'              interval (e.g., CrIHigh)}
+#'            }
+#'            
+#' @keywords internal
+#' @noRd
+pretty_format_ICC_column <- function(var_df){
+  # Record original column names
+  col_names <- names(var_df)
+  # Set new column names
+  names(var_df)[grep("low", names(var_df), ignore.case = T)] <- "low"
+  names(var_df)[grep("high", names(var_df), ignore.case = T)] <- "high"
+  names(var_df)[grep("low|high", names(var_df), ignore.case = T, invert = T)] <- "param"
+  # Create formatted output column
+  formatted_df <- var_df %>% mutate(
+    output = paste0(" ",
+                    custom_round(param), 
+                    " (", 
+                    custom_round(low), 
+                    " - ", 
+                    custom_round(high), 
+                    ")"),
+    .keep = "none"
+  )
+  # Rename new column as "ICC.<cluster.name>"
+  names(formatted_df) <- 
+    grep("low|high", col_names, ignore.case = T, invert = T, value = T)
+  return(formatted_df)
+}
+
+#' Custom round for ICC columns - maintain 4 sig figs across different
+#' magnitudes of values
+#' 
+#' @keywords internal
+#' @noRd
+custom_round <- function(x) {
+  min_x <- min(x)
+  # Get absolute value of greatest magnitude in column 
+  #   (e.g., for 0.01, magnitude = -2 and absolute magnitude = 2)
+  biggest_mag <- max(abs(round(log10(x))))
+  if (biggest_mag <= 3){
+    # Round to 4dp
+    x_formatted <- sprintf(paste0("%.", 3, "f"), round(x, 3) )
+  } else {
+    # Scientific format
+    x_formatted <- sprintf(paste0("%.", (3 - 1), "e"), signif(x, 3) )
+  }
+  return(x_formatted)
+}

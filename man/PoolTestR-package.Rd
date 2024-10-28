@@ -4,8 +4,10 @@
 \name{PoolTestR-package}
 \alias{PoolTestR-package}
 \alias{PoolTestR}
-\title{The 'PoolTestR' package.}
+\title{PoolTestR: Prevalence and Regression for Pool-Tested (Group-Tested) Data}
 \description{
+An easy-to-use tool for working with presence/absence tests on 'pooled' or 'grouped' samples. The primary application is for estimating prevalence of a marker in a population based on the results of tests on pooled specimens. This sampling method is often employed in surveillance of rare conditions in humans or animals (e.g. molecular xenomonitoring). The package was initially conceived as an R-based alternative to the molecular xenomonitoring software, 'PoolScreen' \url{https://sites.uab.edu/statgenetics/software/}. However, it goes further, allowing for estimates of prevalence to be adjusted for hierarchical sampling frames, and perform flexible mixed-effect regression analyses (McLure et al. Environmental Modelling and Software. \doi{10.1016/j.envsoft.2021.105158}). The package is currently in early stages, however more features are planned or in the works: e.g. adjustments for imperfect test specificity/sensitivity, functions for helping with optimal experimental design, and functions for spatial modelling.
+
 This is a package for working with presence/absence tests on pooled
              or grouped samples. The primary application is for estimating prevalence of
              a marker in a population based on the results of tests on pooled specimens.
@@ -26,3 +28,21 @@ Stan Development Team (2019). RStan: the R interface to Stan. R package version 
 
 Paul-Christian Bürkner (2017). brms: An R Package for Bayesian Multilevel Models Using Stan. Journal of Statistical Software, 80(1), 1-28. <DOI:10.18637/jss.v080.i01>
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/AngusMcLure/PoolTestR}
+  \item Report bugs at \url{https://github.com/AngusMcLure/PoolTestR}
+}
+
+}
+\author{
+\strong{Maintainer}: Angus McLure \email{angus.mclure@anu.edu.au} (\href{https://orcid.org/0000-0003-2551-3059}{ORCID})
+
+Other contributors:
+\itemize{
+  \item Caitlin Cherryh (\href{https://orcid.org/0000-0001-6146-4376}{ORCID}) [contributor]
+}
+
+}
+\keyword{internal}
