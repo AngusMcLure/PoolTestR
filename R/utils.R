@@ -11,7 +11,7 @@ extract_matrix_column_ICC <- function(cluster_var, x){
   if (cluster_var %in% all_cluster_vars){
     # Extract only the columns for this clustering variable
     matrix_cols <- x %>%
-      select(grep("ICC", names(x), value = T))
+      select(grep("ICC", names(x), value = TRUE))
     cluster_cols <- tibble::as_tibble(
       lapply(
         names(matrix_cols),
@@ -43,23 +43,23 @@ pretty_format_ICC_column <- function(var_df){
   # Record original column names
   col_names <- names(var_df)
   # Set new column names
-  names(var_df)[grep("low", names(var_df), ignore.case = T)] <- "low"
-  names(var_df)[grep("high", names(var_df), ignore.case = T)] <- "high"
-  names(var_df)[grep("low|high", names(var_df), ignore.case = T, invert = T)] <- "param"
+  names(var_df)[grep("low", names(var_df), ignore.case = TRUE)] <- "low"
+  names(var_df)[grep("high", names(var_df), ignore.case = TRUE)] <- "high"
+  names(var_df)[grep("low|high", names(var_df), ignore.case = TRUE, invert = TRUE)] <- "param"
   # Create formatted output column
-  formatted_df <- var_df %>% mutate(
-    output = paste0(" ",
-                    custom_round(param),
-                    " (",
-                    custom_round(low),
-                    " - ",
-                    custom_round(high),
-                    ")"),
-    .keep = "none"
-  )
+  formatted_df <- var_df %>% 
+    mutate(
+      output = paste0(" ",
+                      custom_round(.data$param),
+                      " (",
+                      custom_round(.data$low),
+                      " - ",
+                      custom_round(.data$high),
+                      ")"),
+      .keep = "none"
+    )
   # Rename new column as "ICC.<cluster.name>"
-  names(formatted_df) <-
-    grep("low|high", col_names, ignore.case = T, invert = T, value = T)
+  names(formatted_df) <- grep("low|high", col_names, ignore.case = TRUE, invert = TRUE, value = TRUE)
   return(formatted_df)
 }
 

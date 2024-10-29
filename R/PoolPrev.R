@@ -167,7 +167,7 @@ PoolPrev <- function(data,result,poolSize,...,
     }
     
     #initialise output object
-    out <- dplyr::tibble(NumberOfPools = sdata$N,
+    out <- tibble::tibble(NumberOfPools = sdata$N,
                           NumberPositive = sum(sdata$Result))
     
     #if there is at least one positive and one negative result
@@ -318,11 +318,11 @@ print.PoolPrevOutput <- function(x, ...) {
   formatted_output <- as.data.frame(
     ungroup(x) %>% 
       mutate(PrevMLE = paste0(" ",
-                              format((PrevMLE*100), digits = 2, nsmall = 2),
+                              format((.data$PrevMLE*100), digits = 2, nsmall = 2),
                               " (", 
-                              format((CILow*100), digits = 2, nsmall = 2),
+                              format((.data$CILow*100), digits = 2, nsmall = 2),
                               " - ", 
-                              format((CIHigh*100), digits = 2, nsmall = 2),
+                              format((.data$CIHigh*100), digits = 2, nsmall = 2),
                               ")"),
              .keep = "unused")  %>%
       rename("PrevMLE % " = "PrevMLE")
@@ -332,11 +332,11 @@ print.PoolPrevOutput <- function(x, ...) {
     formatted_output <- as.data.frame(
       formatted_output %>% 
         mutate(PrevBayes = paste0(" ",
-                                  format((PrevBayes*100), digits = 2, nsmall = 2),
+                                  format((.data$PrevBayes*100), digits = 2, nsmall = 2),
                                   " (", 
-                                  format((CrILow*100), digits = 2, nsmall = 2),
+                                  format((.data$CrILow*100), digits = 2, nsmall = 2),
                                   " - ", 
-                                  format((CrIHigh*100), digits = 2, nsmall = 2),
+                                  format((.data$CrIHigh*100), digits = 2, nsmall = 2),
                                   ")"),
                .keep = "unused")  %>%
         rename("PrevBayes % " = "PrevBayes")

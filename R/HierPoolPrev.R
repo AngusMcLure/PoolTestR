@@ -184,14 +184,14 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                             cores = cores,
                             control = control)
     #return(sfit)
-    sfit <- extract(sfit) %>% dplyr::as_tibble() %>% rowwise()
+    sfit <- extract(sfit) %>% tibble::as_tibble() %>% rowwise()
     
     prevICC <- sfit %>%
-      transmute(prev = meanlinknormal(Intercept,
-                                      total_group_sd,
+      transmute(prev = meanlinknormal(.data$Intercept,
+                                      .data$total_group_sd,
                                       stats::plogis),
-                ICC = t(ICC(Intercept[1],
-                            group_sd,
+                ICC = t(ICC(.data$Intercept[1],
+                            .data$group_sd,
                             .mean = prev,
                             link = 'logit',
                             method = 'approx')))
@@ -207,7 +207,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
       estimate.type = 'consistent'
     }
     
-    out <- dplyr::tibble(PrevBayes =
+    out <- tibble::tibble(PrevBayes =
                             switch(estimate.type,
                                    consistent = mean(prev),
                                    zero = 0)
@@ -283,11 +283,11 @@ print.HierPoolPrevOutput <- function(x, ...) {
   icc_names <- attr(x$ICC, "dimnames")[[2]]
   trimmed_object <- x %>% 
     mutate(PrevBayes = paste0(" ",
-                              format((PrevBayes*100), digits = 2, nsmall = 2),
+                              format((.data$PrevBayes*100), digits = 2, nsmall = 2),
                               " (", 
-                              format((CrILow*100), digits = 2, nsmall = 2),
+                              format((.data$CrILow*100), digits = 2, nsmall = 2),
                               " - ", 
-                              format((CrIHigh*100), digits = 2, nsmall = 2),
+                              format((.data$CrIHigh*100), digits = 2, nsmall = 2),
                               ")"),
            .keep = "unused") %>%
     select(-contains("ICC", ignore.case = TRUE)) %>%

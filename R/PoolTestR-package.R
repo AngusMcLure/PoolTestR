@@ -22,6 +22,7 @@
 #' @import methods
 #' @import Rcpp
 #' @import rstan
+#' @importFrom rlang .data
 #'
 #' @references
 #'
