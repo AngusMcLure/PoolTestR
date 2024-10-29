@@ -107,8 +107,6 @@
 #' you can use: \code{list(individual_sd = TRUE)}, which puts a prior on each
 #' the standard deviations of each of group-level effects separately, but
 #' doesn't change the priors used.
-#'
-
 
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                          prior = NULL,
@@ -186,7 +184,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                             cores = cores,
                             control = control)
     #return(sfit)
-    sfit <- extract(sfit) %>% as_tibble() %>% rowwise()
+    sfit <- extract(sfit) %>% dplyr::as_tibble() %>% rowwise()
     
     prevICC <- sfit %>%
       transmute(prev = meanlinknormal(Intercept,
@@ -209,7 +207,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
       estimate.type = 'consistent'
     }
     
-    out <- tibble::tibble(PrevBayes =
+    out <- dplyr::tibble(PrevBayes =
                             switch(estimate.type,
                                    consistent = mean(prev),
                                    zero = 0)
@@ -225,7 +223,7 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
     out$NumberOfPools <- sdata$N
     out$NumberPositive <- sum(sdata$Result)
     
-    out$ICC <- ICC %>% apply(2, median) %>% t()
+    out$ICC <- ICC %>% apply(2, stats::median) %>% t()
     out$ICC_CrILow  <- ICC %>% apply(2, stats::quantile, probs = (1-level)/2) %>% t()
     out$ICC_CrIHigh <- ICC %>% apply(2, stats::quantile, probs = (1+level)/2) %>% t()
     
@@ -300,4 +298,3 @@ print.HierPoolPrevOutput <- function(x, ...) {
   print(formatted_output)
   return(invisible(x))
 }
-

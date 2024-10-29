@@ -12,9 +12,12 @@ extract_matrix_column_ICC <- function(cluster_var, x){
     # Extract only the columns for this clustering variable
     matrix_cols <- x %>%
       select(grep("ICC", names(x), value = T))
-    cluster_cols <- as_tibble(lapply(names(matrix_cols),
-                                     function(x){matrix_cols[[x]][ , which(all_cluster_vars == cluster_var)]}),
-                              .name_repair = "minimal")
+    cluster_cols <- tibble::as_tibble(
+      lapply(
+        names(matrix_cols),
+        function(x){matrix_cols[[x]][ , which(all_cluster_vars == cluster_var)]}
+      ),
+      .name_repair = "minimal")
     names(cluster_cols) <- paste0(cluster_var, ".", names(matrix_cols))
     formatted_cluster_cols <- pretty_format_ICC_column(cluster_cols) # Pretty print
     return(formatted_cluster_cols)

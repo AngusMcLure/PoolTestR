@@ -79,13 +79,10 @@
 #'   prevalence, \code{CLow} is the lower confidence/credible interval and 
 #'   \code{CHigh} is the upper confidence/credible interval. When printed, the
 #'   prevalence estimate is represented as a percentage (i.e., per 100 units)
-#'   
 #'
 #' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
 #'
 #' @example examples/Prevalence.R
-
-
 
 PoolPrev <- function(data,result,poolSize,...,
                      bayesian = TRUE, prior = NULL,
@@ -170,7 +167,7 @@ PoolPrev <- function(data,result,poolSize,...,
     }
     
     #initialise output object
-    out <- tibble::tibble(NumberOfPools = sdata$N,
+    out <- dplyr::tibble(NumberOfPools = sdata$N,
                           NumberPositive = sum(sdata$Result))
     
     #if there is at least one positive and one negative result

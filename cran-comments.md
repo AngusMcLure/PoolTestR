@@ -13,7 +13,7 @@ There may be 4 NOTEs depending on platform (and psuedo-random number generation)
 * ```checking dependencies in R code ... NOTE
   Namespace in Imports field not imported from: 'RcppParallel' 'rstantools'
   All declared Imports should be used.```
-  PoolTestR *does* use both of these pacakges, so this NOTE is erroneous.
+  PoolTestR *does* use both of these packages, so this NOTE is erroneous.
 * ```installed package size ... NOTE```
   The large files appear to be in ```libs```, but the size appears to be highly platform dependent. On my local build this is only ~3 MB but in others it is >40 MB. I'm not sure how to avoid this issue and I am guessing it is largely outside of the scope of my package.
   
