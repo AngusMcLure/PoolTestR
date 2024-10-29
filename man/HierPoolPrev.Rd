@@ -83,7 +83,9 @@ estimate and lower bound for the interval and \code{level} posterior
 quantile the upper bound of the interval.}
 }
 \value{
-A \code{data.frame} with columns:
+An object of class \code{HierPoolPrevOutput}, which inherits from 
+class \code{tbl}. 
+The output includes the following columns:
   \itemize{\item{\code{PrevBayes} -- the (Bayesian) posterior expectation}
            \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds
                  for credible intervals}
@@ -107,13 +109,13 @@ A \code{data.frame} with columns:
   the prevalence estimates for the whole dataset. When grouping variables are
   supplied, then there is a separate row for each group.
   
-  The custom print method summarises the output data frame by representing 
-  output variables with credible intervals (i.e., \code{PrevBayes}, 
-  \code{ICC}) as a single column in the form \code{"X (CrILow - CrIHigh)"} 
-  where \code{X} is the variable, \code{CrILow} is the lower credible 
-  interval and \code{CrIHigh} is the upper credible interval. In the print 
-  method,  prevalence \code{PrevBayes} is represented as a percentage (i.e., 
-  per 100 units).
+  The custom print method for class \code{HierPoolPrevOutput} summarises the 
+  output data frame. Output variables with credible intervals (i.e., 
+  \code{PrevBayes}, \code{ICC}) are printed in a single column with the form
+  \code{"X (CrILow - CrIHigh)"} where \code{X} is the variable, \code{CrILow} 
+  is the lower credible interval and \code{CrIHigh} is the upper credible 
+  interval. When printed,  the prevalence estimate \code{PrevBayes} is 
+  represented as a percentage (i.e., per 100 units).
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples in

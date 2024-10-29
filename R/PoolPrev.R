@@ -48,7 +48,9 @@
 #'   Defaults to default values as defined in \link[rstan]{stan}, except for
 #'   \code{adapt_delta} which is set to the more conservative value of 0.9. See
 #'   \link[rstan]{stan} for details. Ignored if \code{bayesian == FALSE}.
-#' @return A \code{data.frame} with columns:
+#' @return An object of class \code{PoolPrevOutput}, which inherits from 
+#' class \code{tbl}. 
+#' The output includes the following columns:
 #'   \itemize{
 #'     \item{\code{PrevMLE} -- (the Maximum Likelihood Estimate of prevalence)}
 #'     \item{\code{CILow} and \code{CIHigh} - lower and upper confidence 
@@ -71,12 +73,12 @@
 #'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
 #'   
-#'   The custom print method summarises the output data frame by representing 
-#'   the prevalence and credible intervals as a single column in the form 
-#'   \code{"Prev (CLow - CHigh)"} where \code{Prev} is the prevalence, 
-#'   \code{CLow} is the lower confidence/credible interval and \code{CHigh} is 
-#'   the upper confidence/credible interval. In the print method, prevalence is 
-#'   represented as a percentage (i.e., per 100 units)
+#'   The custom print method for class \code{PoolPrevOutput} summarises the 
+#'   output by representing the prevalence and credible intervals as a single 
+#'   column in the form \code{"Prev (CLow - CHigh)"} where \code{Prev} is the 
+#'   prevalence, \code{CLow} is the lower confidence/credible interval and 
+#'   \code{CHigh} is the upper confidence/credible interval. When printed, the
+#'   prevalence estimate is represented as a percentage (i.e., per 100 units)
 #'   
 #'
 #' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
