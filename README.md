@@ -52,7 +52,7 @@ install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption
 ```
 
 #### 3. Install the current version of `PoolTestR`.
-Though PoolTestR is now at v0.2.0 with additional features and bug fixes, this cannot be made available on CRAN until `StanHeaders` and `rstan` have been updated on CRAN also. To also install the most up-to-date version of `PoolTestR` directly from GitHub, in addition to the above steps also run:
+To also install the most up-to-date version of `PoolTestR` directly from GitHub, in addition to the above steps also run:
 ```R
 install.packages("devtools") # you can skip this if you already have devtools installed
 options(timeout = 300) # increases time-limit for downloading package to 300 seconds (for slow connections)
