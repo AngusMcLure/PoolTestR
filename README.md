@@ -21,7 +21,7 @@ To install the latest version of PoolTestR available on CRAN (the official repos
 install.packages("PoolTestR")
 ```
 
-This will install an old version of PoolTestR that lacks key features. In particular, Bayesian regression modelling (via function ```PoolRegBayes```) will probably not work.
+This will install an old version of PoolTestR that lacks the latest features. In addition, Bayesian regression modelling (via function ```PoolRegBayes```) may require you to install additional software.
 
 ### Advanced Installation
 To use the full functionality of the package, including running Bayesian regression models, you will need either `RTools` (for Windows) or `macrtools` (for Mac OS). You will also need the latest versions of two packages, `StanHeaders` and `rstan`.  
