@@ -265,20 +265,20 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
       select(-all_of(PoolSizeName)) %>%
       rowwise() %>%
       mutate(..zeroest = all.negative.pools == 'zero' && .data$..allnegative)
-    pred$..prev <- t(prev)
+    pred$prev <- t(prev)
     pred <- pred %>%
       mutate(Estimate = ifelse(.data$..zeroest,
                                       0,
                                       ifelse(robust,
-                                             stats::median(.data$..prev, na.rm = TRUE),
-                                             mean(..prev, na.rm = TRUE))),
+                                             stats::median(.data$prev, na.rm = TRUE),
+                                             mean(.data$prev, na.rm = TRUE))),
                     CrILow = ifelse(.data$..zeroest,
                                     0,
-                                    stats::quantile(..prev, 0.5 - level/2)),
+                                    stats::quantile(.data$prev, 0.5 - level/2)),
                     CrIHigh = ifelse(.data$..zeroest,
-                                     stats::quantile(..prev, level),
-                                     stats::quantile(..prev, 0.5 + level/2))) %>%
-      select(-c("..allnegative","..prev","..zeroest")) %>%
+                                     stats::quantile(.data$prev, level),
+                                     stats::quantile(.data$prev, 0.5 + level/2))) %>%
+      select(-c("..allnegative","prev","..zeroest")) %>%
       ungroup()
 
     predlist <- c(predlist,list(pred))
