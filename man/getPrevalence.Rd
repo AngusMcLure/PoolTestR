@@ -53,8 +53,8 @@ one pool is positive. If 'zero' uses 0 as the point estimate and lower
 bound for the interval and \code{level} posterior quantile the upper bound
 of the interval.}
 
-\item{robust}{If \code{FALSE} (default) the point estimate of prevalence is
-the mean over the posterior. If \code{TRUE}, the median over the posterior
+\item{robust}{Logical. If \code{FALSE} (default) the point estimate of
+prevalence is the posterior mean. If \code{TRUE}, the the posterior median
 is used instead.}
 }
 \value{

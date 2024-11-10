@@ -21,8 +21,8 @@
 #' @param re.form A description of which random effects to include in the
 #'   prediction. If omitted, an attempt is made to infer from model and data
 #'   structure.
-#' @param robust If \code{FALSE} (default) the point estimate of prevalence is
-#'   the mean over the posterior. If \code{TRUE}, the median over the posterior
+#' @param robust Logical. If \code{FALSE} (default) the point estimate of
+#'   prevalence is the posterior mean. If \code{TRUE}, the the posterior median
 #'   is used instead.
 #' @param level Defines the confidence level to be used for the confidence and
 #'   credible intervals. Defaults to 0.95 (i.e. 95\% intervals).

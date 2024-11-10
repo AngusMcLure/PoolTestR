@@ -14,6 +14,7 @@ HierPoolPrev(
   hierarchy,
   ...,
   prior = NULL,
+  robust = FALSE,
   level = 0.95,
   verbose = FALSE,
   cores = NULL,
@@ -60,6 +61,10 @@ defined by these columns}
 on the population intercept and standard deviations of group-effect terms.
 See details.}
 
+\item{robust}{Logical. If \code{FALSE} (default) the point estimate of
+prevalence is the posterior mean. If \code{TRUE}, the the posterior median
+is used instead.}
+
 \item{level}{The confidence level to be used for the confidence and credible
 intervals. Defaults to 0.95 (i.e. 95\% intervals)}
 
@@ -91,23 +96,24 @@ The output includes the following columns:
                  for credible intervals}
            \item{\code{NumberOfPools} -- number of pools}
            \item{\code{NumberPositive} -- the number of positive pools}
-           \item{\code{ICC} -- the estimated intra-cluster correlation 
+           \item{\code{ICC} -- the estimated intra-cluster correlation
                  coefficient}
            \item{\code{ICC_CrILow} and \code{ICC_CrIHigh} -- lower and upper
                  bounds for credible intervals of the estimated ICC} }
-                 
-  The three ICC columns (\code{ICC}, \code{ICC_CrILow} and 
+
+  The three ICC columns (\code{ICC}, \code{ICC_CrILow} and
   \code{ICC_CrIHigh}) are matrix columns. These contain one column for each
   variable included in the \code{hierarchy}. E.g., if the input hierarchy is
-  \code{c("Village", "Site")}, each of the three ICC matrix columns will 
-  contain one column with results for \code{Village} and one column with 
+  \code{c("Village", "Site")}, each of the three ICC matrix columns will
+  contain one column with results for \code{Village} and one column with
   results for \code{Site}.
-  
+
   If grouping variables are provided in \code{...} there will be an
   additional column for each grouping variable. When there are no grouping
   variables (supplied in \code{...}) then the output has only one row with
   the prevalence estimates for the whole dataset. When grouping variables are
   supplied, then there is a separate row for each group.
+<<<<<<< Updated upstream
   
   The custom print method for class \code{HierPoolPrevOutput} summarises the 
   output data frame. Output variables with credible intervals (i.e., 
@@ -116,6 +122,16 @@ The output includes the following columns:
   is the lower credible interval and \code{CrIHigh} is the upper credible 
   interval. When printed,  the prevalence estimate \code{PrevBayes} is 
   represented as a percentage (i.e., per 100 units).
+=======
+
+  The custom print method summarises the output data frame by representing
+  output variables with credible intervals (i.e., \code{PrevBayes},
+  \code{ICC}) as a single column in the form \code{"X (CrILow - CrIHigh)"}
+  where \code{X} is the variable, \code{CrILow} is the lower credible
+  interval and \code{CrIHigh} is the upper credible interval. In the print
+  method,  prevalence \code{PrevBayes} is represented as a percentage (i.e.,
+  per 100 units).
+>>>>>>> Stashed changes
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples in
