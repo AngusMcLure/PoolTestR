@@ -83,7 +83,6 @@
 #'   variables (supplied in \code{...}) then the output has only one row with
 #'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
-<<<<<<< Updated upstream
 #'   
 #'   The custom print method for class \code{PoolPrevOutput} summarises the 
 #'   output by representing the prevalence and credible intervals as a single 
@@ -91,7 +90,6 @@
 #'   prevalence, \code{CLow} is the lower confidence/credible interval and 
 #'   \code{CHigh} is the upper confidence/credible interval. When printed, the
 #'   prevalence estimate is represented as a percentage (i.e., per 100 units)
-=======
 #'
 #'   The custom print method summarises the output data frame by representing
 #'   the prevalence and credible intervals as a single column in the form
@@ -100,7 +98,6 @@
 #'   the upper confidence/credible interval. In the print method, prevalence is
 #'   represented as a percentage (i.e., per 100 units)
 #'
->>>>>>> Stashed changes
 #'
 #' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
 #'

@@ -77,7 +77,6 @@
 #'   variables (supplied in \code{...}) then the output has only one row with
 #'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
-<<<<<<< Updated upstream
 #'   
 #'   The custom print method for class \code{HierPoolPrevOutput} summarises the 
 #'   output data frame. Output variables with credible intervals (i.e., 
@@ -86,7 +85,6 @@
 #'   is the lower credible interval and \code{CrIHigh} is the upper credible 
 #'   interval. When printed,  the prevalence estimate \code{PrevBayes} is 
 #'   represented as a percentage (i.e., per 100 units).
-=======
 #'
 #'   The custom print method summarises the output data frame by representing
 #'   output variables with credible intervals (i.e., \code{PrevBayes},
@@ -96,7 +94,6 @@
 #'   method,  prevalence \code{PrevBayes} is represented as a percentage (i.e.,
 #'   per 100 units).
 #'
->>>>>>> Stashed changes
 #'
 #' @seealso \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
 #'
@@ -122,11 +119,8 @@
 #' you can use: \code{list(individual_sd = TRUE)}, which puts a prior on each
 #' the standard deviations of each of group-level effects separately, but
 #' doesn't change the priors used.
-<<<<<<< Updated upstream
-=======
 #' 
 
->>>>>>> Stashed changes
 
 HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
                          prior = NULL, robust = FALSE,
