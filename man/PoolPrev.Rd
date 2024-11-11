@@ -11,9 +11,9 @@ PoolPrev(
   ...,
   bayesian = TRUE,
   prior = NULL,
-  robust = FALSE,
+  robust = TRUE,
   level = 0.95,
-  all.negative.pools = "consistent",
+  all.negative.pools = "zero",
   reproduce.poolscreen = FALSE,
   verbose = FALSE,
   cores = NULL,
@@ -59,21 +59,21 @@ numeric non-negative entries named alpha, beta, and absent. For instance, a
 uniform prior with no probability of true absence can be specified as
 \code{prior = list(alpha = 1, beta = 1, absent = 0}.}
 
-\item{robust}{Logical. If \code{FALSE} (default) the point estimate of
-prevalence is the posterior mean. If \code{TRUE}, the the posterior median
-is used instead. Applies to Bayesian estimates only and therefore ignored
-if \code{bayesian = FALSE}.}
+\item{robust}{Logical. If \code{TRUE} (default), the point estimate of 
+prevalence is the posterior median. If \code{FALSE}, the posterior mean is
+used instead. Applies to Bayesian estimates only and therefore ignored if 
+\code{bayesian = FALSE}.}
 
 \item{level}{Defines the confidence level to be used for the confidence and
 credible intervals. Defaults to 0.95 (i.e. 95\% intervals)}
 
 \item{all.negative.pools}{The kind of point estimate and interval to use when
-all pools are negative (Bayesian estimates only). If 'consistent' (default)
-result is the same as for the case where at least one pool is positive. If
-'zero' uses 0 as the point estimate and lower bound for the interval and
-\code{level} posterior quantile the upper bound of the interval.  Applies
-to Bayesian estimates only and therefore ignored if \code{bayesian ==
-FALSE}.}
+all pools are negative (Bayesian estimates only). If \code{'zero'} 
+(default), uses 0 as the point estimate and lower bound for the interval 
+and \code{level} posterior quantile the upper bound of the interval. If 
+\code{'consistent'}, result is the same as for the case where at least one 
+pool is positive. Applies to Bayesian estimates only and therefore ignored 
+if \code{bayesian == FALSE}.}
 
 \item{reproduce.poolscreen}{(defaults to FALSE). If TRUE this changes the way
 that likelihood ratio confidence intervals are computed to be somewhat
@@ -121,15 +121,6 @@ The output includes the following columns:
   variables (supplied in \code{...}) then the output has only one row with
   the prevalence estimates for the whole dataset. When grouping variables are
   supplied, then there is a separate row for each group.
-<<<<<<< Updated upstream
-  
-  The custom print method for class \code{PoolPrevOutput} summarises the 
-  output by representing the prevalence and credible intervals as a single 
-  column in the form \code{"Prev (CLow - CHigh)"} where \code{Prev} is the 
-  prevalence, \code{CLow} is the lower confidence/credible interval and 
-  \code{CHigh} is the upper confidence/credible interval. When printed, the
-  prevalence estimate is represented as a percentage (i.e., per 100 units)
-=======
 
   The custom print method summarises the output data frame by representing
   the prevalence and credible intervals as a single column in the form
@@ -137,7 +128,6 @@ The output includes the following columns:
   \code{CLow} is the lower confidence/credible interval and \code{CHigh} is
   the upper confidence/credible interval. In the print method, prevalence is
   represented as a percentage (i.e., per 100 units)
->>>>>>> Stashed changes
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples

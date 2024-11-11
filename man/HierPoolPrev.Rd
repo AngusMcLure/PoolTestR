@@ -14,7 +14,7 @@ HierPoolPrev(
   hierarchy,
   ...,
   prior = NULL,
-  robust = FALSE,
+  robust = TRUE,
   level = 0.95,
   verbose = FALSE,
   cores = NULL,
@@ -22,7 +22,7 @@ HierPoolPrev(
   warmup = iter/2,
   chains = 4,
   control = list(adapt_delta = 0.9),
-  all.negative.pools = "consistent"
+  all.negative.pools = "zero"
 )
 }
 \arguments{
@@ -61,9 +61,9 @@ defined by these columns}
 on the population intercept and standard deviations of group-effect terms.
 See details.}
 
-\item{robust}{Logical. If \code{FALSE} (default) the point estimate of
-prevalence is the posterior mean. If \code{TRUE}, the the posterior median
-is used instead.}
+\item{robust}{Logical. If \code{TRUE} (default), the point estimate of 
+prevalence is the posterior median. If \code{FALSE}, the posterior mean is
+used instead.}
 
 \item{level}{The confidence level to be used for the confidence and credible
 intervals. Defaults to 0.95 (i.e. 95\% intervals)}
@@ -82,10 +82,11 @@ Defaults to default values as defined in \link[rstan]{stan}, except for
 \link[rstan]{stan} for details.}
 
 \item{all.negative.pools}{The kind of point estimate and interval to use when
-all pools are negative. If 'consistent' (default) result is the same as for
-the case where at least one pool is positive. If 'zero' uses 0 as the point
-estimate and lower bound for the interval and \code{level} posterior
-quantile the upper bound of the interval.}
+all pools are negative (Bayesian estimates only). If \code{'zero'} 
+(default), uses 0 as the point estimate and lower bound for the interval 
+and \code{level} posterior quantile the upper bound of the interval. If 
+\code{'consistent'}, result is the same as for the case where at least one 
+pool is positive.}
 }
 \value{
 An object of class \code{HierPoolPrevOutput}, which inherits from 
@@ -113,16 +114,6 @@ The output includes the following columns:
   variables (supplied in \code{...}) then the output has only one row with
   the prevalence estimates for the whole dataset. When grouping variables are
   supplied, then there is a separate row for each group.
-<<<<<<< Updated upstream
-  
-  The custom print method for class \code{HierPoolPrevOutput} summarises the 
-  output data frame. Output variables with credible intervals (i.e., 
-  \code{PrevBayes}, \code{ICC}) are printed in a single column with the form
-  \code{"X (CrILow - CrIHigh)"} where \code{X} is the variable, \code{CrILow} 
-  is the lower credible interval and \code{CrIHigh} is the upper credible 
-  interval. When printed,  the prevalence estimate \code{PrevBayes} is 
-  represented as a percentage (i.e., per 100 units).
-=======
 
   The custom print method summarises the output data frame by representing
   output variables with credible intervals (i.e., \code{PrevBayes},
@@ -131,7 +122,6 @@ The output includes the following columns:
   interval and \code{CrIHigh} is the upper credible interval. In the print
   method,  prevalence \code{PrevBayes} is represented as a percentage (i.e.,
   per 100 units).
->>>>>>> Stashed changes
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples in

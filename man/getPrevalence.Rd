@@ -16,7 +16,7 @@ getPrevalence(model, ...)
   model,
   newdata = NULL,
   re.form = NULL,
-  all.negative.pools = "consistent",
+  all.negative.pools = "zero",
   ...
 )
 
@@ -24,9 +24,9 @@ getPrevalence(model, ...)
   model,
   newdata = NULL,
   re.form = NULL,
-  robust = FALSE,
+  robust = TRUE,
   level = 0.95,
-  all.negative.pools = "consistent",
+  all.negative.pools = "zero",
   ...
 )
 }
@@ -47,15 +47,15 @@ prediction. If omitted, an attempt is made to infer from model and data
 structure.}
 
 \item{all.negative.pools}{The kind of point estimate and interval to use when
-all pools are negative. Typically ignored unless newdata is NULL. If
-'consistent' (default) result is the same as for the case where at least
-one pool is positive. If 'zero' uses 0 as the point estimate and lower
-bound for the interval and \code{level} posterior quantile the upper bound
-of the interval.}
+all pools are negative. Typically ignored unless newdata is NULL. If 
+\code{'zero'} (default), uses 0 as the point estimate and lower bound for 
+the interval and \code{level} posterior quantile the upper bound of the 
+interval. If \code{'consistent'}, result is the same as for the case where 
+at least one pool is positive.}
 
-\item{robust}{Logical. If \code{FALSE} (default) the point estimate of
-prevalence is the posterior mean. If \code{TRUE}, the the posterior median
-is used instead.}
+\item{robust}{Logical. Option when model class is \code{brmsfit}. If 
+\code{TRUE} (default) the point estimate of prevalence is the posterior 
+median. If \code{FALSE}, the the posterior mean is used instead.}
 }
 \value{
 A \code{list} with at least one field \code{PopulationEffects} and an
