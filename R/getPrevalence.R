@@ -21,17 +21,17 @@
 #' @param re.form A description of which random effects to include in the
 #'   prediction. If omitted, an attempt is made to infer from model and data
 #'   structure.
-#' @param robust Logical. If \code{FALSE} (default) the point estimate of
-#'   prevalence is the posterior mean. If \code{TRUE}, the the posterior median
-#'   is used instead.
+#' @param robust Logical. Option when model class is \code{brmsfit}. If 
+#'   \code{TRUE} (default) the point estimate of prevalence is the posterior 
+#'   median. If \code{FALSE}, the the posterior mean is used instead.
 #' @param level Defines the confidence level to be used for the confidence and
 #'   credible intervals. Defaults to 0.95 (i.e. 95\% intervals).
 #' @param all.negative.pools The kind of point estimate and interval to use when
-#'   all pools are negative. Typically ignored unless newdata is NULL. If
-#'   'consistent' (default) result is the same as for the case where at least
-#'   one pool is positive. If 'zero' uses 0 as the point estimate and lower
-#'   bound for the interval and \code{level} posterior quantile the upper bound
-#'   of the interval.
+#'   all pools are negative. Typically ignored unless newdata is NULL. If 
+#'   \code{'zero'} (default), uses 0 as the point estimate and lower bound for 
+#'   the interval and \code{level} posterior quantile the upper bound of the 
+#'   interval. If \code{'consistent'}, result is the same as for the case where 
+#'   at least one pool is positive. 
 #' @return A \code{list} with at least one field \code{PopulationEffects} and an
 #'   additional field for every random/group effect variable. The field
 #'   \code{PopulationEffects} contains a \code{data.frame} with the prevalence
@@ -88,10 +88,10 @@ getPrevalence.glm <- function(model, newdata = NULL, level = 0.95,...){
   invlink <- switch(attr(model,'link'),
                     logit = stats::plogis,
                     cloglog = cloglog_inv)
-
+  
   # compute the t-distribution quantile at the specified level of confidence -- used to calculate confidence intervals later
   s <- stats::qt((1-level)/2, df = stats::df.residual(model), lower.tail = FALSE)
-
+  
   # extract the terms used in the model formula
   PopTerms <- attr(stats::terms(model$formula),"term.labels")
   # select corresponding columns from newdata, remove duplicates
@@ -120,40 +120,40 @@ getPrevalence.glm <- function(model, newdata = NULL, level = 0.95,...){
 
 #' @rdname getPrevalence
 #' @export
-getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL, all.negative.pools = 'consistent',...){
-
+getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL, all.negative.pools = 'zero',...){
+  
   if(is.null(newdata)){
     newdata <- attr(model,'frame')
   }
-
+  
   invlink <- switch(attr(model,"link"),
                     logit = stats::plogis,
                     cloglog = cloglog_inv)
-
+  
   formula <- attr(model,'call')$formula
   PoolSizeName <- attr(model,'PoolSizeName')
-
+  
   GroupEffectTerms <- getGroupEffectTerms(formula, newdata, re.form)
   PredData <- preparePredictionData(GroupEffectTerms, newdata, formula, PoolSizeName)
-
+  
   predlist <- list()
   #Make predictions based on group effects
   for(nge in 1:length(GroupEffectTerms)){
     ge <- GroupEffectTerms[[nge]] #The formula for the group effect(s) at this level
     PredDataSub <- PredData[[nge]] #Subset of newdata to make preditions on (only unique combinations of inputs relevant to the level of random effects)
-
+    
     #linear predictor
     eta <- stats::predict(model,
                           type = 'link',
                           re.form = ge,
                           newdata = PredDataSub)
-
+    
     #the random/group effect terms that we need to marginalise/integrate over
     maringal.ge.terms <- retermdiff(formula,ge)
-
+    
     #correlation matrices for each grouping variable
     correlations <- lme4::VarCorr(model, summary = FALSE)
-
+    
     #the standard deviations of the random/group effects that are being integrated over
     #Note that the loop adds up the variances so we need to take square roots after
     sds <- vector('numeric', nrow(PredDataSub))
@@ -167,49 +167,49 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL, all.ne
                           d %*% Sigma %*% t(d)})
     }
     sds <- sqrt(sds)
-
+    
     Prev <- data.frame(Estimate = Vectorize(meanlinknormal)(eta, sds, list(invlink))) %>%
       rowwise() %>%
       mutate(..zeroest = all.negative.pools == 'zero' && .data$..allnegative)
-
+    
     pred <- PredDataSub %>%
       bind_cols(Prev) %>%
       mutate(Estimate = ifelse(.data$..zeroest, 0, .data$Estimate)) %>%
       select(-any_of(c('..zeroest', '..allnegative', PoolSizeName)))
     predlist <- c(predlist, list(pred))
   }
-
+  
   names(predlist) <- names(GroupEffectTerms)
-
+  
   return(predlist)
 }
 
 #' @rdname getPrevalence
 #' @export
 getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
-                                  robust = FALSE, level = 0.95,
-                                  all.negative.pools = 'consistent',...){
+                                  robust = TRUE, level = 0.95,
+                                  all.negative.pools = 'zero',...){
   if(is.null(newdata)){
     newdata <- model$data
   }else{
-    all.negative.pools = 'consistent'
+    all.negative.pools = 'zero'
   }
-
+  
   formula <- model$formula$formula
   invlink <- switch(model$link,
                     logit = stats::plogis,
                     cloglog = cloglog_inv)
-
+  
   PoolSizeName <- model$PoolSizeName
-
+  
   GroupEffectTerms <- getGroupEffectTerms(formula, newdata, re.form)
   PredData <- preparePredictionData(GroupEffectTerms, newdata, formula, PoolSizeName)
-
+  
   #correlation matrices for each grouping variable (only for models with random effects)
   if(!is.null(lme4::findbars(formula))){
     correlations <- lme4::VarCorr(model, summary = FALSE)
   }
-
+  
   predlist <- list()
   #Make predictions based on group effects
   for(nge in 1:length(GroupEffectTerms)){
@@ -220,12 +220,12 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
                          re_formula = ge,
                          newdata = PredDataSub,
                          summary = FALSE)
-
+    
     ndraw <- brms::ndraws(model) #number of MCMC draws
     npoint <- ncol(eta) # number of prediction points
     #the random/group effect terms that we need to marginalise/integrate over
     maringal.ge.terms <- retermdiff(formula,ge) #the random/group effect terms that we need to marginalise/integrate over
-
+    
     #the standard deviations of the random/group effects that are being integrated over
     #Note that the loop adds up the VARIANCES so we need to take square roots after
     sds <- matrix(0,ndraw,npoint) #the standard deviations of the random/group effects that are being integrated over. Note that in the general case these are calculate by summing variances and then taking square roots, so we have to take square roots later
@@ -237,9 +237,9 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
         Sigma <- (correlations[[gn]]$sd)^2
         Sigma <- array(Sigma, dim = c(ndraw, 1, 1)) #change for consistency with other case. By default dim would be c(ndraw, 1)
       }
-
+      
       #sds <- sds + diag(mm %*% Sigma %*% t(mm))
-
+      
       #the goal is to calculate like the above commented out code something like
       #this but for every draw from Sigma. Also we can avoid doing the full
       #matrix computation by iterating over rows of mm, since we only need the
@@ -260,7 +260,7 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
         prev[n,m] <- meanlinknormal(eta[n,m], sds[n,m], invlink)
       }
     }
-
+    
     pred <- PredDataSub %>%
       select(-all_of(PoolSizeName)) %>%
       rowwise() %>%
@@ -268,24 +268,24 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
     pred$prev <- t(prev)
     pred <- pred %>%
       mutate(Estimate = ifelse(.data$..zeroest,
-                                      0,
-                                      ifelse(robust,
-                                             stats::median(.data$prev, na.rm = TRUE),
-                                             mean(.data$prev, na.rm = TRUE))),
-                    CrILow = ifelse(.data$..zeroest,
-                                    0,
-                                    stats::quantile(.data$prev, 0.5 - level/2)),
-                    CrIHigh = ifelse(.data$..zeroest,
-                                     stats::quantile(.data$prev, level),
-                                     stats::quantile(.data$prev, 0.5 + level/2))) %>%
+                               0,
+                               ifelse(robust,
+                                      stats::median(.data$prev, na.rm = TRUE),
+                                      mean(.data$prev, na.rm = TRUE))),
+             CrILow = ifelse(.data$..zeroest,
+                             0,
+                             stats::quantile(.data$prev, 0.5 - level/2)),
+             CrIHigh = ifelse(.data$..zeroest,
+                              stats::quantile(.data$prev, level),
+                              stats::quantile(.data$prev, 0.5 + level/2))) %>%
       select(-c("..allnegative","prev","..zeroest")) %>%
       ungroup()
-
+    
     predlist <- c(predlist,list(pred))
   }
-
+  
   names(predlist) <- names(GroupEffectTerms)
-
+  
   return(predlist)
 }
 
@@ -294,7 +294,7 @@ getGroupEffectTerms <- function(formula,d,re.form){
   GroupVarNames <- getGroupVarNames(formula)
   # Number of grouping variables
   NGroupVars <- length(GroupVarNames)
-
+  
   #set up default re.form list - and if an NA or a single formula wrap in a list
   switch(class(re.form),
          NULL = {
@@ -303,14 +303,14 @@ getGroupEffectTerms <- function(formula,d,re.form){
                   paste(setdiff(GroupVarNames, colnames(d)),collapse = ', '),
                   ' as these have not been provided in `newdata`')
            }
-
+           
            if(NGroupVars >0){
              GroupVarNames <- orderByGranularity(d,GroupVarNames)
            }
-
+           
            if(isNested(d,GroupVarNames)){
              group_effects <- c(list(PopulationEffects = NA),
-                          orderedGroupTerms(formula,GroupVarNames))
+                                orderedGroupTerms(formula,GroupVarNames))
            }else{
              group_effects <- list(PopulationEffects = NA)
            }
@@ -320,9 +320,9 @@ getGroupEffectTerms <- function(formula,d,re.form){
          formula = {group_effects <- list(re.form)},
          stop('re.form must be a list of random effect formulas, or NA (for no random effect terms)')
   )
-
+  
   #checks that group effects are valid
-
+  
   for(ge in group_effects){
     if(inherits(ge, 'formula')){
       #check that grouping variables also exist in original formula
@@ -356,31 +356,31 @@ preparePredictionData <- function(group_effects, data, formula, poolsizename){
         stop('re.form must be a list of random effect formulas, or NA (for no random effect terms)')
       }
     }
-
+    
     #Population terms
     AllTerms <- setdiff(all.vars(formula), response)
     PopTerms <- setdiff(AllTerms,getGroupVarNames(formula))
-
+    
     #Prepare data for prediction -- just want unique combinations of the relevant variables
     PredDataSub <- data
     PredDataSub[,poolsizename] <- 1 #Sets the pool size variable to 1 (not used in calculations but required to keep stats::fitted happy)
-
+    
     PredDataSub <- PredDataSub %>%
       group_by(pick(c(PopTerms,gev,poolsizename))) #grouping by poolsize (which are all 1) guarantees there is at least one row after summarise
-
+    
     #select unique combinations of predictor variables
-
+    
     if(response %in% colnames(data)){#if the response is included in the dataset then additionally annotate whether all responses are negative for the rows of each unique combinations of predictors. Useful if all.negative.pools = 'zero' and newdata = NULL
       PredDataSub$..response <- PredDataSub[,response]
       PredDataSub <- summarise(PredDataSub,
-                                      ..allnegative = sum(.data$..response) == 0)
+                               ..allnegative = sum(.data$..response) == 0)
     }else{
       PredDataSub <- summarise(PredDataSub,
-                                      ..allnegative = NA)
+                               ..allnegative = NA)
     }
-
+    
     PredDataSub <- ungroup(PredDataSub)
-
+    
     PredData <- c(PredData, list(PredDataSub))
   }
   PredData
@@ -403,7 +403,7 @@ isNested <- function(df, Names){
     return(TRUE)
   }
   Names <- rev(orderByGranularity(df,Names))
-
+  
   for(n in 1:(N-1)){
     Levels <- unique(df[,Names[n]])
     for(level in Levels){
@@ -431,13 +431,13 @@ orderedGroupTerms <- function(formula,vars){
   if(is.null(GroupTerms)) return(NULL)
   NumTerms <- length(GroupTerms)
   NumVars <- length(vars)
-
+  
   FinestVar <- rep(length(vars), NumTerms)
   for(n in 1:NumTerms){
     TermVars <- intersect(all.vars(stats::reformulate(as.character(GroupTerms[n]))),vars)
     FinestVar[n] <- max(match(TermVars,vars))
   }
-
+  
   out <- list()
   m <- 0
   for(n in sort(unique(FinestVar))){
@@ -468,12 +468,12 @@ meanlinknormal <- function(mu, sigma, invlink){
     return(invlink(mu))
   } else{
     .mean <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
-                                     lower = -Inf, upper = Inf, abs.tol =  -1)$value,
-                    silent = TRUE)
+                                  lower = -Inf, upper = Inf, abs.tol =  -1)$value,
+                 silent = TRUE)
     if(inherits(.mean,'try-error') || .mean * 10 < invlink(mu)){
       .mean <- try(stats::integrate(function(x){invlink(x) * stats::dnorm(x,mean = mu, sd = sigma)},
-                                       lower = mu - sigma * 5, upper = mu + sigma * 5, abs.tol = -1)$value,
-                      silent = TRUE)
+                                    lower = mu - sigma * 5, upper = mu + sigma * 5, abs.tol = -1)$value,
+                   silent = TRUE)
       if(inherits(.mean,'try-error') || .mean * 10 < invlink(mu)){
         warning('integration failed for mu = ', mu, ' and sigma = ', sigma, ', with error: \n',attr(.mean, 'condition')$message, '\nResult will be NA')
         .mean <- NA
@@ -520,7 +520,7 @@ ICC <- function(mu, sigma, link, .mean = NULL, method = 'nested'){
     for(l in 1:(L-1)){ #...then the remaining levels
       sigma_l <- sqrt(sum(sigma[(l+1):L]^2)) # sqrt of total variance at lower levels
       sigma_h <- sqrt(sum(sigma[1:l]^2))     # sqrt of total variance at higher levels
-
+      
       # if(method == 'triple'){
       #   sgm <- c(sigma_l, sigma_l, sigma_h)
       #   .var[l] <- cubature::hcubature(\(x){
@@ -544,8 +544,8 @@ ICC <- function(mu, sigma, link, .mean = NULL, method = 'nested'){
         # more complicated approximation which works ok for cloglog and logit
         
         linkf <- switch(link,
-                       'logit' = stats::qlogis,
-                       stop(link, " is not a supported link for method = 'approx'"))                       
+                        'logit' = stats::qlogis,
+                        stop(link, " is not a supported link for method = 'approx'"))                       
         
         scaling <- linkf(meanlinknormal(sigma_l, sigma_l, invlink))/sigma_l
         .var[l] <- meanlinknormal(0, sigma_h,
