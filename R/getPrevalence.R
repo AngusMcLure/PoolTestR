@@ -183,7 +183,7 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL, all.ne
     pred <- PredDataSub %>%
       bind_cols(Prev) %>%
       mutate(Estimate = ifelse(.data$..zeroest, 0, .data$Estimate)) %>% 
-      select(-any_of(c('..zeroest', '..allnegative', 'PoolSizeName')))
+      select(-any_of(c('..zeroest', '..allnegative', PoolSizeName)))
     
     predlist <- c(predlist, list(pred))
   }
