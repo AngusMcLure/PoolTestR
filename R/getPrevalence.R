@@ -396,7 +396,7 @@ preparePredictionData <- function(group_effects, data, formula, poolsizename){
       # The ..allnegative column is TRUE when all rows for that set of 
       #   parameters are 0 (i.e., no prevalence)
       PredDataSub <- summarise(PredDataSub,
-                               ..allnegative = sum(..response) == 0)
+                               ..allnegative = sum(.data$..response) == 0)
     }else{
       PredDataSub <- summarise(PredDataSub,
                                ..allnegative = NA)
