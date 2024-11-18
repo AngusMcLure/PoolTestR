@@ -11,14 +11,16 @@ PoolPrev(
   ...,
   bayesian = TRUE,
   prior = NULL,
+  robust = TRUE,
   level = 0.95,
+  all.negative.pools = "zero",
   reproduce.poolscreen = FALSE,
   verbose = FALSE,
   cores = NULL,
   iter = 2000,
   warmup = iter/2,
   chains = 4,
-  control = list(adapt_delta = 0.9)
+  control = list(adapt_delta = 0.98)
 )
 }
 \arguments{
@@ -57,8 +59,21 @@ numeric non-negative entries named alpha, beta, and absent. For instance, a
 uniform prior with no probability of true absence can be specified as
 \code{prior = list(alpha = 1, beta = 1, absent = 0}.}
 
+\item{robust}{Logical. If \code{TRUE} (default), the point estimate of 
+prevalence is the posterior median. If \code{FALSE}, the posterior mean is
+used instead. Applies to Bayesian estimates only and therefore ignored if 
+\code{bayesian = FALSE}.}
+
 \item{level}{Defines the confidence level to be used for the confidence and
 credible intervals. Defaults to 0.95 (i.e. 95\% intervals)}
+
+\item{all.negative.pools}{The kind of point estimate and interval to use when
+all pools are negative (Bayesian estimates only). If \code{'zero'} 
+(default), uses 0 as the point estimate and lower bound for the interval 
+and \code{level} posterior quantile the upper bound of the interval. If 
+\code{'consistent'}, result is the same as for the case where at least one 
+pool is positive. Applies to Bayesian estimates only and therefore ignored 
+if \code{bayesian == FALSE}.}
 
 \item{reproduce.poolscreen}{(defaults to FALSE). If TRUE this changes the way
 that likelihood ratio confidence intervals are computed to be somewhat
@@ -78,7 +93,7 @@ See \link[rstan]{stan} for details. Ignored if \code{bayesian == FALSE}.}
 
 \item{control}{A named list of parameters to control the sampler's behaviour.
 Defaults to default values as defined in \link[rstan]{stan}, except for
-\code{adapt_delta} which is set to the more conservative value of 0.9. See
+\code{adapt_delta} which is set to the more conservative value of 0.98. See
 \link[rstan]{stan} for details. Ignored if \code{bayesian == FALSE}.}
 }
 \value{
@@ -87,32 +102,32 @@ class \code{tbl}.
 The output includes the following columns:
   \itemize{
     \item{\code{PrevMLE} -- (the Maximum Likelihood Estimate of prevalence)}
-    \item{\code{CILow} and \code{CIHigh} - lower and upper confidence 
+    \item{\code{CILow} and \code{CIHigh} - lower and upper confidence
           intervals using the likelihood
           ratio method}
-     \item{\code{PrevBayes} -- the (Bayesian) posterior expectation. Omitted 
+     \item{\code{PrevBayes} -- the (Bayesian) posterior expectation. Omitted
            if \code{bayesian == FALSE}.}
      \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds for
            credible intervals. Omitted if \code{bayesian == FALSE}.}
      \item{\code{ProbAbsent} -- the posterior probability that prevalence is
            exactly 0 (i.e. disease marker is absent). NA if using default
-           Jeffrey's prior or if prior$absent = 0. Omitted if \code{bayesian
-           == FALSE}.}
+           Jeffrey's prior or if \code{prior$absent == 0}. Omitted if
+           \code{bayesian == FALSE}.}
      \item{\code{NumberOfPools} -- number of pools}
      \item{\code{NumberPositive} -- the number of positive pools} }
-     
+
   If grouping variables are provided in \code{...} there will be an
   additional column for each grouping variable. When there are no grouping
   variables (supplied in \code{...}) then the output has only one row with
   the prevalence estimates for the whole dataset. When grouping variables are
   supplied, then there is a separate row for each group.
-  
-  The custom print method for class \code{PoolPrevOutput} summarises the 
-  output by representing the prevalence and credible intervals as a single 
-  column in the form \code{"Prev (CLow - CHigh)"} where \code{Prev} is the 
-  prevalence, \code{CLow} is the lower confidence/credible interval and 
-  \code{CHigh} is the upper confidence/credible interval. When printed, the
-  prevalence estimate is represented as a percentage (i.e., per 100 units)
+
+  The custom print method summarises the output data frame by representing
+  the prevalence and credible intervals as a single column in the form
+  \code{"Prev (CLow - CHigh)"} where \code{Prev} is the prevalence,
+  \code{CLow} is the lower confidence/credible interval and \code{CHigh} is
+  the upper confidence/credible interval. In the print method, prevalence is
+  represented as a percentage (i.e., per 100 units)
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples

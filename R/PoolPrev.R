@@ -30,6 +30,10 @@
 #'   numeric non-negative entries named alpha, beta, and absent. For instance, a
 #'   uniform prior with no probability of true absence can be specified as
 #'   \code{prior = list(alpha = 1, beta = 1, absent = 0}.
+#' @param robust Logical. If \code{TRUE} (default), the point estimate of 
+#'   prevalence is the posterior median. If \code{FALSE}, the posterior mean is
+#'   used instead. Applies to Bayesian estimates only and therefore ignored if 
+#'   \code{bayesian = FALSE}.
 #' @param level Defines the confidence level to be used for the confidence and
 #'   credible intervals. Defaults to 0.95 (i.e. 95\% intervals)
 #' @param reproduce.poolscreen (defaults to FALSE). If TRUE this changes the way
@@ -37,6 +41,13 @@
 #'   wider and more closely match those returned by Poolscreen. We recommend
 #'   using the default (FALSE). However setting to TRUE can help to make
 #'   comparisons between PoolPrev and Poolscreen.
+#' @param all.negative.pools The kind of point estimate and interval to use when
+#'   all pools are negative (Bayesian estimates only). If \code{'zero'} 
+#'   (default), uses 0 as the point estimate and lower bound for the interval 
+#'   and \code{level} posterior quantile the upper bound of the interval. If 
+#'   \code{'consistent'}, result is the same as for the case where at least one 
+#'   pool is positive. Applies to Bayesian estimates only and therefore ignored 
+#'   if \code{bayesian == FALSE}.
 #' @param verbose Logical indicating whether to print progress to screen.
 #'   Defaults to false (no printing to screen). Ignored if \code{bayesian ==
 #'   FALSE}.
@@ -46,39 +57,39 @@
 #'   Ignored if \code{bayesian == FALSE}.
 #' @param control A named list of parameters to control the sampler's behaviour.
 #'   Defaults to default values as defined in \link[rstan]{stan}, except for
-#'   \code{adapt_delta} which is set to the more conservative value of 0.9. See
+#'   \code{adapt_delta} which is set to the more conservative value of 0.98. See
 #'   \link[rstan]{stan} for details. Ignored if \code{bayesian == FALSE}.
 #' @return An object of class \code{PoolPrevOutput}, which inherits from 
 #' class \code{tbl}. 
 #' The output includes the following columns:
 #'   \itemize{
 #'     \item{\code{PrevMLE} -- (the Maximum Likelihood Estimate of prevalence)}
-#'     \item{\code{CILow} and \code{CIHigh} - lower and upper confidence 
+#'     \item{\code{CILow} and \code{CIHigh} - lower and upper confidence
 #'           intervals using the likelihood
 #'           ratio method}
-#'      \item{\code{PrevBayes} -- the (Bayesian) posterior expectation. Omitted 
+#'      \item{\code{PrevBayes} -- the (Bayesian) posterior expectation. Omitted
 #'            if \code{bayesian == FALSE}.}
 #'      \item{\code{CrILow} and \code{CrIHigh} -- lower and upper bounds for
 #'            credible intervals. Omitted if \code{bayesian == FALSE}.}
 #'      \item{\code{ProbAbsent} -- the posterior probability that prevalence is
 #'            exactly 0 (i.e. disease marker is absent). NA if using default
-#'            Jeffrey's prior or if prior$absent = 0. Omitted if \code{bayesian
-#'            == FALSE}.}
+#'            Jeffrey's prior or if \code{prior$absent == 0}. Omitted if
+#'            \code{bayesian == FALSE}.}
 #'      \item{\code{NumberOfPools} -- number of pools}
 #'      \item{\code{NumberPositive} -- the number of positive pools} }
-#'      
+#'
 #'   If grouping variables are provided in \code{...} there will be an
 #'   additional column for each grouping variable. When there are no grouping
 #'   variables (supplied in \code{...}) then the output has only one row with
 #'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
-#'   
-#'   The custom print method for class \code{PoolPrevOutput} summarises the 
-#'   output by representing the prevalence and credible intervals as a single 
-#'   column in the form \code{"Prev (CLow - CHigh)"} where \code{Prev} is the 
-#'   prevalence, \code{CLow} is the lower confidence/credible interval and 
-#'   \code{CHigh} is the upper confidence/credible interval. When printed, the
-#'   prevalence estimate is represented as a percentage (i.e., per 100 units)
+#'
+#'   The custom print method summarises the output data frame by representing
+#'   the prevalence and credible intervals as a single column in the form
+#'   \code{"Prev (CLow - CHigh)"} where \code{Prev} is the prevalence,
+#'   \code{CLow} is the lower confidence/credible interval and \code{CHigh} is
+#'   the upper confidence/credible interval. In the print method, prevalence is
+#'   represented as a percentage (i.e., per 100 units)
 #'
 #' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
 #'
@@ -86,10 +97,13 @@
 
 PoolPrev <- function(data,result,poolSize,...,
                      bayesian = TRUE, prior = NULL,
-                     level = 0.95, reproduce.poolscreen = FALSE,
+                     robust = TRUE,
+                     level = 0.95,
+                     all.negative.pools = 'zero',
+                     reproduce.poolscreen = FALSE,
                      verbose = FALSE, cores = NULL,
                      iter = 2000, warmup = iter/2,
-                     chains = 4, control = list(adapt_delta = 0.9)){
+                     chains = 4, control = list(adapt_delta = 0.98)){
   result <- enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
   groupVar <- enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
@@ -114,6 +128,9 @@ PoolPrev <- function(data,result,poolSize,...,
       stop('If not using the default prior (NULL), prior$absent must be a single number between 0 (no prior probability of absence) and 1.')
     }
   }
+  
+  #kind of function to use to get point estimate from posterior draws
+  f_point <- if(robust){stats::median}else{mean}
   
   
   # log-likelihood function
@@ -198,7 +215,7 @@ PoolPrev <- function(data,result,poolSize,...,
                                    tol = 1e-10)$root
       
       if(bayesian){
-        out$mean <- mean(sfit)
+        out$PrevBayes <- f_point(sfit)
         out$CrILow <- stats::quantile(sfit,(1-level)/2)
         out$CrIHigh <- stats::quantile(sfit,(1+level)/2)
         out$ProbAbsent <- ifelse(!useJefferysPrior && prior$absent,0,NA)
@@ -217,7 +234,7 @@ PoolPrev <- function(data,result,poolSize,...,
       out$CIHigh <- 1
       
       if(bayesian){
-        out$mean = mean(sfit)
+        out$PrevBayes = f_point(sfit)
         out$CrILow <- stats::quantile(sfit,1-level)
         out$CrIHigh <- 1
         out$ProbAbsent <- ifelse(!useJefferysPrior && prior$absent,0,NA)
@@ -237,7 +254,9 @@ PoolPrev <- function(data,result,poolSize,...,
                                    tol = 1e-10)$root
       if(bayesian){
         if(useJefferysPrior){
-          out$mean <- mean(sfit)
+          out$PrevBayes <- switch(all.negative.pools,
+                                 'consistent' = f_point(sfit),
+                                 'zero' = 0)
           out$CrILow <- 0
           out$CrIHigh <- stats::quantile(sfit,level)
           out$ProbAbsent <- NA
@@ -245,7 +264,9 @@ PoolPrev <- function(data,result,poolSize,...,
           ProbAbsent <- 1/(1 + (1/prior$absent - 1) * beta(prior$alpha, prior$beta + sum(sdata$PoolSize))/beta(prior$alpha, prior$beta))
           #This is the quantile we need to extract from the posterior of the beta-binomial posterior dist to get the credible interval
           q <- (level - ProbAbsent)/(1 - ProbAbsent)
-          out$mean <- prior$alpha/(prior$alpha + prior$beta + sum(sdata$PoolSize))*(1-ProbAbsent)
+          out$PrevBayes <- switch(all.negative.pools,
+                                 'consistent' = prior$alpha/(prior$alpha + prior$beta + sum(sdata$PoolSize))*(1-ProbAbsent),
+                                 'zero' = 0)
           out$CrILow <- 0
           out$CrIHigh <- ifelse(q<0, #i.e. if the probability that the disease is absent exceeds the desired size of the credible interval
                                 0,
@@ -259,7 +280,6 @@ PoolPrev <- function(data,result,poolSize,...,
     
     if(bayesian){
       out <- out %>%
-        rename('PrevBayes' = mean) %>%
         select('PrevMLE',
                'CILow', 'CIHigh',
                'PrevBayes',
@@ -285,9 +305,13 @@ PoolPrev <- function(data,result,poolSize,...,
     out <- data %>% group_modify(function(x,...){
       ProgBar$tick(1)
       PoolPrev(x,!! result,!! poolSize,
-               level=level,verbose = verbose,
-               bayesian = bayesian, prior = prior,
+               bayesian = bayesian,
+               prior = prior,
+               robust = robust,
+               level = level,
+               all.negative.pools = all.negative.pools,
                reproduce.poolscreen = reproduce.poolscreen,
+               verbose = verbose,
                cores = cores,
                iter = iter,
                warmup = warmup,
