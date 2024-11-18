@@ -198,9 +198,9 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL, all.ne
 getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
                                   robust = TRUE, level = 0.95,
                                   all.negative.pools = 'zero',...){
-  if(is.null(newdata)){
+  if (is.null(newdata)) {
     newdata <- model$data
-  }else{
+  } else {
     all.negative.pools = 'zero'
   }
   
@@ -214,45 +214,44 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
   GroupEffectTerms <- getGroupEffectTerms(formula, newdata, re.form)
   PredData <- preparePredictionData(GroupEffectTerms, newdata, formula, PoolSizeName)
   
-  #correlation matrices for each grouping variable (only for models with random effects)
-  if(!is.null(lme4::findbars(formula))){
+  # Correlation matrices for each grouping variable (only for models with random effects)
+  if (! is.null(lme4::findbars(formula)) ) {
     correlations <- lme4::VarCorr(model, summary = FALSE)
   }
   
   predlist <- list()
-  #Make predictions based on group effects
-  for(nge in 1:length(GroupEffectTerms)){
-    ge <- GroupEffectTerms[[nge]] #The formula for the group effect(s) at this level
-    PredDataSub <- PredData[[nge]] #Subset of newdata to make predictions on (only unique combinations of inputs relevant to the level of random effects)
+  # Make predictions based on group effects
+  for (nge in 1:length(GroupEffectTerms) ) {
+    ge <- GroupEffectTerms[[nge]] # The formula for the group effect(s) at this level
+    PredDataSub <- PredData[[nge]] # Subset of newdata to make predictions on (only unique combinations of inputs relevant to the level of random effects)
     eta <- stats::fitted(model,
                          scale = 'linear',
                          re_formula = ge,
                          newdata = PredDataSub,
                          summary = FALSE)
     
-    ndraw <- brms::ndraws(model) #number of MCMC draws
-    npoint <- ncol(eta) # number of prediction points
-    #the random/group effect terms that we need to marginalise/integrate over
-    maringal.ge.terms <- retermdiff(formula,ge) #the random/group effect terms that we need to marginalise/integrate over
+    ndraw <- brms::ndraws(model) # Number of MCMC draws
+    npoint <- ncol(eta) # Number of prediction points
+    maringal.ge.terms <- retermdiff(formula,ge) # The random/group effect terms that we need to marginalise/integrate over
     
-    #the standard deviations of the random/group effects that are being integrated over
-    #Note that the loop adds up the VARIANCES so we need to take square roots after
-    sds <- matrix(0,ndraw,npoint) #the standard deviations of the random/group effects that are being integrated over. Note that in the general case these are calculate by summing variances and then taking square roots, so we have to take square roots later
-    for(mge in maringal.ge.terms){
-      gn <- as.character(mge[3]) #name of grouping variable
-      mm <- stats::model.matrix(stats::reformulate(as.character(mge[2])),PredDataSub) #model matrix for random effects
-      Sigma <- correlations[[gn]]$cov #array with first dimension for number of MCMC draws. Each slice is the sampled covariance matrix for random effects for this group (gn)
-      if(is.null(Sigma)){#for groups with only a single random effect, no covariance matrix is given so extract sd (and square) instead
+    # The standard deviations of the random/group effects that are being integrated over
+    # Note that the loop adds up the VARIANCES so we need to take square roots after
+    sds <- matrix(0,ndraw,npoint) # The standard deviations of the random/group effects that are being integrated over. Note that in the general case these are calculate by summing variances and then taking square roots, so we have to take square roots later
+    for (mge in maringal.ge.terms) {
+      gn <- as.character(mge[3]) # Name of grouping variable
+      mm <- stats::model.matrix(stats::reformulate(as.character(mge[2])),PredDataSub) # Model matrix for random effects
+      Sigma <- correlations[[gn]]$cov # Array with first dimension for number of MCMC draws. Each slice is the sampled covariance matrix for random effects for this group (gn)
+      if(is.null(Sigma)){# For groups with only a single random effect, no covariance matrix is given so extract sd (and square) instead
         Sigma <- (correlations[[gn]]$sd)^2
-        Sigma <- array(Sigma, dim = c(ndraw, 1, 1)) #change for consistency with other case. By default dim would be c(ndraw, 1)
+        Sigma <- array(Sigma, dim = c(ndraw, 1, 1)) # Change for consistency with other case. By default dim would be c(ndraw, 1)
       }
       
       #sds <- sds + diag(mm %*% Sigma %*% t(mm))
       
-      #the goal is to calculate like the above commented out code something like
-      #this but for every draw from Sigma. Also we can avoid doing the full
-      #matrix computation by iterating over rows of mm, since we only need the
-      #diagonal
+      # The goal is to calculate like the above commented out code something like
+      # this but for every draw from Sigma. Also we can avoid doing the full
+      # matrix computation by iterating over rows of mm, since we only need the
+      # diagonal
       for(n in 1:ndraw){
         sigma <- Sigma[n,,]
         for(m in 1:npoint){
@@ -262,10 +261,11 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
       }
     }
     sds <- sqrt(sds)
-    #calculate prevalence from eta and sd (integrating over selected random effects)
+    
+    # Calculate prevalence from eta and sd (integrating over selected random effects)
     prev <- matrix(0,ndraw, npoint)
-    for(n in 1:ndraw){
-      for(m in 1:npoint){
+    for (n in 1:ndraw) {
+      for (m in 1:npoint) {
         prev[n,m] <- meanlinknormal(eta[n,m], sds[n,m], invlink)
       }
     }
@@ -273,8 +273,10 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
     pred <- PredDataSub %>%
       select(-all_of(PoolSizeName)) %>%
       rowwise() %>%
-      mutate(..zeroest = all.negative.pools == 'zero' && .data$..allnegative)
+      mutate(..zeroest = (all.negative.pools == 'zero' && .data$..allnegative) )
+    
     pred$prev <- t(prev)
+    
     pred <- pred %>%
       mutate(Estimate = ifelse(.data$..zeroest,
                                0,
