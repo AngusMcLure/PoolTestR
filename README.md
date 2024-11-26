@@ -50,7 +50,7 @@ regression models, you will need to install PoolTestR from source (see the
 [Advanced Installation](#advanced-installation) section below).
 
 We release official versions of PoolTestR on 
-[CRAN](https://cran.r-project.org/web/packages/PoolTestR/index.html) and on 
+[CRAN](https://CRAN.R-project.org/package=PoolTestR) and on 
 [GitHub](https://github.com/AngusMcLure/PoolTestR/releases). 
 
 The development versions of PoolTestR can be used by installing PoolTestR from

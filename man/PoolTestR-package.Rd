@@ -32,7 +32,7 @@ Paul-Christian Bürkner (2017). brms: An R Package for Bayesian Multilevel Model
 Useful links:
 \itemize{
   \item \url{https://github.com/AngusMcLure/PoolTestR}
-  \item Report bugs at \url{https://github.com/AngusMcLure/PoolTestR}
+  \item Report bugs at \url{https://github.com/AngusMcLure/PoolTestR/issues}
 }
 
 }
