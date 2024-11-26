@@ -28,23 +28,73 @@ The details of our package are described in an
 We are happy to share a pdf of this article with you 
 [on request](mailto:angus.mclure@anu.edu.au).
 
+We also have a [graphical user interface](#graphical-user-interface) to 
+PoolTestR available called [PoolTools](https://github.com/AngusMcLure/PoolTools).
+PoolTools is a shiny web app that facilitates analyses of pool-tested data using 
+functions from PoolTestR.
+
 If you find this package helpful, please 
 [let us know](mailto:angus.mclure@anu.edu.au) -- we'd love to hear how it's 
 being used.
 
 ## Installation
+
+There are three ways to download and install PoolTestR: 
+
+- From [CRAN](https://CRAN.R-project.org/package=PoolTestR)
+- From [R-universe](https://angusmclure.r-universe.dev/PoolTestR)
+- From [GitHub](https://github.com/AngusMcLure/PoolTestR) (which requires installation from source)
+
+To use the full functionality of the package, including running Bayesian 
+regression models, you will need to install PoolTestR from source (see the
+[Advanced Installation](#advanced-installation) section below).
+
+We release official versions of PoolTestR on 
+[CRAN](https://cran.r-project.org/web/packages/PoolTestR/index.html) and on 
+[GitHub](https://github.com/AngusMcLure/PoolTestR/releases). 
+
+The development versions of PoolTestR can be used by installing PoolTestR from
+[R-universe](https://angusmclure.r-universe.dev/PoolTestR) or 
+[GitHub](https://github.com/AngusMcLure/PoolTestR/).
+
+Instructions to install PoolTestR through each of these methods are listed 
+below. These instructions have been tested on Windows, Linux, and Mac (both 
+Intel and Apple Silicon chips). Please 
+[get in touch](mailto:angus.mclure@anu.edu.au) if you have problems with 
+installation.
+
 ### Basic Installation
-To install the latest version of 
+
+#### CRAN
+
+To install the latest official release of 
 [PoolTestR from CRAN](https://CRAN.R-project.org/package=PoolTestR) (the 
 official repository for R packages), use the following command in R:
 
 ```R
+# Install PoolTestR from CRAN
 install.packages("PoolTestR")
 ```
 
 This will install an old version of PoolTestR that lacks the latest features. 
 In addition, Bayesian regression modelling (via function ```PoolRegBayes```) 
 may require you to install additional software.
+
+#### R-universe
+
+You can download development versions of PoolTestR from the 
+[angusmclure](https://angusmclure.r-universe.dev) universe on R-universe. 
+
+[Visit PoolTestR on R-universe here.](https://angusmclure.r-universe.dev/PoolTestR)
+
+R-universe contains binaries for the current `master` branch of the PoolTestR 
+GitHub repository. Usually, the binaries on R-universe are updated within a few 
+hours of each new commit to the `master` branch of PoolTestR. 
+
+```R
+# Install PoolTestR from R-universe
+install.packages("PoolTestR", repos = c("https://angusmclure.r-universe.dev"))
+```
 
 ### Advanced Installation
 To use the full functionality of the package, including running Bayesian 
@@ -66,7 +116,7 @@ Install the R package `macrtools` following the instructions
 [here](https://github.com/coatless-mac/macrtools?#quick-start)
 
 ```R
-## From macrtools documentation, retrived 18/10/2024
+# From macrtools documentation, retrived 18/10/2024
 # install.packages("remotes")
 remotes::install_github("coatless-mac/macrtools")
 ```
@@ -76,7 +126,7 @@ Development binaries from the Recipes project) following the instructions
 [here](https://github.com/coatless-mac/macrtools?#quick-start)
 
 ```R
-## From macrtools documentation, retrived 18/10/2024
+# From macrtools documentation, retrived 18/10/2024
 macrtools::macos_rtools_install()
 ```
 
@@ -100,7 +150,9 @@ devtools::install_github("AngusMcLure/PoolTestR")
 ```
 
 If installing from source (the only option if installing from GitHub) this will 
-take some time (really depends on your machine, perhaps up to an hour) and probably produce a lot of text in your R console. The text is related to the compilation of stan source code. 
+take some time (really depends on your machine, perhaps up to an hour) and 
+probably produce a lot of text in your R console. The text is related to the 
+compilation of stan source code. 
 
 If installing from CRAN (basic installation) installation should be very fast 
 and not generate any warning messages. 
