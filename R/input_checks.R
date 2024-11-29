@@ -15,13 +15,50 @@
 #'   and 0 indicating a negative test result.
 #' @param poolSize The name of the column with number of
 #'   specimens/isolates/insects in each pool
+#' @param hier_check Logical. Default is \code{FALSE}. If \code{TRUE}, checks
+#'  whether each row in the specified \code{location}
+#' @param location The name of the column that uniquely identifies each 
+#' location. Must be specified when \code{hier_check = TRUE}.
 #'
 #' @return Returns \code{data} invisibly, using \code{invisible(x)}
 #'
 #' @keywords internal
 #' @noRd
 
-check_data <- function(data, result, poolSize){
-  print(data)
-  return(invisible(x))
+check_data <- function(data, result, poolSize, 
+                       hier_check = FALSE, location = NULL){
+  # Check whether result and poolSize variables are present within column names
+  if (! (result %in% names(data)) ){
+    stop("result column not included in dataframe")
+  }
+  if (! (poolSize %in% names(data)) ){
+    stop("poolSize column not included in dataframe")
+  }
+  
+  # Check whether dataframe columns are all strings
+  stop("All dataframe columns are strings.")
+  
+  # Check whether note rows are appended at bottom of dataframe
+  # i.e., whether rows are present that have missing values
+  stop("Some rows have missing values")
+  
+  # Check whether empty rows are present
+  warning("Empty rows are present within the dataset.")
+  
+  # Check whether result column contains only 0 and 1
+  result_vals <- unique(data[, result])
+  if (! setequal(c(0,1), result_vals)){
+    stop("Results of each test must only be stored as 0 (negative test) or 1 (positive test)")
+  }
+  
+  # Check whether each row has a unique site column value
+  # Complicated - cannot make assumptions about the rest of the data, which
+  # means you cannot simply compare the expected and actual number of values
+  # Need to think about this
+  if (hier_check == TRUE & is.null(location)){
+    stop('Must specify location in function call when "hier_check = TRUE"')
+  }
+  
+  # Return data, invisibly, if all checks succeed
+  return(invisible(data))
 }
