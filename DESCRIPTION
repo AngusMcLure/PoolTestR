@@ -43,7 +43,8 @@ Imports:
     stringr,
     tibble
 Suggests: 
-    covr
+    covr,
+    testthat (>= 3.0.0)
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
@@ -57,3 +58,4 @@ Language: en-AU
 LazyData: true
 RoxygenNote: 7.3.2
 SystemRequirements: GNU make
+Config/testthat/edition: 3
