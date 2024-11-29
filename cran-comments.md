@@ -11,6 +11,8 @@ There may be 5 NOTEs depending on platform (and pseudo-random number generation)
   GNU make is a SystemRequirements.
 ```
 
+- GNU make is necessary for the Stan models included in this package.
+
 ```
 ❯ checking examples ... NOTE
   Examples with CPU (user + system) or elapsed time > 10s
@@ -60,6 +62,9 @@ my package.
 	src/stanExports_PoolPrev.cc
   Some Unix compilers require LF line endings.
 ```
+- Potentially an issue moving between Windows and Mac-OS (dev team uses 
+different OSs). Updated git config to `core.autocrlf input` to convert CRLF to 
+LF on commit
 
 ```
 ❯ checking compilation flags used ... 
