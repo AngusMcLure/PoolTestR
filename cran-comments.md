@@ -65,6 +65,7 @@ my package.
 - Potentially an issue moving between Windows and Mac-OS (dev team uses 
 different OSs). Updated git config to `core.autocrlf input` to convert CRLF to 
 LF on commit
+- Converted files using dos2unix
 
 ```
 ❯ checking compilation flags used ... 
