@@ -55,6 +55,7 @@ how to avoid this issue and I am guessing it is largely outside of the scope of
 my package.
 
 ## Notes in progress
+
 ```
 ❯ NOTE Found the following sources/headers with CR or CRLF line endings:
 	src/stanExports_HierPoolPrevIndividualSD.cc
