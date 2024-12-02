@@ -9,14 +9,16 @@
 #'   pool. It may also contain additional columns with additional information
 #'   (e.g. location where pool was taken) which can optionally be used for
 #'   stratifying the data into smaller groups and calculating prevalence by
-#'   group (e.g. calculating prevalence for each location)
+#'   group (e.g. calculating prevalence for each location).
 #' @param result The name of column with the result of each test on each pooled
 #'   sample. The result must be stored with 1 indicating a positive test result
 #'   and 0 indicating a negative test result.
 #' @param poolSize The name of the column with number of
-#'   specimens/isolates/insects in each pool
+#'   specimens/isolates/insects in each pool.
+#' @param excludeCols Character vector containing the name(s) of columns to 
+#'   exclude from the input checks (e.g., notes columns).
 #' @param hier_check Logical. Default is \code{FALSE}. If \code{TRUE}, checks
-#'  whether each row in the specified \code{location}
+#'  whether each row in the specified \code{location}.
 #' @param location The name of the column that uniquely identifies each 
 #' location. Must be specified when \code{hier_check = TRUE}.
 #'
@@ -25,30 +27,95 @@
 #' @keywords internal
 #' @noRd
 
-check_data <- function(data, result, poolSize, 
-                       hier_check = FALSE, location = NULL){
+checkInputData <- function(data, result, poolSize, excludeCols = NULL, 
+                           hier_check = FALSE, location = NULL){
+  # Remove any columns flagged for exclusion
+  if (! is.null(excludeCols) ){
+    test_data <- data %>% select(! excludeCols)
+  } else (
+    test_data <- data
+  )
+  
+  ## Warnings
+  # Check whether empty rows are present
+  empty_rows <- which(apply(test_data == "", 1, all) == TRUE)
+  if (length(empty_rows) > 0){
+    warning(
+      paste0("Empty rows are present within the dataset.\n",
+             "Rows: ", 
+             paste(empty_rows, collapse = ", ") 
+      )
+    )
+  }
+  
+  # Check whether rows containing only NA are present
+  NA_rows <- which(apply(is.na(test_data), 1, all) == TRUE)
+  if (length(NA_rows) > 0){
+    warning(
+      paste0("Rows containing only NA are present within the dataset.\n",
+             "Rows: ", 
+             paste(NA_rows, collapse = ", ") 
+      )
+    )
+  }
+  
+  # Check whether note rows or missing values are present
+  # i.e., whether rows are present that have 1 or more missing values 
+  #.      (but are not a fully empty row)
+  missing_value_rows <- sort(
+    unique(
+      c(
+        which(rowSums(is.na(test_data)) != 0  
+              & rowSums(is.na(test_data)) < ncol(test_data)),
+        which(rowSums(test_data == "") != 0  
+              & rowSums(test_data == "") < ncol(test_data))
+      )
+    )
+  )
+  if (length(missing_value_rows) > 0){
+    warning(
+      paste0("Rows containing missing values are present within the dataset.\n",
+             "Rows: ", 
+             paste(missing_value_rows, collapse = ", ") 
+      )
+    )
+  }
+  
+  ## Errors
   # Check whether result and poolSize variables are present within column names
-  if (! (result %in% names(data)) ){
+  if (! (result %in% names(test_data)) ){
     stop("result column not included in dataframe")
   }
-  if (! (poolSize %in% names(data)) ){
+  if (! (poolSize %in% names(test_data)) ){
     stop("poolSize column not included in dataframe")
   }
   
-  # Check whether dataframe columns are all strings
-  stop("All dataframe columns are strings.")
+  # Check whether results column values are numeric or integer
+  if (! (class(test_data[,result]) == "numeric" || 
+         class(test_data[,result]) == "integer") ){
+    stop(
+      paste0(
+        'Results of each test must be stored as class "numeric" with only ',
+        'values 0 (negative test) or 1 (positive test)'
+      )
+    )
+  }
   
-  # Check whether note rows are appended at bottom of dataframe
-  # i.e., whether rows are present that have missing values
-  stop("Some rows have missing values")
-  
-  # Check whether empty rows are present
-  warning("Empty rows are present within the dataset.")
+  # Check whether poolSize column values are numeric or integer
+  if (! (class(test_data[,poolSize]) == "numeric" || 
+         class(test_data[,poolSize]) == "integer") ){
+    stop('Pool size column should be class "numeric"')
+  }
   
   # Check whether result column contains only 0 and 1
-  result_vals <- unique(data[, result])
+  result_vals <- unique(test_data[, result])
   if (! setequal(c(0,1), result_vals)){
-    stop("Results of each test must only be stored as 0 (negative test) or 1 (positive test)")
+    stop(
+      paste0(
+        'Results of each test must be stored as class "numeric" with only ',
+        'values 0 (negative test) or 1 (positive test)'
+      )
+    )
   }
   
   # Check whether each row has a unique site column value
