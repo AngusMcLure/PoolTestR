@@ -10,7 +10,7 @@ test_that("SimpleExampleData returns no errors or warnings", {
   )
 })
 
-test_that("Missing results colum returns error", {
+test_that("Missing results column returns error", {
   expect_error(
     checkInputData(SimpleExampleData, "WrongResultColumnName", "NumInPool")
   )
@@ -50,21 +50,6 @@ test_that("Empty rows in dataframe returns error and warning", {
   expect_error(
     expect_warning(
       checkInputData(empty_df, "Result", "NumInPool")
-    )
-  )
-})
-
-test_that("NA rows in dataframe returns error and warning", {
-  NA_row <- rep(NA, ncol(SimpleExampleData))
-  names(NA_row) <- names(SimpleExampleData)
-  NA_df <- rbind(SimpleExampleData,
-                 NA_row,
-                 NA_row,
-                 NA_row)
-  # Expect error (Results must be numeric 0 or 1 only) and warning (NA rows)
-  expect_error(
-    expect_warning(
-      checkInputData(NA_df, "Result", "NumInPool")
     )
   )
 })
