@@ -12,13 +12,15 @@ test_that("SimpleExampleData returns no errors or warnings", {
 
 test_that("Missing results column returns error", {
   expect_error(
-    checkInputData(SimpleExampleData, "WrongResultColumnName", "NumInPool")
+    checkInputData(SimpleExampleData, "WrongResultColumnName", "NumInPool"),
+    class = "DataCheck_missing_column"
   )
 })
 
 test_that("Missing poolSize column returns error", {
   expect_error(
-    checkInputData(SimpleExampleData, "Result", "WrongNumInPoolColumnName")
+    checkInputData(SimpleExampleData, "Result", "WrongNumInPoolColumnName"),
+    class = "DataCheck_missing_column"
   )
 })
 
@@ -26,7 +28,8 @@ test_that("Character class for results column returns error", {
   char_df <- SimpleExampleData %>%
     mutate(across("Result", as.character))
   expect_error(
-    checkInputData(char_df, "Result", "NumInPool")
+    checkInputData(char_df, "Result", "NumInPool"),
+    class = "DataCheck_col_not_numeric"
   )
 })
 
@@ -34,7 +37,8 @@ test_that("Character class for poolSize column returns error", {
   char_df <- SimpleExampleData %>%
     mutate(across("NumInPool", as.character))
   expect_error(
-    checkInputData(char_df, "Result", "NumInPool")
+    checkInputData(char_df, "Result", "NumInPool"),
+    class = "DataCheck_col_not_numeric"
   )
 })
 
@@ -49,8 +53,10 @@ test_that("Empty rows in dataframe returns error and warning", {
   # Expect error (Result column is class "character") and warning (empty rows)
   expect_error(
     expect_warning(
-      checkInputData(empty_df, "Result", "NumInPool")
-    )
+      checkInputData(empty_df, "Result", "NumInPool"),
+      class = "DataCheck_empty_rows"
+    ),
+    class = "DataCheck_col_not_numeric"
   )
 })
 
@@ -64,8 +70,10 @@ test_that("NA rows in dataframe returns error and warning", {
   # Expect error (Results must be numeric 0 or 1 only) and warning (NA rows)
   expect_error(
     expect_warning(
-      checkInputData(NA_df, "Result", "NumInPool")
-    )
+      checkInputData(NA_df, "Result", "NumInPool"),
+      class = "DataCheck_NA_rows"
+    ),
+    class = "DataCheck_invalid_results_values"
   )
 })
 
@@ -79,8 +87,10 @@ test_that("Missing values in every column returns error and warning", {
   # Expect error (Results must be numeric 0 or 1 only) and warning (missing values)
   expect_error(
     expect_warning(
-      checkInputData(missing_df, "Result", "NumInPool")
-    )
+      checkInputData(missing_df, "Result", "NumInPool"),
+      class = "DataCheck_missing_values"
+    ),
+    class = "DataCheck_col_not_numeric"
   )
 })
 
@@ -95,8 +105,10 @@ test_that("NA values in every column returns error and warning", {
   # Expect error (Results must be numeric 0 or 1 only) and warning (missing values)
   expect_error(
     expect_warning(
-      checkInputData(NA_df, "Result", "NumInPool")
-    )
+      checkInputData(NA_df, "Result", "NumInPool"),
+      class = "DataCheck_missing_values"
+    ),
+    class = "DataCheck_invalid_results_values"
   )
 })
 
@@ -108,7 +120,8 @@ test_that("Missing values in hierarchy columns returns warning", {
   missing_df[4,4] <- ""
   # Expect warning (missing values)
   expect_warning(
-    checkInputData(missing_df, "Result", "NumInPool")
+    checkInputData(missing_df, "Result", "NumInPool"),
+    class = "DataCheck_missing_values"
   )
 })
 
@@ -120,13 +133,15 @@ test_that("NA values in hierarchy columns returns warning", {
   NA_df[5,5] <- NA
   # Expect warning (missing values)
   expect_warning(
-    checkInputData(NA_df, "Result", "NumInPool")
+    checkInputData(NA_df, "Result", "NumInPool"),
+    class = "DataCheck_missing_values"
   )
 })
 
 test_that("hier_check = TRUE without input hierarchy columns returns error", {
  expect_error(
    checkInputData(SimpleExampleData, "Result", "NumInPool",
-                  hier_check = TRUE, location = NULL)
+                  hier_check = TRUE, location = NULL),
+   class = "DataCheck_no_specified_location_cols"
  )
 })
