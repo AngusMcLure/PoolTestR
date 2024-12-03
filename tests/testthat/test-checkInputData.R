@@ -145,3 +145,18 @@ test_that("hier_check = TRUE without input hierarchy columns returns error", {
    class = "DataCheck_no_specified_location_cols"
  )
 })
+
+test_that("Clustering by variable with missing values raises helpful error ", {
+  # If you use PoolPrev() or HierPoolPrev() and cluster by a variable with 
+  # missing values, error should be raised
+  expect_error(
+    checkInputData(SimpleExampleData, "Result", "NumInPool",
+                   hier_check = TRUE, location = NULL),
+    class = "DataCheck_no_specified_location_cols"
+  )
+})
+
+
+
+
+

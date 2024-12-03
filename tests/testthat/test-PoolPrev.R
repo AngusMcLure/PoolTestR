@@ -17,7 +17,9 @@ test_that("PoolPrev returns correct ML and Bayesian estimates", {
   prev <- PoolPrev(SimpleExampleData, "Result", "NumInPool", 
                    bayesian = TRUE)
   # PrevMLE:   mean = 0.05722, range = (0.05722 - 0.05723) - (20 replicates)
+  # Differences should be minor - fix to 4 or 5 d.p.
   # PrevBayes: mean = 0.05726, range = (0.05704 - 0.05755) - (20 replicates)
+  # Allow values within 5x the range for PrevBayes
   expect_named(prev, 
                expected = c("PrevMLE", "CILow", "CIHigh",
                             "PrevBayes", "CrILow", "CrIHigh",
