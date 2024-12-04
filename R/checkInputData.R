@@ -34,7 +34,7 @@
 #'
 #' @keywords internal
 #' @noRd
-# #' TODO Complete documentation
+# TODO Complete documentation
 
 checkInputData <- function(data, result, poolSize, ...,  
                            hier_check = FALSE, excludeCols = NULL){
@@ -195,7 +195,7 @@ checkInputData <- function(data, result, poolSize, ...,
 #'
 #' @keywords internal
 #' @noRd
-# #' TODO Complete documentation
+# TODO Complete documentation
 checkClusterVars <- function(data, ...){
   # Extract name(s) of columns to group by
   groupVar <- as.character(list(...)) 
@@ -213,8 +213,13 @@ checkClusterVars <- function(data, ...){
   incomplete_cols <- unlist(lapply(groupVar, function(x){is.null(missing_list[[x]]) == FALSE}))
   output_list <- missing_list[ groupVar[incomplete_cols] ]
   # Raise error and output missing values and corresponding column name
+  if (length(output_list) > 0){
+    rlang::abort(message = "",
+                 class = "DataCheck_missing_group_vars")
+  }
   
-  
+  # Return data, invisibly, if check succeeds
+  return(invisible(data))
 }
 
 
@@ -278,10 +283,10 @@ checkClusterVars <- function(data, ...){
 #' 
 #' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
 #'
-# #' TODO Need to add examples here!
+# TODO Need to add examples here!
 # #' @examples
-# #' TODO Complete documentation
+# TODO Complete documentation and remove example from doco, use example from @examples instead
 prepareClusterData <- function(data, result, poolSize, ...){
-  
+  # TODO write function
 }
 
