@@ -57,23 +57,11 @@ my package.
 ## Notes in progress
 
 ```
-❯ NOTE Found the following sources/headers with CR or CRLF line endings:
-	src/stanExports_HierPoolPrevIndividualSD.cc
-	src/stanExports_HierPoolPrevTotalSD.cc
-	src/stanExports_PoolPrev.cc
-  Some Unix compilers require LF line endings.
-```
-- Potentially an issue moving between Windows and Mac-OS (dev team uses 
-different OSs). Updated git config to `core.autocrlf input` to convert CRLF to 
-LF on commit
-- Converted files using dos2unix
-
-```
 ❯ checking compilation flags used ... 
   NOTE Compilation used the following non-portable flag(s):
   '-Wa,-mbig-obj' '-march=native'
 ```
-
+Removed compilation flags from `configure.win`, then recompiled
 
 ## Downstream dependencies
 PoolTestR has no downstream dependencies.
