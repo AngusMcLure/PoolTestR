@@ -213,6 +213,7 @@ checkClusterVars <- function(data, ...){
   incomplete_cols <- unlist(lapply(groupVar, function(x){is.null(missing_list[[x]]) == FALSE}))
   output_list <- missing_list[ groupVar[incomplete_cols] ]
   # Raise error and output missing values and corresponding column name
+  # TODO add custom error message with values from output_list
   if (length(output_list) > 0){
     rlang::abort(message = "",
                  class = "DataCheck_missing_group_vars")
