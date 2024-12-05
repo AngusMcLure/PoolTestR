@@ -54,14 +54,6 @@ platform dependent.
 how to avoid this issue and I am guessing it is largely outside of the scope of 
 my package.
 
-## Notes in progress
-
-```
-❯ checking compilation flags used ... 
-  NOTE Compilation used the following non-portable flag(s):
-  '-Wa,-mbig-obj' '-march=native'
-```
-Removed compilation flags from `configure.win`, then recompiled
 
 ## Downstream dependencies
 PoolTestR has no downstream dependencies.
