@@ -146,14 +146,40 @@ test_that("hier_check = TRUE without input hierarchy columns returns error", {
  )
 })
 
-test_that("Clustering by variable with missing values raises helpful error ", {
+test_that("Clustering by variable with missing values raises error", {
   # If you use PoolPrev() or HierPoolPrev() and cluster by a variable with 
   # missing values, error should be raised
+  
+  # Site col includes NA
+  site_df <- SimpleExampleData
+  site_df$Site[1] <- NA
+  # Village col includes empty string ""
+  village_df <- SimpleExampleData
+  village_df$Village[1] <- ""
+  # Region col includes NA as factor level
+  region_df <- SimpleExampleData
+  region_df$Region[c(1, 289, 577, 865)] <- NA
+  # Year col is all NA
+  nosite_df <- SimpleExampleData
+  nosite_df$Site <- NA
+  
   expect_error(
-    checkInputData(SimpleExampleData, "Result", "NumInPool",
-                   hier_check = TRUE, location = NULL),
-    class = "DataCheck_no_specified_location_cols"
+    checkClusterVars(site_df, "Result", "NumInPool",
+                     "Region", "Village", "Site")
   )
+  expect_error(
+    checkClusterVars(village_df, "Result", "NumInPool",
+                     "Region", "Village", "Site")
+  )
+  expect_error(
+    checkClusterVars(region_df, "Result", "NumInPool",
+                     "Region", "Village", "Site")
+  )
+  expect_error(
+    checkClusterVars(nosite_df, "Result", "NumInPool",
+                     "Region", "Village", "Site")
+  )
+  
 })
 
 
