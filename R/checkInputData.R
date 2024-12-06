@@ -36,7 +36,7 @@
 #' @noRd
 # TODO Complete documentation
 
-checkInputData <- function(data, result, poolSize, ...,  
+CheckInputData <- function(data, result, poolSize, ...,  
                            hier_check = FALSE, excludeCols = NULL){
   # Extract name(s) of columns to group by
   hier_vars <- as.character(list(...)) 
@@ -196,7 +196,7 @@ checkInputData <- function(data, result, poolSize, ...,
 #' @keywords internal
 #' @noRd
 # TODO Complete documentation
-checkClusterVars <- function(data, ...){
+CheckClusterVars <- function(data, ...){
   # Extract name(s) of columns to group by
   groupVar <- as.character(list(...)) 
   missing_list <- vector(mode="list", length=length(groupVar))
