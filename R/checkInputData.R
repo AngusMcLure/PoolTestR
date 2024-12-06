@@ -19,7 +19,7 @@
 #'   scheme, listed from largest to smallest. Only used if 
 #'   \code{hier_check = TRUE}.
 #' @param hier_check Logical. Default is \code{FALSE}. If \code{TRUE}, checks
-#'  the hierarchy whether each row in the specified \code{location}.
+#'  the hierarchy using column names provided in \code{...}.
 #' @param excludeCols Character vector containing the name(s) of columns to 
 #'   exclude from the input checks (e.g., notes columns). If no character
 #'   vector is provided, \code{excludeCols = NULL}.

@@ -138,14 +138,6 @@ test_that("NA values in hierarchy columns returns warning", {
   )
 })
 
-test_that("hier_check = TRUE without input hierarchy columns returns error", {
- expect_error(
-   CheckInputData(SimpleExampleData, "Result", "NumInPool",
-                  hier_check = TRUE, location = NULL),
-   class = "DataCheck_no_specified_location_cols"
- )
-})
-
 test_that("Clustering by variable with missing values raises error", {
   # If you use PoolPrev() or HierPoolPrev() and cluster by a variable with 
   # missing values, error should be raised
