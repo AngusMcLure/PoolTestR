@@ -287,7 +287,7 @@ CheckClusterVars <- function(data, ...){
 # TODO Need to add examples here!
 # #' @examples
 # TODO Complete documentation and remove example from doco, use example from @examples instead
-prepareClusterData <- function(data, result, poolSize, ...){
+PrepareClusterData <- function(data, result, poolSize, ...){
   # TODO write function
 }
 
