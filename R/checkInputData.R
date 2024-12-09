@@ -57,7 +57,7 @@ CheckInputData <- function(data, result, poolSize, ...,
                        "Rows: ", 
                        paste(empty_rows, collapse = ", ")
       ),
-      class = "DataCheck_empty_rows"
+      class = c("DataCheck_empty_rows", "warning", "condition")
     )
   }
   
@@ -69,7 +69,7 @@ CheckInputData <- function(data, result, poolSize, ...,
                        "Rows: ", 
                        paste(NA_rows, collapse = ", ") 
       ),
-      class = "DataCheck_NA_rows"
+      class = c("DataCheck_NA_rows", "warning", "condition")
     )
   }
   
@@ -92,7 +92,7 @@ CheckInputData <- function(data, result, poolSize, ...,
                        "Rows: ", 
                        paste(missing_value_rows, collapse = ", ") 
       ),
-      class = "DataCheck_missing_values"
+      class = c("DataCheck_missing_values", "warning", "condition")
     )
   }
   
@@ -101,12 +101,14 @@ CheckInputData <- function(data, result, poolSize, ...,
   if (! (result %in% names(test_data)) ){
     rlang::abort(
       message = "result column not included in dataframe",
-      class = "DataCheck_missing_column")
+      class = c("DataCheck_missing_column", "error", "condition")
+    )
   }
   if (! (poolSize %in% names(test_data)) ){
     rlang::abort(
       message = "poolSize column not included in dataframe",
-      class = "DataCheck_missing_column")
+      class = c("DataCheck_missing_column", "error", "condition")
+      )
   }
   
   # Check whether results column values are numeric or integer
@@ -117,7 +119,7 @@ CheckInputData <- function(data, result, poolSize, ...,
         'Results of each test must be stored as class "numeric" with only ',
         'values 0 (negative test) or 1 (positive test)'
       ),
-      class = "DataCheck_col_not_numeric"
+      class = c("DataCheck_col_not_numeric", "error", "condition")
     )
   }
   
@@ -126,7 +128,8 @@ CheckInputData <- function(data, result, poolSize, ...,
          class(test_data[,poolSize]) == "integer") ){
     rlang::abort(
       message = 'Pool size column should be class "numeric"',
-      class = "DataCheck_col_not_numeric")
+      class = c("DataCheck_col_not_numeric", "error", "condition")
+      )
   }
   
   # Check whether result column contains only 0 and 1
@@ -137,18 +140,8 @@ CheckInputData <- function(data, result, poolSize, ...,
         'Results of each test must only be values 0 (negative test) ',
         'or 1 (positive test)'
       ),
-      class = "DataCheck_invalid_results_values"
+      class = c("DataCheck_invalid_results_values", "error", "condition")
     )
-  }
-  
-  # Check whether each row has a unique site column value
-  # Complicated - cannot make assumptions about the rest of the data, which
-  # means you cannot simply compare the expected and actual number of values
-  # Need to think about this
-  if (hier_check == TRUE & is.null(location)){
-    rlang::abort(
-      message = 'Must specify location in function call when "hier_check = TRUE"',
-      class = "DataCheck_no_specified_location_cols")
   }
   
   # Check lower levels of hierarchy - lowest level (e.g., house) should look at next level
@@ -163,6 +156,35 @@ CheckInputData <- function(data, result, poolSize, ...,
   # Helper function to help people tidy up their names - return error and return helper function
   # Make a warning on PoolTools - names not unique, we have provided unique names and run through this
   # Check hierarchy column names too 
+  
+  # Check hierarchy columns 
+  if (hier_check == TRUE & length(hier_vars) > 0) {
+    # Check that names of hierarchy columns are present in data
+    missing_hier_cols <- hier_vars[! (hier_vars %in% names(test_data)) ]
+    if (length(missing_hier_cols) > 0){
+      rlang::abort(
+        message = paste0(
+          'Results of each test must only be values 0 (negative test) ',
+          'or 1 (positive test)'
+        ),
+        class = c("DataCheck_missing_hier_cols", "error", "condition"),
+        missing_cols = missing_hier_cols
+      )
+    }
+    
+    # Check values of each column in the hierarchy 
+    
+    
+    
+    # Check whether each row has a unique site column value
+    # Complicated - cannot make assumptions about the rest of the data, which
+    # means you cannot simply compare the expected and actual number of values
+    # Need to think about this
+    
+    
+    
+  }
+  
   
   # Return data, invisibly, if all checks succeed
   return(invisible(data))
