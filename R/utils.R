@@ -151,6 +151,7 @@ check_nesting_levels <- function(data, outer_cluster, inner_cluster) {
         }
       )
     )
+  # Return inner_cluster variables present in multiple outer_cluster rows
   repeated_inners <- which(length_outer_vals > 1)
   if (length(repeated_inners) > 0){
     repeated_inner_list <- inner_list[repeated_inners]
