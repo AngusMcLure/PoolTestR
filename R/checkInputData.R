@@ -1,6 +1,6 @@
 #' Checking input data for errors and inconsistencies
 #' 
-#' 
+#'
 #' Internal function to test the input data and return relevant errors.
 #'
 #' @param data A \code{data.frame} with one row for each pooled sampled and
@@ -34,7 +34,6 @@
 #'
 #' @keywords internal
 #' @noRd
-# TODO Complete documentation
 
 CheckInputData <- function(data, result, poolSize, ...,  
                            hier_check = FALSE, excludeCols = NULL){
@@ -108,7 +107,7 @@ CheckInputData <- function(data, result, poolSize, ...,
     rlang::abort(
       message = "poolSize column not included in dataframe",
       class = c("DataCheck_missing_column", "error", "condition")
-      )
+    )
   }
   
   # Check whether results column values are numeric or integer
@@ -129,7 +128,7 @@ CheckInputData <- function(data, result, poolSize, ...,
     rlang::abort(
       message = 'Pool size column should be class "numeric"',
       class = c("DataCheck_col_not_numeric", "error", "condition")
-      )
+    )
   }
   
   # Check whether result column contains only 0 and 1
@@ -156,6 +155,7 @@ CheckInputData <- function(data, result, poolSize, ...,
   # Helper function to help people tidy up their names - return error and return helper function
   # Make a warning on PoolTools - names not unique, we have provided unique names and run through this
   # Check hierarchy column names too 
+  # NOTE: See function below `CheckClusterVars()`
   
   # Check hierarchy columns 
   if (hier_check == TRUE & length(hier_vars) > 0) {
@@ -164,8 +164,8 @@ CheckInputData <- function(data, result, poolSize, ...,
     if (length(missing_hier_cols) > 0){
       rlang::abort(
         message = paste0(
-          'Results of each test must only be values 0 (negative test) ',
-          'or 1 (positive test)'
+          'Data frame does not include the following columns: ',
+          paste(missing_hier_cols, collapse = ", ")
         ),
         class = c("DataCheck_missing_hier_cols", "error", "condition"),
         missing_cols = missing_hier_cols
@@ -203,6 +203,11 @@ CheckInputData <- function(data, result, poolSize, ...,
 #'   (e.g. location where pool was taken) which can optionally be used for
 #'   stratifying the data into smaller groups and calculating prevalence by
 #'   group (e.g. calculating prevalence for each location).
+#' @param result The name of column with the result of each test on each pooled
+#'   sample. The result must be stored with 1 indicating a positive test result
+#'   and 0 indicating a negative test result.
+#' @param poolSize The name of the column with number of 
+#'   specimens/isolates/insects in each pool.
 #' @param ... Optional name(s) of columns with variables to stratify the data
 #' by. If omitted the complete dataset is used to estimate a single
 #' prevalence. If included, prevalence is estimated separately for each group
@@ -210,36 +215,106 @@ CheckInputData <- function(data, result, poolSize, ...,
 #'
 #' @return Returns \code{data} invisibly, using \code{invisible(x)}
 #' 
+#' Iterate through each column in \code{...}. If any values in those columns
+#' are missing (i.e., \code{""}, \code{NA}, \code{NULL}), an error is raised.
+#' 
+#' Checks nesting of the columns in \code{...}. If the given hierarchy/clustering 
+#' scheme is Region > Village > Site, this function checks that each Site appears
+#' within only one Village, and that each Village appears within only one region.
+#' 
 #' For the \code{SimpleExampleData} data included in this package, the 
 #' hierarchical sampling scheme is \code{Region} > \code{Village} > \code{Site}.
 #' The function call would be:
-#' \code{checkClusterVars(SimpleExampleData, "Result", "NumInPool", "Region", "Village", "Site")}
+#' \code{checkClusterVars(SimpleExampleData, "Region", "Village", "Site")}
 #'
 #' @keywords internal
 #' @noRd
-# TODO Complete documentation
-CheckClusterVars <- function(data, ...){
-  # Extract name(s) of columns to group by
+CheckClusterVars <- function(data, result, poolSize, ...){
+  ## Extract name(s) of columns to group by
   groupVar <- as.character(list(...)) 
+  
+  ## Check that each column exists
+  missing_hier_cols <- groupVar[! (groupVar %in% names(data))]
+  if (length(missing_hier_cols) > 0){
+    rlang::abort(
+      message = paste0(
+        'Data frame does not include the following columns: ',
+        paste(missing_hier_cols, collapse = ", ")
+      ),
+      class = c("CheckClusterVars_missing_cols", "error", "condition"),
+      missing_cols = missing_hier_cols
+    )
+  }
+  
+  ## Identify missing values in cluster/hierarchy columns
   missing_list <- vector(mode="list", length=length(groupVar))
-  # Identify missing values
   names(missing_list) <- groupVar
   for (i in groupVar){
     i_vals <- data[, i]
-    missing_i_vals <- which( i_vals == "" | is.na(i_vals) )
-    if (length(missing_i_vals) > 0){
-      missing_list[[i]] <- missing_i_vals
+    if (class(i_vals) == "character"){
+      # Missing char vals = "", NA, NULL
+      missing_i_vals <- which(i_vals == "" | is.na(i_vals) | is.null(i_vals))
+      if (length(missing_i_vals) > 0){
+        missing_list[[i]] <- missing_i_vals
+      }
+    } else if (class(i_vals) == "integer" | class(i_vals) == "numeric"){
+      # Missing num/int vals = NA, NULL
+      missing_i_vals <- which(is.na(i_vals) | is.null(i_vals))
+      if (length(missing_i_vals) > 0){
+        missing_list[[i]] <- missing_i_vals
+      }
+    } else if (class(i_vals) == "factor"){
+      # Missing factor levels = "", NA, NULL
+      missing_i_vals <- which(i_vals == "" | is.na(i_vals) | is.null(i_vals))
+      if (length(missing_i_vals) > 0){
+        missing_list[[i]] <- missing_i_vals
+      }
     }
   }
   # Extract the missing values for each column in the hierarchy/sampling scheme
-  incomplete_cols <- unlist(lapply(groupVar, function(x){is.null(missing_list[[x]]) == FALSE}))
-  output_list <- missing_list[ groupVar[incomplete_cols] ]
-  # Raise error and output missing values and corresponding column name
-  # TODO add custom error message with values from output_list
-  if (length(output_list) > 0){
-    rlang::abort(message = "",
-                 class = "DataCheck_missing_group_vars")
+  bad_cols <- groupVar[! unlist(lapply(groupVar, function(x){is.null(missing_list[[x]])}))]
+  if (length(bad_cols) > 0){
+    # Raise error and output missing values and corresponding column name
+    output_list <- missing_list[bad_cols]
+    output_messages <- unlist(
+      lapply(
+        names(output_list), 
+        function(x){paste0(x, ": ", paste(output_list[[x]], collapse = ", "))}
+      )
+    )
+    rlang::abort(
+      message = paste0("Some columns in the hierarchy/sampling scheme have missing values\n",
+                       "Please correct the following values in each of these columns:\n",
+                       paste(output_messages, collapse = "\n")),
+      class = c("CheckClusterVars_missing_vals", "error", "condition"),
+      missing_vals = output_list
+    )
   }
+  
+  ## Check nesting within hierarchy/sampling scheme
+  # Set nesting levels
+  nesting_list <- vector(mode="list", length = (length(groupVars) - 1) )
+  for (i in 1:length(nesting_list)){
+    # Use rev(groupVars) so hierarchy columns ordered from smallest to largest 
+    temp_nest_vector <- c("outer" = rev(groupVars)[i+1],
+                          "inner" = rev(groupVars)[i])
+    nesting_list[[i]] <- temp_nest_vector
+  }
+  # Check each level
+  check_nests <- 
+    lapply(
+      1:length(nesting_list), 
+      function(i){
+        check_nesting_levels(
+          data = data,
+          outer_cluster = nesting_list[[i]][["outer"]], 
+          inner_cluster = nesting_list[[i]][["inner"]]
+        )
+      }
+    )
+  # Return errors for poor nesting
+  # TODO
+
   
   # Return data, invisibly, if check succeeds
   return(invisible(data))
