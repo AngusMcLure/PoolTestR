@@ -96,6 +96,8 @@ custom_round <- function(x) {
 #' sampling scheme, this function checks whether any variables in the inner
 #' level are present for multiple outer levels.
 #' 
+#' Only called from within \code{CheckClusterVars()}
+#' 
 #' @param data A \code{data.frame} with one row for each pooled sampled and
 #'   columns for the size of the pool (i.e., the number of specimens / isolates /
 #'   insects pooled to make that particular pool), the result of the test of the
@@ -107,6 +109,16 @@ custom_round <- function(x) {
 #' from \code{data}.
 #' @param inner_cluster The inner (i.e., smaller) cluster. Nested within the 
 #' \code{outer_cluster}. Must be a column name from \code{data}.
+#' 
+#' @return Returns a \code{data.frame} with the following columns:
+#'   \itemize{
+#'     \item{\code{inner_vals} -- value of the \code{inner_cluster} that is 
+#'     present within multiple \code{outer_cluster} values.}
+#'     \item{\code{outer_vals} -- values of the \code{outer_cluster} that
+#'     contain the \code{inner_vals}.}
+#'     \item{\code{inner_cluster} -- name of the \code{inner_cluster}. }
+#'     \item{\code{outer_cluster} -- name of the \code{outer_cluster}. } 
+#'      }
 #' 
 #' Assume we have Houses 1 and 2 in Village A and Houses 1 and 2 in Village B. 
 #' This function will return the values 1 and 2 for the Houses level, as there 
@@ -155,10 +167,44 @@ check_nesting_levels <- function(data, outer_cluster, inner_cluster) {
   repeated_inners <- which(length_outer_vals > 1)
   if (length(repeated_inners) > 0){
     repeated_inner_list <- inner_list[repeated_inners]
-    op <- as.data.frame(do.call(rbind, repeated_inner_list))
+    bad_nesting_op <- as.data.frame(do.call(rbind, repeated_inner_list))
   } else {
-    op <- NULL
+    bad_nesting_op <- NULL
   }
-  return(op)
+  return(bad_nesting_op)
 }  
+
+
+#' Create pretty error message for incorrect nesting 
+#' 
+#' Only called from within \code{CheckClusterVars()}.
+#' 
+#' Takes the \code{data.frame} output by \code{check_nesting_levels()} and 
+#' turns it into a pretty and informative error message that can be output 
+#' to the user.
+#' 
+#' @param nest_df A \code{data.frame} object. Output from 
+#' \code{check_nesting_levels()}
+#' 
+#' @return Returns a \code{character} vector where each element is an error
+#' message to return to the user.
+#'
+#' @keywords internal
+#' @noRd
+#' 
+create_nesting_error_message <- function(nest_df){
+  general_warning <- c()
+  row_warnings <- nest_df %>% 
+    rowwise() %>%
+    mutate(
+      error_message = paste0(
+        "'", inner_cluster, "' column value '", as.character(inner_vals), 
+        "' appears in same row as '", outer_cluster, "' column values: '", 
+        paste(outer_vals, collapse = "', "), "'"
+      ),
+      .keep = "all"
+    )
+  all_warnings <- c(general_warning, row_warnings)
+  return(all_warnings)
+}
 
