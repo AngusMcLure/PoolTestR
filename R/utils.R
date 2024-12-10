@@ -105,43 +105,80 @@ custom_round <- function(x) {
 #'   (e.g. location where pool was taken) which can optionally be used for
 #'   stratifying the data into smaller groups and calculating prevalence by
 #'   group (e.g. calculating prevalence for each location).
-#' @param outer_cluster The outer (i.e., larger) cluster. Must be a column name 
-#' from \code{data}.
-#' @param inner_cluster The inner (i.e., smaller) cluster. Nested within the 
-#' \code{outer_cluster}. Must be a column name from \code{data}.
+#' @param hierarchy_scheme Names of columns in the hierarchy/clustering scheme, 
+#' ordered from largest to smallest
 #' 
-#' @return Returns a \code{data.frame} with the following columns:
-#'   \itemize{
-#'     \item{\code{inner_vals} -- value of the \code{inner_cluster} that is 
-#'     present within multiple \code{outer_cluster} values.}
-#'     \item{\code{outer_vals} -- values of the \code{outer_cluster} that
-#'     contain the \code{inner_vals}.}
-#'     \item{\code{inner_cluster} -- name of the \code{inner_cluster}. }
-#'     \item{\code{outer_cluster} -- name of the \code{outer_cluster}. } 
-#'      }
+#' @return Returns a \code{list}
 #' 
 #' Assume we have Houses 1 and 2 in Village A and Houses 1 and 2 in Village B. 
 #' This function will return the values 1 and 2 for the Houses level, as there 
 #' are identical houses in both Villages.
 #' 
-#' To correct this, each location (i.e., in this example each House) should have
+#' To avoid this, each location (i.e., in this example each House) should have
 #' a unique identifier. The houses could have Village names appended (e.g., A-1,
 #' A-2, B-1, B-2) or each house could be numbered sequentially (e.g., 1, 2, 3, 
 #' 4).
 #' 
 #' In the example above the \code{outer_cluster} is "Village" and the 
 #' \code{inner_cluster} is "House".
-#' 
-#' As in \code{PrepareClusterData()} and \code{CheckClusterVars()}, the 
-#' clustering/hierarchical columns are input into the function from largest to 
-#' smallest.
 #'
 #' @keywords internal
 #' @noRd
 #' 
-check_nesting_levels <- function(data, 
-                                 outer_cluster, inner_cluster, 
-                                 hierarchy_scheme) {
+check_nesting_levels <- function(data, hierarchy_scheme) {
+  hier_df <- unique(data[, hierarchy_scheme])
+  # Identify pairwise comparisons between adjacent hierarchy levels
+  hier_list <- vector(mode="list", length = (length(hierarchy_scheme) - 1) )
+  for (i in 1:length(hier_list)){
+    # Use rev(hierarchy_scheme) so hierarchy columns ordered from smallest to largest 
+    temp_list <- list("outer" = rev(hierarchy_scheme)[i+1],
+                      "inner" = rev(hierarchy_scheme)[i],
+                      "scheme" = hierarchy_scheme)
+    hier_list[[i]] <- temp_list
+  }
+  # Check for inner level values with multiple values at the outer level
+  check_df <- 
+    as.data.frame(
+      do.call(
+        rbind, 
+        lapply(
+          1:length(hier_list),
+          function(i){
+            as.data.frame(
+              do.call(
+                rbind,
+                lapply(
+                  unique(hier_df[[hier_list[[i]]$inner]]), 
+                  function(j){
+                    list(
+                      "inner" = hier_list[[i]]$inner,
+                      "outer" = hier_list[[i]]$outer,
+                      "inner_val" = j,
+                      "outer_val" = unique(hier_df[(hier_df[[hier_list[[i]]$inner]] == j), hier_list[[i]]$outer])
+                    )
+                  }
+                )
+              )
+            )
+          }
+        )
+      )
+    )
+  check_df <- check_df %>%
+    rowwise() %>%
+    mutate(num_outer_val = length(outer_val),
+           .keep = "all")
+  error_df <- check_df[which(check_df$num_outer_val > 1), ]
+  return(error_df)
+  
+  # for each village, give me the list of regions including this value
+  # for each site, give me the list of regions including this value
+  # filter values of length 1
+  lapply(unique(hier_df$Site), function(x){unique(hier_df[(hier_df$Site == x), "Village"])})
+  lapply(unique(hier_df$Site), function(x){unique(hier_df[(hier_df$Site == x), "Village"])})
+  
+  
+  ## TODO remove old code
   # Keep only unique rows for the two columns in the inner/outer cluster 
   unique_df <- unique(data[, c(outer_cluster, inner_cluster)])
   inner_vals <- unique(unique_df[[inner_cluster]])
@@ -177,7 +214,7 @@ check_nesting_levels <- function(data,
   } else {
     bad_nesting_op <- NULL
   }
-  return(bad_nesting_op)
+  return(error_df)
 }  
 
 
