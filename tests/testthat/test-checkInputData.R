@@ -182,19 +182,23 @@ test_that("Clustering by variable with missing values raises error", {
   # Call function
   expect_error(
     CheckClusterVars(site_df, "Result", "NumInPool",
-                     "Region", "Village", "Site")
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_missing_vals"
   )
   expect_error(
     CheckClusterVars(village_df, "Result", "NumInPool",
-                     "Region", "Village", "Site")
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_missing_vals"
   )
   expect_error(
     CheckClusterVars(region_df, "Result", "NumInPool",
-                     "Region", "Village", "Site")
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_missing_vals"
   )
   expect_error(
     CheckClusterVars(nosite_df, "Result", "NumInPool",
-                     "Region", "Village", "Site")
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_missing_vals"
   )
 })
 
@@ -229,7 +233,8 @@ test_that("Incorrect nesting within hierarchy columns raises errors", {
   )
   expect_error(
     CheckClusterVars(bad_sites_df, "Result", "NumInPool",
-                     "Region", "Village", "Site")
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_nesting"
   )
   bad_villages_df <- data.frame(
     Region = rep(c("A", "B"), each = 4),
@@ -241,7 +246,8 @@ test_that("Incorrect nesting within hierarchy columns raises errors", {
   )
   expect_error(
     CheckClusterVars(bad_villages_df, "Result", "NumInPool",
-                     "Region", "Village", "Site")
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_nesting"
   )
 })
 
@@ -340,4 +346,4 @@ test_that("check_nesting_levels() returns expected output", {
   )
 })
 
-
+## TODO test CheckClusterVars for different num of cols in scheme (2,4,5)
