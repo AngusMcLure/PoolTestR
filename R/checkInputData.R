@@ -39,6 +39,7 @@ CheckInputData <- function(data, result, poolSize, ...,
                            hier_check = FALSE, excludeCols = NULL){
   # Extract name(s) of columns to group by
   groupVar <- as.character(list(...)) 
+  print(groupVar)
   
   # Remove any columns flagged for exclusion
   if (! is.null(excludeCols) ){
@@ -143,29 +144,20 @@ CheckInputData <- function(data, result, poolSize, ...,
     )
   }
   
-  # Check hierarchy columns 
+  # If running hierarchy/clustering checks, ensure groupVar has been provided 
+  if (hier_check == TRUE & length(groupVar) == 0) {
+    rlang::abort(
+      message = "No hierarchical/sampling variables included in function call.",
+      class = c("DataCheck_missing_hierarchy", "error", "condition")
+    )
+  }
+  
+  # Check hierarchy/clustering scheme
   if (hier_check == TRUE & length(groupVar) > 0) {
-    # Check that names of hierarchy columns are present in data
-    missing_hier_cols <- groupVar[! (groupVar %in% names(test_data)) ]
-    if (length(missing_hier_cols) > 0){
-      rlang::abort(
-        message = paste0(
-          'Data frame does not include the following columns: ',
-          paste(missing_hier_cols, collapse = ", ")
-        ),
-        class = c("DataCheck_missing_hier_cols", "error", "condition"),
-        missing_cols = missing_hier_cols
-      )
-    }
-    
-    # Check values of each column in the hierarchy 
     hier_check <- CheckClusterVars(data = test_data, 
                                    result = result, poolSize = poolSize,
                                    groupVar)
-    
-    
   }
-  
   
   # Return data, invisibly, if all checks succeed
   return(invisible(data))
@@ -293,14 +285,22 @@ CheckClusterVars <- function(data, result, poolSize, ...){
         )
       }
     )
-  check_nests <- check_nests[unlist(lapply(check_nests, function(x){is.null(x) == FALSE}))]
-  # Return errors for poor nesting
-  lapply()
+  check_nests <- check_nests[unlist(lapply(check_nests, function(x){! is.null(x)}))]
+  if (length(check_nests) > 0){
+    # Return errors for poor nesting
+    nesting_errors <- 
+      c(
+        "Hierarchy/clustered sampling scheme is not nested correctly.",
+        unlist(lapply(check_nests, create_nesting_error_message))
+      )
+    rlang::abort(
+      message = nesting_errors,
+      class = c("CheckClusterVars_nesting", "error", "condition"),
+      missing_vals = check_nests
+    )
+  }
   
-  # TODO
-
-  
-  # Return data, invisibly, if check succeeds
+  # Return data, invisibly, if checks succeeds
   return(invisible(data))
 }
 
@@ -369,6 +369,18 @@ CheckClusterVars <- function(data, result, poolSize, ...){
 # #' @examples
 # TODO Complete documentation and remove example from doco, use example from @examples instead
 PrepareClusterData <- function(data, result, poolSize, ...){
-  # TODO write function
+  groupVar <- as.character(list(...)) 
+  
+  # Check for warnings and errors
+  CheckInputData(data, result, poolSize, groupVar,  
+                 hier_check = TRUE, excludeCols = NULL)
+  CheckClusterVars(data, result, poolSize, groupVar)
+  
+  # Add unique identifier for each location by pasting groupVar columns
+  new_data <- data %>%
+    rowwise() %>%
+    mutate(PoolTestR_ID = create_unique_location_id(.data, groupVar),
+           .keep = "all")
+  return(new_data)
 }
 
