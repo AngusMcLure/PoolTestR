@@ -1,4 +1,4 @@
-test_that("SimpleExampleData returns no errors or warnings", {
+test_that("CheckInputData - SimpleExampleData returns no errors/warnings", {
   expect_no_message(
     CheckInputData(SimpleExampleData, "Result", "NumInPool")
   )
@@ -11,7 +11,7 @@ test_that("SimpleExampleData returns no errors or warnings", {
 })
 
 
-test_that("Missing results column returns error", {
+test_that("CheckInputData - missing results column returns error", {
   expect_error(
     CheckInputData(SimpleExampleData, "WrongResultColumnName", "NumInPool"),
     class = "DataCheck_missing_column"
@@ -19,7 +19,7 @@ test_that("Missing results column returns error", {
 })
 
 
-test_that("Missing poolSize column returns error", {
+test_that("CheckInputData - missing poolSize column returns error", {
   expect_error(
     CheckInputData(SimpleExampleData, "Result", "WrongNumInPoolColumnName"),
     class = "DataCheck_missing_column"
@@ -27,7 +27,7 @@ test_that("Missing poolSize column returns error", {
 })
 
 
-test_that("Character class for results column returns error", {
+test_that("CheckInputData - character class for results column returns error", {
   char_df <- SimpleExampleData %>%
     mutate(across("Result", as.character))
   expect_error(
@@ -37,7 +37,7 @@ test_that("Character class for results column returns error", {
 })
 
 
-test_that("Character class for poolSize column returns error", {
+test_that("CheckInputData - character class for poolSize column returns error", {
   char_df <- SimpleExampleData %>%
     mutate(across("NumInPool", as.character))
   expect_error(
@@ -47,7 +47,7 @@ test_that("Character class for poolSize column returns error", {
 })
 
 
-test_that("Empty rows in dataframe returns error and warning", {
+test_that("CheckInputData - empty rows in dataframe returns error and warning", {
   empty_row <- rep("", ncol(SimpleExampleData))
   names(empty_row) <- names(SimpleExampleData)
   empty_df <- rbind(SimpleExampleData %>%
@@ -55,7 +55,6 @@ test_that("Empty rows in dataframe returns error and warning", {
                     empty_row,
                     empty_row,
                     empty_row)
-  # Expect error (Result column is class "character") and warning (empty rows)
   expect_error(
     expect_warning(
       CheckInputData(empty_df, "Result", "NumInPool"),
@@ -66,14 +65,13 @@ test_that("Empty rows in dataframe returns error and warning", {
 })
 
 
-test_that("NA rows in dataframe returns error and warning", {
+test_that("CheckInputData - NA rows in dataframe returns error and warning", {
   NA_row <- rep(NA, ncol(SimpleExampleData))
   names(NA_row) <- names(SimpleExampleData)
   NA_df <- rbind(SimpleExampleData,
                  NA_row,
                  NA_row,
                  NA_row)
-  # Expect error (Results must be numeric 0 or 1 only) and warning (NA rows)
   expect_error(
     expect_warning(
       CheckInputData(NA_df, "Result", "NumInPool"),
@@ -84,14 +82,13 @@ test_that("NA rows in dataframe returns error and warning", {
 })
 
 
-test_that("Missing values in every column returns error and warning", {
+test_that("CheckInputData - missing column values returns error and warning", {
   missing_df <- SimpleExampleData
   missing_df[1,1] <- ""
   missing_df[2,2] <- ""
   missing_df[3,3] <- ""
   missing_df[4,4] <- ""
   missing_df[6,6] <- ""
-  # Expect error (Results must be numeric 0 or 1 only) and warning (missing values)
   expect_error(
     expect_warning(
       CheckInputData(missing_df, "Result", "NumInPool"),
@@ -102,7 +99,7 @@ test_that("Missing values in every column returns error and warning", {
 })
 
 
-test_that("NA values in every column returns error and warning", {
+test_that("CheckInputData - NA column values returns error and warning", {
   NA_df <- SimpleExampleData
   NA_df[1,1] <- NA
   NA_df[2,2] <- NA
@@ -110,7 +107,6 @@ test_that("NA values in every column returns error and warning", {
   NA_df[4,4] <- NA
   NA_df[5,5] <- NA
   NA_df[6,6] <- NA
-  # Expect error (Results must be numeric 0 or 1 only) and warning (missing values)
   expect_error(
     expect_warning(
       CheckInputData(NA_df, "Result", "NumInPool"),
@@ -121,12 +117,20 @@ test_that("NA values in every column returns error and warning", {
 })
 
 
-test_that("Missing values in hierarchy columns returns warning", {
+test_that("CheckInputData - no hierarchy columns input raises error", {
+  expect_error(
+    CheckInputData(SimpleExampleData, "Result", "NumInPool",
+                   hier_check = TRUE),
+    class = "DataCheck_missing_hierarchy"
+  )
+})
+
+
+test_that("CheckInputData - missing values in hierarchy columns returns warning", {
   missing_df <- SimpleExampleData
   missing_df[2,2] <- ""
   missing_df[3,3] <- ""
   missing_df[4,4] <- ""
-  # Expect warning (missing values)
   expect_warning(
     CheckInputData(missing_df, "Result", "NumInPool"),
     class = "DataCheck_missing_values"
@@ -134,13 +138,12 @@ test_that("Missing values in hierarchy columns returns warning", {
 })
 
 
-test_that("NA values in hierarchy columns returns warning", {
+test_that("CheckInputData - NA values in hierarchy columns returns warning", {
   NA_df <- SimpleExampleData
   NA_df[2,2] <- NA
   NA_df[3,3] <- NA
   NA_df[4,4] <- NA
   NA_df[5,5] <- NA
-  # Expect warning (missing values)
   expect_warning(
     CheckInputData(NA_df, "Result", "NumInPool"),
     class = "DataCheck_missing_values"
@@ -148,7 +151,7 @@ test_that("NA values in hierarchy columns returns warning", {
 })
 
 
-test_that("CheckClusterVars() with SimpleExampleData has no errors or warnings", {
+test_that("CheckClusterVars() with SimpleExampleData has no errors/warnings", {
   expect_no_message(
     CheckClusterVars(SimpleExampleData, "Result", "NumInPool",
                      "Region", "Village", "Site")
@@ -164,7 +167,7 @@ test_that("CheckClusterVars() with SimpleExampleData has no errors or warnings",
 })
 
 
-test_that("Clustering by variable with missing values raises error", {
+test_that("CheckClusterVars - hierarchy columns with missing values raise error", {
   # Site col includes NA
   test_df <- SimpleExampleData
   test_df$Site[1] <- NA
@@ -237,8 +240,7 @@ test_that("Clustering by variable with missing values raises error", {
 })
 
 
-test_that("Correct nesting within hierarchy columns raises no errors", {
-  # TODO
+test_that("CheckClusterVars - correct hierarchy nesting scheme has no errors", {
   nest_df <- data.frame(
     Region = c("A", "A", "A", "A", "B", "B", "B", "B"),
     Village = c("W", "W", "X", "X", "Y", "Y", "Z", "Z"),
@@ -253,10 +255,7 @@ test_that("Correct nesting within hierarchy columns raises no errors", {
 })
 
 
-
-
-test_that("Incorrect nesting within hierarchy columns raises errors", {
-  #TODO
+test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
   bad_sites_df <- data.frame(
     Region = rep(c("A", "B"), each = 4),
     Village = rep(c("W", "X", "Y", "Z"), each = 2),
@@ -280,6 +279,33 @@ test_that("Incorrect nesting within hierarchy columns raises errors", {
   )
   expect_error(
     CheckClusterVars(bad_villages_df, "Result", "NumInPool",
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_nesting"
+  )
+  bad_sites_villages_df <- data.frame(
+    Region = rep(c("A", "B"), each = 4),
+    Village = rep(rep(c("W", "X"), each = 2), 2),
+    Site = c(1:4, 4:1),
+    Year = rep(0, 8),
+    NumInPool = rep(10, 8),
+    Result = rep(0, 8)
+  )
+  expect_error(
+    CheckClusterVars(bad_sites_villages_df, "Result", "NumInPool",
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_nesting"
+  )
+  #TODO check whole sampling scheme at once
+  bad_sites_villages_df <- data.frame(
+    Region = rep(c("A", "B"), each = 4),
+    Village = rep(rep(c("W", "X"), each = 2), 2),
+    Site = c(1:4, 1:4),
+    Year = rep(0, 8),
+    NumInPool = rep(10, 8),
+    Result = rep(0, 8)
+  )
+  expect_error(
+    CheckClusterVars(bad_sites_villages_df, "Result", "NumInPool",
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_nesting"
   )
