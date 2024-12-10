@@ -117,12 +117,12 @@ check_nesting_levels <- function(data, hierarchy_scheme) {
   hier_df <- unique(data[, hierarchy_scheme])
   # Identify pairwise comparisons between adjacent hierarchy levels
   hier_list <- vector(mode="list", length = (length(hierarchy_scheme) - 1) )
-  for (i in 1:length(hier_list)){
+  for (k in 1:length(hier_list)){
     # Use rev(hierarchy_scheme) so hierarchy columns ordered from smallest to largest 
-    temp_list <- list("outer" = rev(hierarchy_scheme)[i+1],
-                      "inner" = rev(hierarchy_scheme)[i],
+    temp_list <- list("outer" = rev(hierarchy_scheme)[k+1],
+                      "inner" = rev(hierarchy_scheme)[k],
                       "scheme" = hierarchy_scheme)
-    hier_list[[i]] <- temp_list
+    hier_list[[k]] <- temp_list
   }
   # Check for inner level values with multiple values at the outer level
   check_df <- 
@@ -154,10 +154,9 @@ check_nesting_levels <- function(data, hierarchy_scheme) {
     )
   check_df <- check_df %>%
     rowwise() %>%
-    mutate(num_outer_val = length(outer_val),
-           .keep = "all")
-  error_df <- check_df[which(check_df$num_outer_val > 1), ]
-  return(error_df)
+    mutate(num_outer_val = length(outer_val), .keep = "all") %>%
+    ungroup()
+  return(check_df)
 }  
 
 
@@ -169,8 +168,7 @@ check_nesting_levels <- function(data, hierarchy_scheme) {
 #' turns it into a pretty and informative error message that can be output 
 #' to the user.
 #' 
-#' @param nest_df A \code{data.frame} object. Output from 
-#' \code{check_nesting_levels()}
+#' @param df A \code{data.frame} object. Output from \code{check_nesting_levels()}
 #' 
 #' @return Returns a \code{character} vector where each element is an error
 #' message to return to the user.
@@ -178,19 +176,27 @@ check_nesting_levels <- function(data, hierarchy_scheme) {
 #' @keywords internal
 #' @noRd
 #' 
-create_nesting_error_message <- function(nest_df){
-  col_names_warning <- paste0(
-    "Some values in the '", unique(nest_df$inner_cluster), 
-    "' column are present within multiple levels of the '",
-    unique(nest_df$outer_cluster), "' column."
+create_nesting_error_message <- function(df){
+  cols_to_check_df <- unique(df[, c("inner", "outer")])
+  col_names_warning <- unlist(
+    lapply(
+      1:nrow(cols_to_check_df),
+      function(i){
+        paste0(
+          "Some values in the '", cols_to_check_df[i, "inner"], 
+          "' column are present within multiple levels of the '",
+          cols_to_check_df[i, "outer"], "' column."
+        )
+      }
+    )
   )
-  row_warnings <- nest_df %>% 
+  row_warnings <- df %>% 
     rowwise() %>%
     mutate(
       error_message = paste0(
-        "'", .data$inner_cluster, "' value '", .data$inner_vals, 
-        "' appears in rows for multiple '", .data$outer_cluster, "' values: '", 
-        paste(.data$outer_vals, collapse = "', "), "'"
+        "'", .data$inner, "' value '", .data$inner_val, 
+        "' appears in rows for multiple '", .data$outer, "' values: '", 
+        paste(.data$outer_val, collapse = "', "), "'"
       ),
       .keep = "all"
     )
