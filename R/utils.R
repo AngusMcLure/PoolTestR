@@ -166,8 +166,12 @@ check_nesting_levels <- function(data, outer_cluster, inner_cluster) {
   # Return inner_cluster variables present in multiple outer_cluster rows
   repeated_inners <- which(length_outer_vals > 1)
   if (length(repeated_inners) > 0){
-    repeated_inner_list <- inner_list[repeated_inners]
-    bad_nesting_op <- as.data.frame(do.call(rbind, repeated_inner_list))
+    bad_nesting_op <- as.data.frame(
+      do.call(
+        rbind, 
+        inner_list[repeated_inners]
+      )
+    )
   } else {
     bad_nesting_op <- NULL
   }
@@ -193,18 +197,23 @@ check_nesting_levels <- function(data, outer_cluster, inner_cluster) {
 #' @noRd
 #' 
 create_nesting_error_message <- function(nest_df){
-  general_warning <- c()
+  nest_warning <- c("Hierarchy/clustered sampling scheme is not nested correctly.")
+  col_names_warning <- paste0(
+    "Some values in the '", unique(nest_df$inner_cluster), 
+    "' column are present within multiple levels of the '",
+    unique(nest_df$outer_cluster), "' column."
+  )
   row_warnings <- nest_df %>% 
     rowwise() %>%
     mutate(
       error_message = paste0(
-        "'", inner_cluster, "' column value '", as.character(inner_vals), 
-        "' appears in same row as '", outer_cluster, "' column values: '", 
-        paste(outer_vals, collapse = "', "), "'"
+        "'", .data$inner_cluster, "' value '", .data$inner_vals, 
+        "' appears in multiple '", .data$outer_cluster, "' values: '", 
+        paste(.data$outer_vals, collapse = "', "), "'"
       ),
       .keep = "all"
     )
-  all_warnings <- c(general_warning, row_warnings)
+  all_warnings <- c(nest_warning, col_names_warning, row_warnings$error_message)
   return(all_warnings)
 }
 
