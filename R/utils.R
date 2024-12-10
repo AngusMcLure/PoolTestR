@@ -197,7 +197,6 @@ check_nesting_levels <- function(data, outer_cluster, inner_cluster) {
 #' @noRd
 #' 
 create_nesting_error_message <- function(nest_df){
-  nest_warning <- c("Hierarchy/clustered sampling scheme is not nested correctly.")
   col_names_warning <- paste0(
     "Some values in the '", unique(nest_df$inner_cluster), 
     "' column are present within multiple levels of the '",
@@ -208,12 +207,40 @@ create_nesting_error_message <- function(nest_df){
     mutate(
       error_message = paste0(
         "'", .data$inner_cluster, "' value '", .data$inner_vals, 
-        "' appears in multiple '", .data$outer_cluster, "' values: '", 
+        "' appears in rows for multiple '", .data$outer_cluster, "' values: '", 
         paste(.data$outer_vals, collapse = "', "), "'"
       ),
       .keep = "all"
     )
-  all_warnings <- c(nest_warning, col_names_warning, row_warnings$error_message)
+  all_warnings <- c(col_names_warning, row_warnings$error_message)
   return(all_warnings)
+}
+
+
+#' Create a unique identifier for each location, given the full 
+#' hierarchical/clustering scheme
+#' 
+#' Only called from within \code{PrepareClusterData()}.
+#' 
+#' Takes the \code{data.frame} output by \code{check_nesting_levels()} and 
+#' turns it into a pretty and informative error message that can be output 
+#' to the user.
+#' 
+#' @param df_row A \code{data.frame} object with one row, taken from the 
+#' input \code{data} to \code{PrepareClusterData()}.
+#' @param cluster_hierarchy A \code{character} vector containing the full 
+#' hierarchical/clustering scheme for the data, ordered from largest to 
+#' smallest.
+#' 
+#' @return Returns a \code{character} vector of length 1, which is the new 
+#' unique identifier for the location given by the input \code{df_row}
+#'
+#' @keywords internal
+#' @noRd
+#' 
+create_unique_location_id <- function(df_row, cluster_hierarchy){
+  hier_vals <- unlist(lapply(cluster_hierarchy, function(x){df_row[[x]]}))
+  unique_id <- paste0(hier_vals, collapse = "_")
+  return(unique_id)
 }
 
