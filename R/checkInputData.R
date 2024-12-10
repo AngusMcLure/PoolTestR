@@ -38,8 +38,7 @@
 CheckInputData <- function(data, result, poolSize, ...,  
                            hier_check = FALSE, excludeCols = NULL){
   # Extract name(s) of columns to group by
-  groupVar <- as.character(list(...)) 
-  print(groupVar)
+  groupVar <- as.character(list(...))
   
   # Remove any columns flagged for exclusion
   if (! is.null(excludeCols) ){
@@ -73,9 +72,7 @@ CheckInputData <- function(data, result, poolSize, ...,
     )
   }
   
-  # Check whether note rows or missing values are present
-  # i.e., whether rows are present that have 1 or more missing values 
-  #.      (but are not a fully empty row)
+  # Check whether rows have missing values
   missing_value_rows <- sort(
     unique(
       c(
@@ -97,7 +94,7 @@ CheckInputData <- function(data, result, poolSize, ...,
   }
   
   ## Errors
-  # Check whether result and poolSize variables are present within column names
+  # Check whether result and poolSize columns are present
   if (! (result %in% names(test_data)) ){
     rlang::abort(
       message = "result column not included in dataframe",
@@ -272,8 +269,9 @@ CheckClusterVars <- function(data, result, poolSize, ...){
   nesting_list <- vector(mode="list", length = (length(groupVar) - 1) )
   for (i in 1:length(nesting_list)){
     # Use rev(groupVar) so hierarchy columns ordered from smallest to largest 
-    temp_nest_vector <- c("outer" = rev(groupVar)[i+1],
-                          "inner" = rev(groupVar)[i])
+    temp_nest_vector <- list("outer" = rev(groupVar)[i+1],
+                             "inner" = rev(groupVar)[i],
+                             "scheme" = groupVar)
     nesting_list[[i]] <- temp_nest_vector
   }
   # Check each level
@@ -284,7 +282,8 @@ CheckClusterVars <- function(data, result, poolSize, ...){
         check_nesting_levels(
           data = data,
           outer_cluster = nesting_list[[i]][["outer"]], 
-          inner_cluster = nesting_list[[i]][["inner"]]
+          inner_cluster = nesting_list[[i]][["inner"]],
+          hierarchy_scheme = nesting_list[[i]][["scheme"]]
         )
       }
     )
@@ -329,11 +328,8 @@ CheckClusterVars <- function(data, result, poolSize, ...){
 #'   scheme, listed from largest to smallest. 
 #'
 #' @return An object of class \code{data.frame}, containing the same columns as
-#' the input, with a single new column containing a unique identifier for
-#' each location in the survey.
-#' 
-#' This function checks that each site in the data has a unique identifying
-#' variable.
+#' the input, with a single new column \code{PoolTestR_ID} containing a unique 
+#' identifier for each location in the survey.
 #' 
 #' For example, take a hypothetical survey with two villages \code{A} and 
 #' \code{B}, and two households are sampled within each village. In this survey, 

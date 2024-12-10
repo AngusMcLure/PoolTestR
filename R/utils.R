@@ -139,7 +139,9 @@ custom_round <- function(x) {
 #' @keywords internal
 #' @noRd
 #' 
-check_nesting_levels <- function(data, outer_cluster, inner_cluster) {
+check_nesting_levels <- function(data, 
+                                 outer_cluster, inner_cluster, 
+                                 hierarchy_scheme) {
   # Keep only unique rows for the two columns in the inner/outer cluster 
   unique_df <- unique(data[, c(outer_cluster, inner_cluster)])
   inner_vals <- unique(unique_df[[inner_cluster]])
