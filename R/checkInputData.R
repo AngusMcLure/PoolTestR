@@ -38,7 +38,7 @@
 CheckInputData <- function(data, result, poolSize, ...,  
                            hier_check = FALSE, excludeCols = NULL){
   # Extract name(s) of columns to group by
-  hier_vars <- as.character(list(...)) 
+  groupVar <- as.character(list(...)) 
   
   # Remove any columns flagged for exclusion
   if (! is.null(excludeCols) ){
@@ -143,24 +143,10 @@ CheckInputData <- function(data, result, poolSize, ...,
     )
   }
   
-  # Check lower levels of hierarchy - lowest level (e.g., house) should look at next level
-  # i.e., village and each househould should only return within one village
-  # For that check to work need to know the order of the hierarchy i.e., Site, Village
-  # OK to just check clustering variables 
-  # Most common mistake is order houses 1-10 in each village, have houses 1-10 in village A, B, C
-  # Will assume that house 10 is in all the villages (doesn't make sense)
-  # PoolTools -> listing from biggest to smallest
-  # Check whether Fred implemented check on PoolTools to check data size
-  # Loop through different levels -> check each house in 1 village, each village in 1 region
-  # Helper function to help people tidy up their names - return error and return helper function
-  # Make a warning on PoolTools - names not unique, we have provided unique names and run through this
-  # Check hierarchy column names too 
-  # NOTE: See function below `CheckClusterVars()`
-  
   # Check hierarchy columns 
-  if (hier_check == TRUE & length(hier_vars) > 0) {
+  if (hier_check == TRUE & length(groupVar) > 0) {
     # Check that names of hierarchy columns are present in data
-    missing_hier_cols <- hier_vars[! (hier_vars %in% names(test_data)) ]
+    missing_hier_cols <- groupVar[! (groupVar %in% names(test_data)) ]
     if (length(missing_hier_cols) > 0){
       rlang::abort(
         message = paste0(
@@ -173,14 +159,9 @@ CheckInputData <- function(data, result, poolSize, ...,
     }
     
     # Check values of each column in the hierarchy 
-    
-    
-    
-    # Check whether each row has a unique site column value
-    # Complicated - cannot make assumptions about the rest of the data, which
-    # means you cannot simply compare the expected and actual number of values
-    # Need to think about this
-    
+    hier_check <- CheckClusterVars(data = test_data, 
+                                   result = result, poolSize = poolSize,
+                                   ...)
     
     
   }
@@ -191,7 +172,7 @@ CheckInputData <- function(data, result, poolSize, ...,
 }
 
 
-#' Checking hierarchy columns for missing values
+#' Checking hierarchy columns for missing values and incorrect nesting
 #' 
 #' 
 #' Internal function to test the input data and return relevant errors.
@@ -293,11 +274,11 @@ CheckClusterVars <- function(data, result, poolSize, ...){
   
   ## Check nesting within hierarchy/sampling scheme
   # Set nesting levels
-  nesting_list <- vector(mode="list", length = (length(groupVars) - 1) )
+  nesting_list <- vector(mode="list", length = (length(groupVar) - 1) )
   for (i in 1:length(nesting_list)){
-    # Use rev(groupVars) so hierarchy columns ordered from smallest to largest 
-    temp_nest_vector <- c("outer" = rev(groupVars)[i+1],
-                          "inner" = rev(groupVars)[i])
+    # Use rev(groupVar) so hierarchy columns ordered from smallest to largest 
+    temp_nest_vector <- c("outer" = rev(groupVar)[i+1],
+                          "inner" = rev(groupVar)[i])
     nesting_list[[i]] <- temp_nest_vector
   }
   # Check each level
