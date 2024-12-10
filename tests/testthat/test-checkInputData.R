@@ -149,7 +149,6 @@ test_that("NA values in hierarchy columns returns warning", {
 
 
 test_that("CheckClusterVars() with SimpleExampleData has no errors or warnings", {
-  #TODO
   expect_no_message(
     CheckClusterVars(SimpleExampleData, "Result", "NumInPool",
                      "Region", "Village", "Site")
@@ -166,37 +165,72 @@ test_that("CheckClusterVars() with SimpleExampleData has no errors or warnings",
 
 
 test_that("Clustering by variable with missing values raises error", {
-  #TODO
   # Site col includes NA
-  site_df <- SimpleExampleData
-  site_df$Site[1] <- NA
+  test_df <- SimpleExampleData
+  test_df$Site[1] <- NA
+  expect_error(
+    CheckClusterVars(test_df, "Result", "NumInPool",
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_missing_vals"
+  )
+  
   # Village col includes empty string ""
-  village_df <- SimpleExampleData
-  village_df$Village[1] <- ""
+  test_df <- SimpleExampleData
+  test_df$Village[1] <- ""
+  expect_error(
+    CheckClusterVars(test_df, "Result", "NumInPool",
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_missing_vals"
+  )
+  
   # Region col includes NA as factor level
-  region_df <- SimpleExampleData
-  region_df$Region[c(1, 289, 577, 865)] <- NA
-  # Year col is all NA
-  nosite_df <- SimpleExampleData
-  nosite_df$Site <- NA
-  # Call function
+  test_df <- SimpleExampleData
+  test_df$Region[c(1, 289, 577, 865)] <- NA  
   expect_error(
-    CheckClusterVars(site_df, "Result", "NumInPool",
+    CheckClusterVars(test_df, "Result", "NumInPool",
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_missing_vals"
   )
+  
+  # Site, Village and Region columns include NA
+  test_df <- SimpleExampleData
+  test_df$Site[1:5] <- NA
+  test_df$Village[6:10] <- NA
+  test_df$Region[11:15] <- NA
   expect_error(
-    CheckClusterVars(village_df, "Result", "NumInPool",
+    CheckClusterVars(test_df, "Result", "NumInPool",
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_missing_vals"
   )
+  
+  # Site, Village and Region columns include ""
+  test_df <- SimpleExampleData
+  test_df$Site[1:5] <- ""
+  test_df$Village[6:10] <- ""
+  test_df$Region <- as.character(test_df$Region)
+  test_df$Region[11:15] <- ""
   expect_error(
-    CheckClusterVars(region_df, "Result", "NumInPool",
+    CheckClusterVars(test_df, "Result", "NumInPool",
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_missing_vals"
   )
+  
+  # Site col is all NA
+  test_df <- SimpleExampleData
+  test_df$Site <- NA
   expect_error(
-    CheckClusterVars(nosite_df, "Result", "NumInPool",
+    CheckClusterVars(test_df, "Result", "NumInPool",
+                     "Region", "Village", "Site"),
+    class = "CheckClusterVars_missing_vals"
+  )
+  
+  # Site, Village and Region columns are all NA
+  test_df <- SimpleExampleData
+  test_df$Site <- NA
+  test_df$Village <- NA
+  test_df$Region <- NA
+  expect_error(
+    CheckClusterVars(test_df, "Result", "NumInPool",
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_missing_vals"
   )

@@ -227,23 +227,26 @@ CheckClusterVars <- function(data, result, poolSize, ...){
     if (class(i_vals) == "character"){
       # Missing char vals = "", NA, NULL
       missing_i_vals <- which(i_vals == "" | is.na(i_vals) | is.null(i_vals))
-      if (length(missing_i_vals) > 0){
-        missing_list[[i]] <- missing_i_vals
-      }
     } else if (class(i_vals) == "integer" | class(i_vals) == "numeric"){
       # Missing num/int vals = NA, NULL
       missing_i_vals <- which(is.na(i_vals) | is.null(i_vals))
-      if (length(missing_i_vals) > 0){
-        missing_list[[i]] <- missing_i_vals
-      }
     } else if (class(i_vals) == "factor"){
       # Missing factor levels = "", NA, NULL
       missing_i_vals <- which(i_vals == "" | is.na(i_vals) | is.null(i_vals))
-      if (length(missing_i_vals) > 0){
-        missing_list[[i]] <- missing_i_vals
-      }
+    } else if (class(i_vals) == "logical"){
+      # Missing logical vals = NA, NULL
+      missing_i_vals <- which(is.na(i_vals) | is.null(i_vals))
+    } else {
+      # Missing vals = NA, NULL
+      missing_i_vals <- which(is.na(i_vals) | is.null(i_vals))
+    }
+    if (length(missing_i_vals) == length(i_vals)){
+      missing_list[[i]] <- "all values missing"
+    } else if (length(missing_i_vals) > 0){
+      missing_list[[i]] <- missing_i_vals
     }
   }
+  
   # Extract the missing values for each column in the hierarchy/sampling scheme
   bad_cols <- groupVar[! unlist(lapply(groupVar, function(x){is.null(missing_list[[x]])}))]
   if (length(bad_cols) > 0){
@@ -256,8 +259,8 @@ CheckClusterVars <- function(data, result, poolSize, ...){
       )
     )
     rlang::abort(
-      message = paste0("Some columns in the hierarchy/sampling scheme have missing values\n",
-                       "Please correct the following values in each of these columns:\n",
+      message = paste0("Some columns in the hierarchy/sampling scheme have missing values ",
+                       "(i.e., NA, NULL or empty strings)\n",
                        paste(output_messages, collapse = "\n")),
       class = c("CheckClusterVars_missing_vals", "error", "condition"),
       missing_vals = output_list
