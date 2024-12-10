@@ -161,7 +161,7 @@ CheckInputData <- function(data, result, poolSize, ...,
     # Check values of each column in the hierarchy 
     hier_check <- CheckClusterVars(data = test_data, 
                                    result = result, poolSize = poolSize,
-                                   ...)
+                                   groupVar)
     
     
   }
@@ -293,7 +293,10 @@ CheckClusterVars <- function(data, result, poolSize, ...){
         )
       }
     )
+  check_nests <- check_nests[unlist(lapply(check_nests, function(x){is.null(x) == FALSE}))]
   # Return errors for poor nesting
+  lapply()
+  
   # TODO
 
   
