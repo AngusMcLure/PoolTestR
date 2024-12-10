@@ -92,15 +92,14 @@ custom_round <- function(x) {
 
 #' Check nesting for hierarchy/cluster variables within a data frame
 #' 
-#' Given a dataframe and two columns from the hierarchy/
-#' sampling scheme, this function checks whether any variables in the inner
-#' level are present for multiple outer levels.
+#' Given a dataframe and the hierarchy/sampling scheme, this function checks 
+#' whether any values are incorrectly nested.
 #' 
 #' Only called from within \code{CheckClusterVars()}
 #' 
 #' @param data A \code{data.frame} with one row for each pooled sampled and
-#'   columns for the size of the pool (i.e., the number of specimens / isolates /
-#'   insects pooled to make that particular pool), the result of the test of the
+#'   columns for the size of the pool (i.e., the number of specimens/isolates/insects 
+#'   pooled to make that particular pool), the result of the test of the
 #'   pool. It may also contain additional columns with additional information
 #'   (e.g. location where pool was taken) which can optionally be used for
 #'   stratifying the data into smaller groups and calculating prevalence by
@@ -108,19 +107,8 @@ custom_round <- function(x) {
 #' @param hierarchy_scheme Names of columns in the hierarchy/clustering scheme, 
 #' ordered from largest to smallest
 #' 
-#' @return Returns a \code{list}
-#' 
-#' Assume we have Houses 1 and 2 in Village A and Houses 1 and 2 in Village B. 
-#' This function will return the values 1 and 2 for the Houses level, as there 
-#' are identical houses in both Villages.
-#' 
-#' To avoid this, each location (i.e., in this example each House) should have
-#' a unique identifier. The houses could have Village names appended (e.g., A-1,
-#' A-2, B-1, B-2) or each house could be numbered sequentially (e.g., 1, 2, 3, 
-#' 4).
-#' 
-#' In the example above the \code{outer_cluster} is "Village" and the 
-#' \code{inner_cluster} is "House".
+#' @return Returns a \code{data.frame} containing details of incorrectly 
+#' nested variables.
 #'
 #' @keywords internal
 #' @noRd
@@ -169,51 +157,6 @@ check_nesting_levels <- function(data, hierarchy_scheme) {
     mutate(num_outer_val = length(outer_val),
            .keep = "all")
   error_df <- check_df[which(check_df$num_outer_val > 1), ]
-  return(error_df)
-  
-  # for each village, give me the list of regions including this value
-  # for each site, give me the list of regions including this value
-  # filter values of length 1
-  lapply(unique(hier_df$Site), function(x){unique(hier_df[(hier_df$Site == x), "Village"])})
-  lapply(unique(hier_df$Site), function(x){unique(hier_df[(hier_df$Site == x), "Village"])})
-  
-  
-  ## TODO remove old code
-  # Keep only unique rows for the two columns in the inner/outer cluster 
-  unique_df <- unique(data[, c(outer_cluster, inner_cluster)])
-  inner_vals <- unique(unique_df[[inner_cluster]])
-  # Check that the values of the inner_cluster column are present only in one
-  # outer_cluster 
-  inner_list <- vector(mode="list", length = length(inner_vals))
-  for (i in 1:length(inner_list) ){
-    i_inner <- inner_vals[[i]]
-    i_outer <- unique_df[which(unique_df[[inner_cluster]] == i_inner), outer_cluster]
-    inner_list[[i]] <- list("inner_vals" = i_inner,
-                            "outer_vals" = i_outer,
-                            "inner_cluster" = inner_cluster,
-                            "outer_cluster" = outer_cluster)
-  }
-  length_outer_vals <- 
-    unlist(
-      lapply(
-        1:length(inner_list),
-        function(x){
-          length(inner_list[[i]]$outer_vals)
-        }
-      )
-    )
-  # Return inner_cluster variables present in multiple outer_cluster rows
-  repeated_inners <- which(length_outer_vals > 1)
-  if (length(repeated_inners) > 0){
-    bad_nesting_op <- as.data.frame(
-      do.call(
-        rbind, 
-        inner_list[repeated_inners]
-      )
-    )
-  } else {
-    bad_nesting_op <- NULL
-  }
   return(error_df)
 }  
 
