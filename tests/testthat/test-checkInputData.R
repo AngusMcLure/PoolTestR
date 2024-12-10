@@ -256,14 +256,19 @@ test_that("check_nesting_levels() returns expected output", {
     NumInPool = rep(10, 8),
     Result = rep(0, 8)
   )
-  good_sites_op <- NULL
+  expect_identical(
+    check_nesting_levels(data = good_sites_df, 
+                         outer_cluster = "Region", 
+                         inner_cluster = "Village"), 
+    NULL
+  )
   expect_identical(
     check_nesting_levels(data = good_sites_df, 
                          outer_cluster = "Village", 
                          inner_cluster = "Site"), 
-    good_sites_op
+    NULL
   )
-  # Check call with bad nesting
+  # Check call with bad nesting at Sites level
   bad_sites_df <- data.frame(
     Region = rep(c("A", "B"), each = 4),
     Village = rep(c("W", "X", "Y", "Z"), each = 2),
@@ -288,9 +293,51 @@ test_that("check_nesting_levels() returns expected output", {
   )
   expect_equal(
     check_nesting_levels(data = bad_sites_df, 
+                         outer_cluster = "Region", 
+                         inner_cluster = "Village"), 
+    NULL
+  )
+  expect_equal(
+    check_nesting_levels(data = bad_sites_df, 
                          outer_cluster = "Village", 
                          inner_cluster = "Site"), 
     bad_sites_op
   )
+  # Check call with bad nesting at Villages level
+  bad_villages_df <- data.frame(
+    Region = rep(c("A", "B"), each = 4),
+    Village = rep(rep(c("W", "X"), each = 2), 2),
+    Site = 1:8,
+    Year = rep(0, 8),
+    NumInPool = rep(10, 8),
+    Result = rep(0, 8)
+  )
+  bad_villages_op <- as.data.frame(
+    do.call(rbind,
+            list(
+              list(inner_vals = "W", 
+                   outer_vals = c("A", "B"), 
+                   inner_cluster = "Village", 
+                   outer_cluster = "Region"),
+              list(inner_vals = "X", 
+                   outer_vals = c("A", "B"), 
+                   inner_cluster = "Village", 
+                   outer_cluster = "Region")
+            )
+    )
+  )
+  expect_equal(
+    check_nesting_levels(data = bad_villages_df, 
+                         outer_cluster = "Region", 
+                         inner_cluster = "Village"), 
+    bad_villages_op
+  )
+  expect_equal(
+    check_nesting_levels(data = bad_villages_df, 
+                         outer_cluster = "Village", 
+                         inner_cluster = "Site"), 
+    NULL
+  )
 })
+
 
