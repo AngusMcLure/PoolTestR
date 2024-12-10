@@ -27,11 +27,8 @@ scheme, listed from largest to smallest.}
 }
 \value{
 An object of class \code{data.frame}, containing the same columns as
-the input, with a single new column containing a unique identifier for
-each location in the survey.
-
-This function checks that each site in the data has a unique identifying
-variable.
+the input, with a single new column \code{PoolTestR_ID} containing a unique 
+identifier for each location in the survey.
 
 For example, take a hypothetical survey with two villages \code{A} and 
 \code{B}, and two households are sampled within each village. In this survey, 
