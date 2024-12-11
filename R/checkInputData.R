@@ -204,7 +204,7 @@ CheckClusterVars <- function(data, result, poolSize, ...){
   
   ## Check all hierarchy columns exist
   missing_hier_cols <- groupVar[! (groupVar %in% names(data))]
-  if (length(missing_hier_cols) > 0){
+  if (! identical(character(0), missing_hier_cols) ) {
     rlang::abort(
       message = paste0(
         'Data frame does not include the following columns: ',
@@ -227,14 +227,17 @@ CheckClusterVars <- function(data, result, poolSize, ...){
       # Missing vals = NA, NULL
       missing_x_vals <- which(is.na(x_vals) | is.null(x_vals))
     }
-    if (length(missing_x_vals) == length(x_vals)){
+    # Check length of vector as columns can have different classes
+    if (length(missing_x_vals) == 0) {
+      missing_list[[x]] <- NA
+    } else if (length(missing_x_vals) == length(x_vals)){
       missing_list[[x]] <- "all values missing"
     } else {
       missing_list[[x]] <- missing_x_vals
     }
   }
-  bad_cols <- groupVar[! unlist(lapply(groupVar, function(x){is.null(missing_list[[x]])}))]
-  if (length(bad_cols) > 0){
+  bad_cols <- groupVar[! unlist(lapply(groupVar, function(x){is.na(missing_list[[x]])}))]
+  if (! identical(character(0), bad_cols) ){
     output_list <- missing_list[bad_cols]
     output_messages <- unlist(
       lapply(
