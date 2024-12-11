@@ -104,7 +104,7 @@ custom_round <- function(x) {
 #'   (e.g. location where pool was taken) which can optionally be used for
 #'   stratifying the data into smaller groups and calculating prevalence by
 #'   group (e.g. calculating prevalence for each location).
-#' @param hierarchy_scheme Names of columns in the hierarchy/clustering scheme, 
+#' @param hierarchy Names of columns in the hierarchy/clustering scheme, 
 #' ordered from largest to smallest
 #' 
 #' @return Returns a \code{data.frame} containing details of incorrectly 
@@ -113,7 +113,7 @@ custom_round <- function(x) {
 #' @keywords internal
 #' @noRd
 #' 
-check_nesting_levels <- function(data, hierarchy_scheme) {
+check_nesting_levels <- function(data, hierarchy) {
   # TODO extend to all pairwise comparisons, not just ones next to each other in levels
   hier_df <- unique(data[, hierarchy_scheme])
   # Identify pairwise comparisons between adjacent hierarchy levels

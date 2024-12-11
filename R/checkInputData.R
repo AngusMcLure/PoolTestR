@@ -15,11 +15,11 @@
 #'   and 0 indicating a negative test result.
 #' @param poolSize The name of the column with number of
 #'   specimens/isolates/insects in each pool.
-#' @param ... Optional name(s) of columns included in the hierarchical sampling
+#' @param hierarchy Optional name(s) of columns included in the hierarchical sampling
 #'   scheme, listed from largest to smallest. Only used if 
 #'   \code{hier_check = TRUE}.
 #' @param hier_check Logical. Default is \code{FALSE}. If \code{TRUE}, checks
-#'  the hierarchy using column names provided in \code{...}.
+#'  the hierarchy using column names provided in \code{hierarchy}.
 #' @param excludeCols Character vector containing the name(s) of columns to 
 #'   exclude from the input checks (e.g., notes columns). If no character
 #'   vector is provided, \code{excludeCols = NULL}.
@@ -35,10 +35,12 @@
 #' @keywords internal
 #' @noRd
 
-CheckInputData <- function(data, result, poolSize, ...,  
+CheckInputData <- function(data, result, poolSize, hierarchy = NULL,  
                            hier_check = FALSE, excludeCols = NULL){
   # Extract name(s) of columns to group by
-  groupVar <- as.character(list(...))
+  if (is.null(hierarchy) == FALSE){
+    groupVar <- as.character(hierarchy)  
+  }
   
   # Remove any columns flagged for exclusion
   if (! is.null(excludeCols) ){
@@ -142,9 +144,9 @@ CheckInputData <- function(data, result, poolSize, ...,
   }
   
   # If running hierarchy/clustering checks, ensure groupVar has been provided 
-  if (hier_check == TRUE & length(groupVar) == 0) {
+  if (hier_check == TRUE & is.null(hierarchy)) {
     rlang::abort(
-      message = "No hierarchical/sampling variables included in function call.",
+      message = "No hierarchical/sampling variable included in function call.",
       class = c("DataCheck_missing_hierarchy", "error", "condition")
     )
   }
@@ -153,7 +155,7 @@ CheckInputData <- function(data, result, poolSize, ...,
   if (hier_check == TRUE & length(groupVar) > 0) {
     hier_check <- CheckClusterVars(data = test_data, 
                                    result = result, poolSize = poolSize,
-                                   groupVar)
+                                   hierarchy = groupVar)
   }
   
   # Return data, invisibly, if all checks succeed
@@ -164,7 +166,8 @@ CheckInputData <- function(data, result, poolSize, ...,
 #' Checking hierarchy columns for missing values and incorrect nesting
 #' 
 #' 
-#' Internal function to test the input data and return relevant errors.
+#' Internal function to test the input data for problems with the 
+#' hierarchy/sampling scheme and raise any relevant errors/warnings.
 #'
 #' @param data A \code{data.frame} with one row for each pooled sampled and
 #'   columns for the size of the pool (i.e., the number of specimens / isolates /
@@ -178,29 +181,31 @@ CheckInputData <- function(data, result, poolSize, ...,
 #'   and 0 indicating a negative test result.
 #' @param poolSize The name of the column with number of 
 #'   specimens/isolates/insects in each pool.
-#' @param ... Optional name(s) of columns with variables to stratify the data
+#' @param hierarchy Optional name(s) of columns with variables to stratify the data
 #' by. If omitted the complete dataset is used to estimate a single
 #' prevalence. If included, prevalence is estimated separately for each group
 #' defined by these columns
 #'
 #' @return Returns \code{data} invisibly, using \code{invisible(x)}
 #' 
-#' Iterate through each column in \code{...}. If any values in those columns
-#' are missing (i.e., \code{""}, \code{NA}, \code{NULL}), an error is raised.
-#' 
-#' Checks nesting of the columns in \code{...}. If the given hierarchy/clustering 
-#' scheme is Region > Village > Site, this function checks that each Site appears
-#' within only one Village, and that each Village appears within only one region.
-#' 
 #' For the \code{SimpleExampleData} data included in this package, the 
 #' hierarchical sampling scheme is \code{Region} > \code{Village} > \code{Site}.
 #' The function call would be:
-#' \code{checkClusterVars(SimpleExampleData, "Region", "Village", "Site")}
+#' \code{checkClusterVars(data = SimpleExampleData, 
+#' result = "Result", poolSize = "NumInPool"
+#' hierarchy = c("Region", "Village", "Site"))}
 #'
 #' @keywords internal
 #' @noRd
-CheckClusterVars <- function(data, result, poolSize, ...){
-  groupVar <- as.character(list(...)) 
+CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
+  if (is.null(hierarchy)){
+    rlang::abort(
+      message = "No hierarchical/sampling variable included in function call.",
+      class = c("CheckClusterVars_no_hierarchy", "error", "condition")
+    )
+  } else {
+    groupVar <- as.character(hierarchy)  
+  }
   
   ## Check all hierarchy columns exist
   missing_hier_cols <- groupVar[! (groupVar %in% names(data))]
@@ -291,41 +296,32 @@ CheckClusterVars <- function(data, result, poolSize, ...){
 #'   and 0 indicating a negative test result.
 #' @param poolSize The name of the column with number of
 #'   specimens/isolates/insects in each pool
-#' @param ... Optional name(s) of columns included in the hierarchical sampling
-#'   scheme, listed from largest to smallest. 
+#' @param hierarchy The name of column(s) indicating the group membership, 
+#'   ordered from largest to smallest. 
 #'
 #' @return An object of class \code{data.frame}, containing the same columns as
 #' the input, with a single new column \code{PoolTestR_ID} containing a unique 
 #' identifier for each location in the survey.
 #' 
-#' For example, take a hypothetical survey with two villages \code{A} and 
-#' \code{B}, and two households are sampled within each village. In this survey, 
-#' the \code{"household"} variable is nested inside the \code{"village"} 
-#' variable. Each of the four households must have a unique identifier. 
+#' In a nested sampling design with multiple levels of grouping, the 
+#' lower-level groups must have names/numbers that differentiate them from all 
+#' other groups at the same level. E.g. If sampling was performed at 200 sites 
+#' across 10 villages (20 site per village), then there should be 200 unique 
+#' names for the sites. If, for instance, the sites are instead numbered 1 to 
+#' 20 within each village, the village identifier (e.g. A, B, C...) should be 
+#' combined with the site number to create unique identifiers for each site 
+#' (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in 
+#' village B etc.)
 #' 
-#' A common mistake is to reuse names across different locations, e.g., to
-#' name the two households in Village A \code{H1} and \code{H2}, and to name
-#' the two households in Village B \code{H1} and \code{H2}. The household names
-#' are duplicated - there are two houses named \code{H1} and two named 
-#' \code{H2}. To ensure unique variables for each location, the houses could be 
-#' numbered sequentially e.g., \code{c("H1", "H2", "H3", "H4")}, or each house
-#' could be labelled with the corresponding village e.g., 
-#' \code{c("A-H1", "A-H2", "B-H1", "B-H2")}.
-#' 
-#' The tools in PoolTools apply for all cases where a hierarchical sampling 
-#' frame is involved. The functions do not make assumptions about the 
-#' number of levels present or the names of hierarchical columns. 
-#' 
-#' Note that each hierarchical variable must have its own column. If the 
-#' sampling scheme is "District" > "Subdistrict" > "Street" > "Unit", there 
-#' should be one column in the data for each of the columns \code{"District"},
-#' \code{"Subdistrict"}, \code{"Street"}, and \code{"Unit"}. 
+#' The functions in PoolTools apply for all cases where a hierarchical sampling 
+#' frame is involved, and do not make assumptions about the number of levels 
+#' present or the names of hierarchical columns. 
 #' 
 #' For the \code{SimpleExampleData} data included in this package, the 
 #' hierarchical sampling scheme is \code{Region} > \code{Village} > \code{Site}.
 #' The function call would be:
 #' \code{prepareClusterData(SimpleExampleData, "Result", "NumInPool",
-#' "Region", "Village", "Site")}
+#' c("Region", "Village", "Site"))}
 #
 #' @export
 #' 
@@ -334,8 +330,16 @@ CheckClusterVars <- function(data, result, poolSize, ...){
 # TODO Need to add examples here!
 # #' @examples
 # TODO Complete documentation and remove example from doco, use example from @examples instead
-PrepareClusterData <- function(data, result, poolSize, ...){
-  groupVar <- as.character(list(...)) 
+PrepareClusterData <- function(data, result, poolSize, hierarchy = NULL){
+  
+  if (is.null(hierarchy)){
+    rlang::abort(
+      message = "No hierarchical/sampling variable included in function call.",
+      class = c("PrepareClusterData_no_hierarchy", "error", "condition")
+    )
+  } else {
+    groupVar <- as.character(hierarchy)  
+  }
   
   # Check for warnings and errors
   CheckInputData(data, result, poolSize, groupVar,  
