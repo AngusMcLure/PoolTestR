@@ -94,7 +94,7 @@
 #'   method,  prevalence \code{PrevBayes} is represented as a percentage (i.e.,
 #'   per 100 units).
 #'
-#' @seealso \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
+#' @seealso \code{\link{PrepareClusterData}}, \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
 #'
 #' @example examples/HierPrevalence.R
 #'
