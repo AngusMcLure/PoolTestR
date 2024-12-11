@@ -200,10 +200,9 @@ CheckInputData <- function(data, result, poolSize, ...,
 #' @keywords internal
 #' @noRd
 CheckClusterVars <- function(data, result, poolSize, ...){
-  ## Extract name(s) of columns to group by
   groupVar <- as.character(list(...)) 
   
-  ## Check that each column exists
+  ## Check all hierarchy columns exist
   missing_hier_cols <- groupVar[! (groupVar %in% names(data))]
   if (length(missing_hier_cols) > 0){
     rlang::abort(
@@ -216,38 +215,26 @@ CheckClusterVars <- function(data, result, poolSize, ...){
     )
   }
   
-  ## Identify missing values in cluster/hierarchy columns
+  ## Flag missing values in cluster/hierarchy columns
   missing_list <- vector(mode="list", length=length(groupVar))
   names(missing_list) <- groupVar
-  for (i in groupVar){
-    i_vals <- data[, i]
-    if (class(i_vals) == "character"){
+  for (x in groupVar){
+    x_vals <- data[, x]
+    if (class(x_vals) == "character"){
       # Missing char vals = "", NA, NULL
-      missing_i_vals <- which(i_vals == "" | is.na(i_vals) | is.null(i_vals))
-    } else if (class(i_vals) == "integer" | class(i_vals) == "numeric"){
-      # Missing num/int vals = NA, NULL
-      missing_i_vals <- which(is.na(i_vals) | is.null(i_vals))
-    } else if (class(i_vals) == "factor"){
-      # Missing factor levels = "", NA, NULL
-      missing_i_vals <- which(i_vals == "" | is.na(i_vals) | is.null(i_vals))
-    } else if (class(i_vals) == "logical"){
-      # Missing logical vals = NA, NULL
-      missing_i_vals <- which(is.na(i_vals) | is.null(i_vals))
+      missing_x_vals <- which(x_vals == "" | is.na(x_vals) | is.null(x_vals))
     } else {
       # Missing vals = NA, NULL
-      missing_i_vals <- which(is.na(i_vals) | is.null(i_vals))
+      missing_x_vals <- which(is.na(x_vals) | is.null(x_vals))
     }
-    if (length(missing_i_vals) == length(i_vals)){
-      missing_list[[i]] <- "all values missing"
-    } else if (length(missing_i_vals) > 0){
-      missing_list[[i]] <- missing_i_vals
+    if (length(missing_x_vals) == length(x_vals)){
+      missing_list[[x]] <- "all values missing"
+    } else {
+      missing_list[[x]] <- missing_x_vals
     }
   }
-  
-  # Extract the missing values for each column in the hierarchy/sampling scheme
   bad_cols <- groupVar[! unlist(lapply(groupVar, function(x){is.null(missing_list[[x]])}))]
   if (length(bad_cols) > 0){
-    # Raise error and output missing values and corresponding column name
     output_list <- missing_list[bad_cols]
     output_messages <- unlist(
       lapply(
@@ -268,10 +255,10 @@ CheckClusterVars <- function(data, result, poolSize, ...){
   check_nests <- check_nesting_levels(data = data, hierarchy_scheme = groupVar)
   nesting_errors_df <- as.data.frame(check_nests[which(check_nests$num_outer_val > 1), ])
   if (nrow(nesting_errors_df) > 0){
-    rlang::abort(
+    rlang::warn(
       message = paste(
         c("Hierarchy/clustered sampling scheme is not nested correctly.",
-        create_nesting_error_message(nesting_errors_df)), 
+          create_nesting_error_message(nesting_errors_df)), 
         collapse = "\n"
       ),
       class = c("CheckClusterVars_nesting", "error", "condition"),
