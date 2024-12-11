@@ -168,7 +168,7 @@ test_that("CheckClusterVars() with SimpleExampleData has no errors/warnings", {
 
 
 test_that("CheckClusterVars - hierarchy columns with missing values raise error", {
-  # Site col includes NA
+  ## Site col includes NA
   test_df <- SimpleExampleData
   test_df$Site[1] <- NA
   expect_error(
@@ -176,8 +176,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_missing_vals"
   )
-  
-  # Village col includes empty string ""
+  ## Village col includes empty string ""
   test_df <- SimpleExampleData
   test_df$Village[1] <- ""
   expect_error(
@@ -185,8 +184,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_missing_vals"
   )
-  
-  # Region col includes NA as factor level
+  ## Region col includes NA as factor level
   test_df <- SimpleExampleData
   test_df$Region[c(1, 289, 577, 865)] <- NA  
   expect_error(
@@ -194,8 +192,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_missing_vals"
   )
-  
-  # Site, Village and Region columns include NA
+  ## Site, Village and Region columns include NA
   test_df <- SimpleExampleData
   test_df$Site[1:5] <- NA
   test_df$Village[6:10] <- NA
@@ -205,8 +202,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_missing_vals"
   )
-  
-  # Site, Village and Region columns include ""
+  ## Site, Village and Region columns include ""
   test_df <- SimpleExampleData
   test_df$Site[1:5] <- ""
   test_df$Village[6:10] <- ""
@@ -217,8 +213,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_missing_vals"
   )
-  
-  # Site col is all NA
+  ## Site col is all NA
   test_df <- SimpleExampleData
   test_df$Site <- NA
   expect_error(
@@ -226,8 +221,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_missing_vals"
   )
-  
-  # Site, Village and Region columns are all NA
+  ## Site, Village and Region columns are all NA
   test_df <- SimpleExampleData
   test_df$Site <- NA
   test_df$Village <- NA
@@ -264,7 +258,7 @@ test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
     NumInPool = rep(10, 8),
     Result = rep(0, 8)
   )
-  expect_error(
+  expect_warning(
     CheckClusterVars(bad_sites_df, "Result", "NumInPool",
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_nesting"
@@ -277,7 +271,7 @@ test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
     NumInPool = rep(10, 8),
     Result = rep(0, 8)
   )
-  expect_error(
+  expect_warning(
     CheckClusterVars(bad_villages_df, "Result", "NumInPool",
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_nesting"
@@ -290,12 +284,16 @@ test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
     NumInPool = rep(10, 8),
     Result = rep(0, 8)
   )
-  expect_error(
+  expect_warning(
     CheckClusterVars(bad_sites_villages_df, "Result", "NumInPool",
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_nesting"
   )
-  #TODO check whole sampling scheme at once
+  # This test is particularly tricky to detangle 
+  # Each "Village" is associated with multiple "Regions"
+  # However, this is acceptable "Site" input as each "Site" is associated with 
+  # only one "Village". 
+  # TODO - potential cross-levels check (i.e., check "Site" and "Region")
   bad_sites_villages_df <- data.frame(
     Region = rep(c("A", "B"), each = 4),
     Village = rep(rep(c("W", "X"), each = 2), 2),
@@ -304,7 +302,7 @@ test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
     NumInPool = rep(10, 8),
     Result = rep(0, 8)
   )
-  expect_error(
+  expect_warning(
     CheckClusterVars(bad_sites_villages_df, "Result", "NumInPool",
                      "Region", "Village", "Site"),
     class = "CheckClusterVars_nesting"
@@ -313,7 +311,7 @@ test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
 
 
 test_that("check_nesting_levels() returns expected output", {
-  # Check call with good nesting
+  # Check good nesting returns 12 comparisons with no duplicates
   good_sites_df <- data.frame(
     Region = rep(c("A", "B"), each = 4),
     Village = rep(c("W", "X", "Y", "Z"), each = 2),
@@ -322,19 +320,15 @@ test_that("check_nesting_levels() returns expected output", {
     NumInPool = rep(10, 8),
     Result = rep(0, 8)
   )
-  expect_identical(
-    check_nesting_levels(data = good_sites_df, 
-                         outer_cluster = "Region", 
-                         inner_cluster = "Village"), 
-    NULL
+  good_sites_op <- check_nesting_levels(
+    data = good_sites_df, 
+    hierarchy_scheme = c("Region", "Village", "Site")
   )
-  expect_identical(
-    check_nesting_levels(data = good_sites_df, 
-                         outer_cluster = "Village", 
-                         inner_cluster = "Site"), 
-    NULL
+  expect_equal(
+    length(which(good_sites_op$num_outer_val == 1)),
+    12
   )
-  # Check call with bad nesting at Sites level
+  # Check bad nesting at "Site" level returns 6 comparisons, 2 with duplicates
   bad_sites_df <- data.frame(
     Region = rep(c("A", "B"), each = 4),
     Village = rep(c("W", "X", "Y", "Z"), each = 2),
@@ -343,33 +337,19 @@ test_that("check_nesting_levels() returns expected output", {
     NumInPool = rep(10, 8),
     Result = rep(0, 8)
   )
-  bad_sites_op <- as.data.frame(
-    do.call(rbind,
-            list(
-              list(inner_vals = 1, 
-                   outer_vals = c("W", "X", "Y", "Z"), 
-                   inner_cluster = "Site", 
-                   outer_cluster = "Village"),
-              list(inner_vals = 2, 
-                   outer_vals = c("W", "X", "Y", "Z"), 
-                   inner_cluster = "Site", 
-                   outer_cluster = "Village")
-            )
-    )
+  bad_sites_op <- check_nesting_levels(
+    data = bad_sites_df, 
+    hierarchy_scheme = c("Region", "Village", "Site")
   )
   expect_equal(
-    check_nesting_levels(data = bad_sites_df, 
-                         outer_cluster = "Region", 
-                         inner_cluster = "Village"), 
-    NULL
+    length(which(bad_sites_op$num_outer_val == 1)),
+    4
   )
   expect_equal(
-    check_nesting_levels(data = bad_sites_df, 
-                         outer_cluster = "Village", 
-                         inner_cluster = "Site"), 
-    bad_sites_op
+    length(which(bad_sites_op$num_outer_val > 1)),
+    2
   )
-  # Check call with bad nesting at Villages level
+  # Check bad nesting at "Site" level returns 10 comparisons, 2 with duplicates
   bad_villages_df <- data.frame(
     Region = rep(c("A", "B"), each = 4),
     Village = rep(rep(c("W", "X"), each = 2), 2),
@@ -378,32 +358,48 @@ test_that("check_nesting_levels() returns expected output", {
     NumInPool = rep(10, 8),
     Result = rep(0, 8)
   )
-  bad_villages_op <- as.data.frame(
-    do.call(rbind,
-            list(
-              list(inner_vals = "W", 
-                   outer_vals = c("A", "B"), 
-                   inner_cluster = "Village", 
-                   outer_cluster = "Region"),
-              list(inner_vals = "X", 
-                   outer_vals = c("A", "B"), 
-                   inner_cluster = "Village", 
-                   outer_cluster = "Region")
-            )
-    )
+  bad_villages_op <-  check_nesting_levels(
+    data = bad_villages_df, 
+    hierarchy_scheme = c("Region", "Village", "Site")
   )
   expect_equal(
-    check_nesting_levels(data = bad_villages_df, 
-                         outer_cluster = "Region", 
-                         inner_cluster = "Village"), 
-    bad_villages_op
+    length(which(bad_villages_op$num_outer_val == 1)),
+    8
   )
   expect_equal(
-    check_nesting_levels(data = bad_villages_df, 
-                         outer_cluster = "Village", 
-                         inner_cluster = "Site"), 
-    NULL
+    length(which(bad_villages_op$num_outer_val > 1)),
+    2
+  )
+  # Check bad nesting at "Site" and "Villages" levels returns 6 comparisons, 6 with duplicates
+  bad_sites_villages_df <- data.frame(
+    Region = rep(c("A", "B"), each = 4),
+    Village = rep(rep(c("W", "X"), each = 2), 2),
+    Site = c(1:4, 4:1),
+    Year = rep(0, 8),
+    NumInPool = rep(10, 8),
+    Result = rep(0, 8)
+  )
+  bad_sites_villages_op <- check_nesting_levels(
+    data = bad_sites_villages_df, 
+    hierarchy_scheme = c("Region", "Village", "Site")
+  )
+  expect_equal(
+    length(which(bad_sites_villages_op$num_outer_val == 1)),
+    0
+  )
+  expect_equal(
+    length(which(bad_sites_villages_op$num_outer_val > 1)),
+    6
   )
 })
 
-## TODO test CheckClusterVars for different num of cols in scheme (2,4,5)
+## TODO test CheckClusterVars for different num of cols in scheme 
+# 2 cols 
+# 4 cols
+# 5 cols
+
+# TODO test PrepareClusterData output
+# test output
+# test warnings
+# test output ignoring warnings
+

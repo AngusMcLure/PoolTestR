@@ -114,6 +114,8 @@ custom_round <- function(x) {
 #' @noRd
 #' 
 check_nesting_levels <- function(data, hierarchy_scheme) {
+  # TODO extend to all pairwise comparisons, not just ones next to each other in levels
+  # TODO raise GitHub error for this
   hier_df <- unique(data[, hierarchy_scheme])
   # Identify pairwise comparisons between adjacent hierarchy levels
   hier_list <- vector(mode="list", length = (length(hierarchy_scheme) - 1) )

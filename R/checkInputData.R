@@ -264,7 +264,7 @@ CheckClusterVars <- function(data, result, poolSize, ...){
           create_nesting_error_message(nesting_errors_df)), 
         collapse = "\n"
       ),
-      class = c("CheckClusterVars_nesting", "error", "condition"),
+      class = c("CheckClusterVars_nesting", "warning", "condition"),
       missing_vals = nesting_errors_df
     )
   }
