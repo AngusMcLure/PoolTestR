@@ -4,7 +4,7 @@
 \alias{PrepareClusterData}
 \title{Prepare hierarchical/clustered survey data for analysis}
 \usage{
-PrepareClusterData(data, result, poolSize, hierarchy)
+PrepareClusterData(data, result, poolSize, hierarchy = NULL)
 }
 \arguments{
 \item{data}{A \code{data.frame} with one row for each pooled sampled and
