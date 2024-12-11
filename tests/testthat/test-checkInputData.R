@@ -322,7 +322,7 @@ test_that("check_nesting_levels() returns expected output", {
   )
   good_sites_op <- check_nesting_levels(
     data = good_sites_df, 
-    hierarchy_scheme = c("Region", "Village", "Site")
+    hierarchy = c("Region", "Village", "Site")
   )
   expect_equal(
     length(which(good_sites_op$num_outer_val == 1)),
@@ -339,7 +339,7 @@ test_that("check_nesting_levels() returns expected output", {
   )
   bad_sites_op <- check_nesting_levels(
     data = bad_sites_df, 
-    hierarchy_scheme = c("Region", "Village", "Site")
+    hierarchy = c("Region", "Village", "Site")
   )
   expect_equal(
     length(which(bad_sites_op$num_outer_val == 1)),
@@ -360,7 +360,7 @@ test_that("check_nesting_levels() returns expected output", {
   )
   bad_villages_op <-  check_nesting_levels(
     data = bad_villages_df, 
-    hierarchy_scheme = c("Region", "Village", "Site")
+    hierarchy = c("Region", "Village", "Site")
   )
   expect_equal(
     length(which(bad_villages_op$num_outer_val == 1)),
@@ -381,7 +381,7 @@ test_that("check_nesting_levels() returns expected output", {
   )
   bad_sites_villages_op <- check_nesting_levels(
     data = bad_sites_villages_df, 
-    hierarchy_scheme = c("Region", "Village", "Site")
+    hierarchy = c("Region", "Village", "Site")
   )
   expect_equal(
     length(which(bad_sites_villages_op$num_outer_val == 1)),
@@ -399,7 +399,20 @@ test_that("check_nesting_levels() returns expected output", {
 # 5 cols
 
 # TODO test PrepareClusterData output
-# test output
-# test warnings
-# test output ignoring warnings
+test_that("PrepareClusterData() works for SimpleExampleData", {
+  # test output
+  # test warnings
+  # test output ignoring warnings
+PrepareClusterData(data, result, poolSize, 
+                   "")
+})
+
+test_that("PrepareClusterData() works when hierarchy values inadequately nested", {
+  PrepareClusterData(data, result, poolSize, 
+                     "")
+  # test output
+  # test warnings
+  # test output ignoring warnings
+})
+
 
