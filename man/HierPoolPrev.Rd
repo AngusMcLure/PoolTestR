@@ -173,5 +173,5 @@ doesn't change the priors used.
 
 }
 \seealso{
-\code{\link{PoolPrev}}, \code{\link{getPrevalence}}
+\code{\link{PrepareClusterData}}, \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
 }
