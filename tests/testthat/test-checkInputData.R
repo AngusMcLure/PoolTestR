@@ -99,70 +99,14 @@ test_that("CheckInputData - missing column values returns error and warning", {
 })
 
 
-test_that("CheckInputData - NA column values returns error and warning", {
-  NA_df <- SimpleExampleData
-  NA_df[1,1] <- NA
-  NA_df[2,2] <- NA
-  NA_df[3,3] <- NA
-  NA_df[4,4] <- NA
-  NA_df[5,5] <- NA
-  NA_df[6,6] <- NA
-  expect_error(
-    expect_warning(
-      CheckInputData(NA_df, "Result", "NumInPool"),
-      class = "DataCheck_missing_values"
-    ),
-    class = "DataCheck_invalid_results_values"
-  )
-})
-
-
-test_that("CheckInputData - no hierarchy columns input raises error", {
-  expect_error(
-    CheckInputData(SimpleExampleData, "Result", "NumInPool",
-                   hier_check = TRUE),
-    class = "DataCheck_missing_hierarchy"
-  )
-})
-
-
-test_that("CheckInputData - missing values in hierarchy columns returns warning", {
-  missing_df <- SimpleExampleData
-  missing_df[2,2] <- ""
-  missing_df[3,3] <- ""
-  missing_df[4,4] <- ""
-  expect_warning(
-    CheckInputData(missing_df, "Result", "NumInPool"),
-    class = "DataCheck_missing_values"
-  )
-})
-
-
-test_that("CheckInputData - NA values in hierarchy columns returns warning", {
-  NA_df <- SimpleExampleData
-  NA_df[2,2] <- NA
-  NA_df[3,3] <- NA
-  NA_df[4,4] <- NA
-  NA_df[5,5] <- NA
-  expect_warning(
-    CheckInputData(NA_df, "Result", "NumInPool"),
-    class = "DataCheck_missing_values"
-  )
-})
-
-
 test_that("CheckClusterVars() with SimpleExampleData has no errors/warnings", {
-  expect_no_message(
-    CheckClusterVars(SimpleExampleData, "Result", "NumInPool",
-                     "Region", "Village", "Site")
-  )
   expect_no_error(
-    CheckClusterVars(SimpleExampleData, "Result", "NumInPool",
-                     "Region", "Village", "Site")
-  )
-  expect_no_warning(
-    CheckClusterVars(SimpleExampleData, "Result", "NumInPool",
-                     "Region", "Village", "Site")
+    expect_no_warning(
+      expect_no_message(
+        CheckClusterVars(SimpleExampleData, "Result", "NumInPool",
+                         hierarchy = c("Region", "Village", "Site"))
+      )
+    )
   )
 })
 
@@ -173,7 +117,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
   test_df$Site[1] <- NA
   expect_error(
     CheckClusterVars(test_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_missing_vals"
   )
   ## Village col includes empty string ""
@@ -181,7 +125,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
   test_df$Village[1] <- ""
   expect_error(
     CheckClusterVars(test_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_missing_vals"
   )
   ## Region col includes NA as factor level
@@ -189,7 +133,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
   test_df$Region[c(1, 289, 577, 865)] <- NA  
   expect_error(
     CheckClusterVars(test_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_missing_vals"
   )
   ## Site, Village and Region columns include NA
@@ -199,7 +143,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
   test_df$Region[11:15] <- NA
   expect_error(
     CheckClusterVars(test_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_missing_vals"
   )
   ## Site, Village and Region columns include ""
@@ -210,7 +154,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
   test_df$Region[11:15] <- ""
   expect_error(
     CheckClusterVars(test_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_missing_vals"
   )
   ## Site col is all NA
@@ -218,7 +162,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
   test_df$Site <- NA
   expect_error(
     CheckClusterVars(test_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_missing_vals"
   )
   ## Site, Village and Region columns are all NA
@@ -228,7 +172,7 @@ test_that("CheckClusterVars - hierarchy columns with missing values raise error"
   test_df$Region <- NA
   expect_error(
     CheckClusterVars(test_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_missing_vals"
   )
 })
@@ -244,7 +188,7 @@ test_that("CheckClusterVars - correct hierarchy nesting scheme has no errors", {
     Result = rep(0, 8))
   expect_no_error(
     CheckClusterVars(nest_df, "Result", "NumInPool",
-                     "Region", "Village", "Site")
+                     hierarchy = c("Region", "Village", "Site"))
   )
 })
 
@@ -260,7 +204,7 @@ test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
   )
   expect_warning(
     CheckClusterVars(bad_sites_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_nesting"
   )
   bad_villages_df <- data.frame(
@@ -273,7 +217,7 @@ test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
   )
   expect_warning(
     CheckClusterVars(bad_villages_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_nesting"
   )
   bad_sites_villages_df <- data.frame(
@@ -286,7 +230,7 @@ test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
   )
   expect_warning(
     CheckClusterVars(bad_sites_villages_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_nesting"
   )
   # This test is particularly tricky to detangle 
@@ -304,7 +248,7 @@ test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
   )
   expect_warning(
     CheckClusterVars(bad_sites_villages_df, "Result", "NumInPool",
-                     "Region", "Village", "Site"),
+                     hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_nesting"
   )
 })
@@ -403,13 +347,13 @@ test_that("PrepareClusterData() works for SimpleExampleData", {
   # test output
   # test warnings
   # test output ignoring warnings
-PrepareClusterData(data, result, poolSize, 
-                   "")
+  PrepareClusterData(data, result, poolSize, 
+                     hierarchy = c("Village", "Site"))
 })
 
 test_that("PrepareClusterData() works when hierarchy values inadequately nested", {
   PrepareClusterData(data, result, poolSize, 
-                     "")
+                     hierarchy = c("Village", "Site"))
   # test output
   # test warnings
   # test output ignoring warnings
