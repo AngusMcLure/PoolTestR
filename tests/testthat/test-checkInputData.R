@@ -25,6 +25,27 @@ test_that("CheckInputData - missing poolSize column returns error", {
 })
 
 
+test_that("CheckInputData - all Result 0 works", {
+  zero_df <- SimpleExampleData %>%
+    mutate("Result" = 0)
+  expect_no_warning(
+    expect_no_error(
+      CheckInputData(zero_df, "Result", "NumInPool")
+    )
+  )
+})
+
+test_that("CheckInputData - all Result 1 works", {
+  one_df <- SimpleExampleData %>%
+    mutate("Result" = 1)
+  expect_no_warning(
+    expect_no_error(
+      CheckInputData(one_df, "Result", "NumInPool")
+    )
+  )
+})
+
+
 test_that("CheckInputData - character class for results column returns error", {
   char_df <- SimpleExampleData %>%
     mutate(across("Result", as.character))
