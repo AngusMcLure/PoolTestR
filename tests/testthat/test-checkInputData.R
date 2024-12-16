@@ -252,11 +252,6 @@ test_that("CheckClusterVars - incorrect hierarchy nesting raises errors", {
                      hierarchy = c("Region", "Village", "Site")),
     class = "CheckClusterVars_nesting"
   )
-  # This test is particularly tricky to detangle 
-  # Each "Village" is associated with multiple "Regions"
-  # However, this is acceptable "Site" input as each "Site" is associated with 
-  # only one "Village". 
-  # TODO - potential cross-levels check (i.e., check "Site" and "Region")
   bad_sites_villages_df <- data.frame(
     Region = rep(c("A", "B"), each = 4),
     Village = rep(rep(c("W", "X"), each = 2), 2),

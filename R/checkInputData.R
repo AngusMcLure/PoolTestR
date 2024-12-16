@@ -305,6 +305,7 @@ PrepareClusterData <- function(data, result, poolSize, hierarchy = NULL){
   CheckInputData(data, result, poolSize)
   CheckClusterVars(data, result, poolSize, hierarchy)
   
+  # TODO only output new column if there is a nesting error
   # Add unique identifier for each location by pasting hierarchy columns
   new_data <- data %>%
     rowwise() %>%
