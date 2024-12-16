@@ -1,12 +1,10 @@
 test_that("CheckInputData - SimpleExampleData returns no errors/warnings", {
   expect_no_message(
-    CheckInputData(SimpleExampleData, "Result", "NumInPool")
-  )
-  expect_no_error(
-    CheckInputData(SimpleExampleData, "Result", "NumInPool")
-  )
-  expect_no_warning(
-    CheckInputData(SimpleExampleData, "Result", "NumInPool")
+    expect_no_error(
+      expect_no_warning(
+        CheckInputData(SimpleExampleData, "Result", "NumInPool")
+      )
+    )
   )
 })
 
@@ -342,18 +340,31 @@ test_that("check_nesting_levels() returns expected output", {
 # 4 cols
 # 5 cols
 
-# TODO test PrepareClusterData output
+
 test_that("PrepareClusterData() works for SimpleExampleData", {
-  # test output
-  # test warnings
-  # test output ignoring warnings
-  PrepareClusterData(data, result, poolSize, 
-                     hierarchy = c("Village", "Site"))
+  expect_no_message(
+    expect_no_error(
+      expect_no_warning(
+        PrepareClusterData(data = SimpleExampleData, 
+                           result = "Result", poolSize = "NumInPool", 
+                           hierarchy = c("Village", "Site") )
+      )
+    )
+  )
 })
 
 test_that("PrepareClusterData() works when hierarchy values inadequately nested", {
-  PrepareClusterData(data, result, poolSize, 
-                     hierarchy = c("Village", "Site"))
+  bad_sites_villages_df <- data.frame(
+    Region = rep(c("A", "B"), each = 4),
+    Village = rep(rep(c("W", "X"), each = 2), 2),
+    Site = c(1:4, 4:1),
+    Year = rep(0, 8),
+    NumInPool = rep(10, 8),
+    Result = c(rep(0, 8))
+  )
+  PrepareClusterData(data = bad_sites_villages_df, 
+                     result = "Result", poolSize = "NumInPool", 
+                     hierarchy = c("Village", "Site") )
   # test output
   # test warnings
   # test output ignoring warnings
