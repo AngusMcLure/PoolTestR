@@ -24,7 +24,7 @@
 CheckInputData <- function(data, result, poolSize){
   ## Warnings
   # Check whether empty rows are present
-  empty_rows <- which(apply(test_data == "", 1, all) == TRUE)
+  empty_rows <- which(apply(data == "", 1, all) == TRUE)
   if (length(empty_rows) > 0){
     rlang::warn(
       message = paste0("Empty rows are present within the dataset.\n",
@@ -36,7 +36,7 @@ CheckInputData <- function(data, result, poolSize){
   }
   
   # Check whether rows containing only NA are present
-  NA_rows <- which(apply(is.na(test_data), 1, all) == TRUE)
+  NA_rows <- which(apply(is.na(data), 1, all) == TRUE)
   if (length(NA_rows) > 0){
     rlang::warn(
       message = paste0("Rows containing only NA are present within the dataset.\n",
@@ -51,10 +51,10 @@ CheckInputData <- function(data, result, poolSize){
   missing_value_rows <- sort(
     unique(
       c(
-        which(rowSums(is.na(test_data)) != 0  
-              & rowSums(is.na(test_data)) < ncol(test_data)),
-        which(rowSums(test_data == "") != 0  
-              & rowSums(test_data == "") < ncol(test_data))
+        which(rowSums(is.na(data)) != 0  
+              & rowSums(is.na(data)) < ncol(data)),
+        which(rowSums(data == "") != 0  
+              & rowSums(data == "") < ncol(data))
       )
     )
   )
@@ -70,13 +70,13 @@ CheckInputData <- function(data, result, poolSize){
   
   ## Errors
   # Check whether result and poolSize columns are present
-  if (! (result %in% names(test_data)) ){
+  if (! (result %in% names(data)) ){
     rlang::abort(
       message = "result column not included in dataframe",
       class = c("DataCheck_missing_column", "error", "condition")
     )
   }
-  if (! (poolSize %in% names(test_data)) ){
+  if (! (poolSize %in% names(data)) ){
     rlang::abort(
       message = "poolSize column not included in dataframe",
       class = c("DataCheck_missing_column", "error", "condition")
@@ -84,8 +84,8 @@ CheckInputData <- function(data, result, poolSize){
   }
   
   # Check whether results column values are numeric or integer
-  if (! (class(test_data[,result]) == "numeric" || 
-         class(test_data[,result]) == "integer") ){
+  if (! (class(data[,result]) == "numeric" || 
+         class(data[,result]) == "integer") ){
     rlang::abort(
       message = paste0(
         'Results of each test must be stored as class "numeric" with only ',
@@ -96,8 +96,8 @@ CheckInputData <- function(data, result, poolSize){
   }
   
   # Check whether poolSize column values are numeric or integer
-  if (! (class(test_data[,poolSize]) == "numeric" || 
-         class(test_data[,poolSize]) == "integer") ){
+  if (! (class(data[,poolSize]) == "numeric" || 
+         class(data[,poolSize]) == "integer") ){
     rlang::abort(
       message = 'Pool size column should be class "numeric"',
       class = c("DataCheck_col_not_numeric", "error", "condition")
@@ -105,7 +105,7 @@ CheckInputData <- function(data, result, poolSize){
   }
   
   # Check whether result column contains only 0 and 1
-  result_vals <- unique(test_data[, result])
+  result_vals <- unique(data[, result])
   if (! setequal(c(0,1), result_vals)){
     rlang::abort(
       message = paste0(
