@@ -106,7 +106,9 @@ CheckInputData <- function(data, result, poolSize){
   
   # Check whether result column contains only 0 and 1
   result_vals <- unique(data[, result])
-  if (! setequal(c(0,1), result_vals)){
+  allowed_result_vals <- c(0, 1)
+  check_result_vals <- setdiff(result_vals, allowed_result_vals) # output vector of values that aren't 0 and 1
+  if (! identical(check_result_vals, numeric(0)) ){
     rlang::abort(
       message = paste0(
         'Results of each test must only be values 0 (negative test) ',
