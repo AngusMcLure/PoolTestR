@@ -114,15 +114,14 @@ custom_round <- function(x) {
 #' @noRd
 #' 
 check_nesting_levels <- function(data, hierarchy) {
-  # TODO extend to all pairwise comparisons, not just ones next to each other in levels
-  hier_df <- unique(data[, hierarchy_scheme])
+  hier_df <- unique(data[, hierarchy])
   # Identify pairwise comparisons between adjacent hierarchy levels
-  hier_list <- vector(mode="list", length = (length(hierarchy_scheme) - 1) )
+  hier_list <- vector(mode="list", length = (length(hierarchy) - 1) )
   for (k in 1:length(hier_list)){
-    # Use rev(hierarchy_scheme) so hierarchy columns ordered from smallest to largest 
-    temp_list <- list("outer" = rev(hierarchy_scheme)[k+1],
-                      "inner" = rev(hierarchy_scheme)[k],
-                      "scheme" = hierarchy_scheme)
+    # Use rev(hierarchy) so hierarchy columns ordered from smallest to largest 
+    temp_list <- list("outer" = rev(hierarchy)[k+1],
+                      "inner" = rev(hierarchy)[k],
+                      "scheme" = hierarchy)
     hier_list[[k]] <- temp_list
   }
   # Check for inner level values with multiple values at the outer level

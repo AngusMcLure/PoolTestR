@@ -15,40 +15,13 @@
 #'   and 0 indicating a negative test result.
 #' @param poolSize The name of the column with number of
 #'   specimens/isolates/insects in each pool.
-#' @param hierarchy Optional name(s) of columns included in the hierarchical sampling
-#'   scheme, listed from largest to smallest. Only used if 
-#'   \code{hier_check = TRUE}.
-#' @param hier_check Logical. Default is \code{FALSE}. If \code{TRUE}, checks
-#'  the hierarchy using column names provided in \code{hierarchy}.
-#' @param excludeCols Character vector containing the name(s) of columns to 
-#'   exclude from the input checks (e.g., notes columns). If no character
-#'   vector is provided, \code{excludeCols = NULL}.
 #'
 #' @return Returns \code{data} invisibly, using \code{invisible(x)}
-#' 
-#' For the \code{SimpleExampleData} data included in this package, the 
-#' hierarchical sampling scheme is \code{Region} > \code{Village} > \code{Site}.
-#' The function call would be:
-#' \code{checkInputData(SimpleExampleData, "Result", "NumInPool",
-#' "Region", "Village", "Site", hier_check = TRUE)}
 #'
 #' @keywords internal
 #' @noRd
 
-CheckInputData <- function(data, result, poolSize, hierarchy = NULL,  
-                           hier_check = FALSE, excludeCols = NULL){
-  # Extract name(s) of columns to group by
-  if (is.null(hierarchy) == FALSE){
-    groupVar <- as.character(hierarchy)  
-  }
-  
-  # Remove any columns flagged for exclusion
-  if (! is.null(excludeCols) ){
-    test_data <- data %>% select(! excludeCols)
-  } else (
-    test_data <- data
-  )
-  
+CheckInputData <- function(data, result, poolSize){
   ## Warnings
   # Check whether empty rows are present
   empty_rows <- which(apply(test_data == "", 1, all) == TRUE)
@@ -143,21 +116,6 @@ CheckInputData <- function(data, result, poolSize, hierarchy = NULL,
     )
   }
   
-  # If running hierarchy/clustering checks, ensure groupVar has been provided 
-  if (hier_check == TRUE & is.null(hierarchy)) {
-    rlang::abort(
-      message = "No hierarchical/sampling variable included in function call.",
-      class = c("DataCheck_missing_hierarchy", "error", "condition")
-    )
-  }
-  
-  # Check hierarchy/clustering scheme
-  if (hier_check == TRUE & length(groupVar) > 0) {
-    hier_check <- CheckClusterVars(data = test_data, 
-                                   result = result, poolSize = poolSize,
-                                   hierarchy = groupVar)
-  }
-  
   # Return data, invisibly, if all checks succeed
   return(invisible(data))
 }
@@ -204,11 +162,11 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
       class = c("CheckClusterVars_no_hierarchy", "error", "condition")
     )
   } else {
-    groupVar <- as.character(hierarchy)  
+    hierarchy <- as.character(hierarchy)
   }
   
   ## Check all hierarchy columns exist
-  missing_hier_cols <- groupVar[! (groupVar %in% names(data))]
+  missing_hier_cols <- hierarchy[! (hierarchy %in% names(data))]
   if (! identical(character(0), missing_hier_cols) ) {
     rlang::abort(
       message = paste0(
@@ -221,9 +179,9 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
   }
   
   ## Flag missing values in cluster/hierarchy columns
-  missing_list <- vector(mode="list", length=length(groupVar))
-  names(missing_list) <- groupVar
-  for (x in groupVar){
+  missing_list <- vector(mode="list", length=length(hierarchy))
+  names(missing_list) <- hierarchy
+  for (x in hierarchy){
     x_vals <- data[, x]
     if (class(x_vals) == "character"){
       # Missing char vals = "", NA, NULL
@@ -241,7 +199,7 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
       missing_list[[x]] <- missing_x_vals
     }
   }
-  bad_cols <- groupVar[! unlist(lapply(groupVar, function(x){is.na(missing_list[[x]])}))]
+  bad_cols <- hierarchy[! unlist(lapply(hierarchy, function(x){is.na(missing_list[[x]])}))]
   if (! identical(character(0), bad_cols) ){
     output_list <- missing_list[bad_cols]
     output_messages <- unlist(
@@ -260,7 +218,7 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
   }
   
   ## Check nesting within hierarchy/sampling scheme
-  check_nests <- check_nesting_levels(data = data, hierarchy_scheme = groupVar)
+  check_nests <- check_nesting_levels(data = data, hierarchy = hierarchy)
   nesting_errors_df <- as.data.frame(check_nests[which(check_nests$num_outer_val > 1), ])
   if (nrow(nesting_errors_df) > 0){
     rlang::warn(
@@ -338,18 +296,17 @@ PrepareClusterData <- function(data, result, poolSize, hierarchy = NULL){
       class = c("PrepareClusterData_no_hierarchy", "error", "condition")
     )
   } else {
-    groupVar <- as.character(hierarchy)  
+    hierarchy <- as.character(hierarchy)  
   }
   
   # Check for warnings and errors
-  CheckInputData(data, result, poolSize, groupVar,  
-                 hier_check = TRUE, excludeCols = NULL)
-  CheckClusterVars(data, result, poolSize, groupVar)
+  CheckInputData(data, result, poolSize)
+  CheckClusterVars(data, result, poolSize, hierarchy)
   
-  # Add unique identifier for each location by pasting groupVar columns
+  # Add unique identifier for each location by pasting hierarchy columns
   new_data <- data %>%
     rowwise() %>%
-    mutate(PoolTestR_ID = create_unique_location_id(.data, groupVar),
+    mutate(PoolTestR_ID = create_unique_location_id(.data, hierarchy),
            .keep = "all")
   return(new_data)
 }
