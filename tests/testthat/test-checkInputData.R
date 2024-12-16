@@ -362,12 +362,14 @@ test_that("PrepareClusterData() works when hierarchy values inadequately nested"
     NumInPool = rep(10, 8),
     Result = c(rep(0, 8))
   )
-  PrepareClusterData(data = bad_sites_villages_df, 
-                     result = "Result", poolSize = "NumInPool", 
-                     hierarchy = c("Village", "Site") )
-  # test output
-  # test warnings
-  # test output ignoring warnings
+  expect_warning(
+    expect_no_error(
+      PrepareClusterData(data = bad_sites_villages_df, 
+                         result = "Result", poolSize = "NumInPool", 
+                         hierarchy = c("Village", "Site") )
+    ), 
+    class = "CheckClusterVars_nesting"
+  )
 })
 
 
