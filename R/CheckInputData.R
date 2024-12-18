@@ -23,6 +23,14 @@
 
 CheckInputData <- function(data, result, poolSize){
   ## Errors
+  # Check class of input data
+  if (! class(data)[[1]] == "data.frame"){
+    rlang::abort(
+      message = 'Input data should be class "data.frame"',
+      class = c("DataCheck_input_class", "error", "condition")
+    )
+  }
+  
   # Check whether result and poolSize columns are present
   if (! (result %in% names(data)) ){
     rlang::abort(
@@ -167,6 +175,14 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
     hierarchy <- as.character(hierarchy)
   }
   
+  ## Check class of input data
+  if (! class(data)[[1]] == "data.frame"){
+    rlang::abort(
+      message = 'Input data should be class "data.frame"',
+      class = c("CheckClusterVars_input_class", "error", "condition")
+    )
+  }
+  
   ## Check all hierarchy columns exist
   missing_hier_cols <- hierarchy[! (hierarchy %in% names(data))]
   if (! identical(character(0), missing_hier_cols) ) {
@@ -303,16 +319,52 @@ PrepareClusterData <- function(data, result, poolSize, hierarchy = NULL){
     hierarchy <- as.character(hierarchy)  
   }
   
-  # Check for warnings and errors
+  # Check for warnings and errors in the input data
   CheckInputData(data, result, poolSize)
-  CheckClusterVars(data, result, poolSize, hierarchy)
   
-  # TODO only output new column if there is a nesting error
-  # Add unique identifier for each location by pasting hierarchy columns
-  new_data <- data %>%
-    rowwise() %>%
-    mutate(PoolTestR_ID = create_unique_location_id(.data, hierarchy),
-           .keep = "all")
-  return(new_data)
+  # Check for warnings and errors in the hierarchical/clustering scheme
+  # If nesting warning is present, add new column of unique location identifiers
+  data <- bad_sites_villages_df
+  pooltestr_input <- tryCatch(
+    expr = {
+      print("in expr")
+      op_data <- CheckClusterVars(data, result, poolSize, hierarchy)
+    },
+    error = function(e){
+      print("in error")
+      print(e)
+      op_data <- NA
+      return(op_data)
+    },
+    warning=function(w) {
+      print("in w")
+      if ("CheckClusterVars_nesting" %in% class(w)){
+        print("in CheckClusterVars_nesting")
+        w_message <- gsub("<|>|CheckClusterVars_nesting: ", "", capture.output(w))
+        rlang::warn(message = w_message,
+                    class = c("PrepareClusterData_nesting", "warning", "condition"))
+        rlang::inform("Note: Unique identification for each location added in new dataframe column `PoolTestR_ID`",
+                      class = c("PrepareClusterData_output", "warning", "condition"))
+        op_data <- data %>%
+          rowwise() %>%
+          mutate(PoolTestR_ID = create_unique_location_id(.data, hierarchy),
+                 .keep = "all")
+      } else {
+        print("in other warning")
+        op_data <- NA
+      }
+      return(op_data)
+    }
+  )
+  
+  # CheckClusterVars(data, result, poolSize, hierarchy)
+  # 
+  # # TODO only output new column if there is a nesting error
+  # # Add unique identifier for each location by pasting hierarchy columns
+  # new_data <- data %>%
+  #   rowwise() %>%
+  #   mutate(PoolTestR_ID = create_unique_location_id(.data, hierarchy),
+  #          .keep = "all")
+  return(pooltestr_input)
 }
 

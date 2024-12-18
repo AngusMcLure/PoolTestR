@@ -8,6 +8,34 @@ test_that("CheckInputData - SimpleExampleData returns no errors/warnings", {
   )
 })
 
+test_that("CheckInputData returns error for non-data.frame input", {
+  # numeric
+  expect_error(
+    CheckInputData(1, "Result", "NumInPool"),
+    class = "DataCheck_input_class"
+  )
+  # character
+  expect_error(
+    CheckInputData("a", "Result", "NumInPool"),
+    class = "DataCheck_input_class"
+  )
+  # function
+  expect_error(
+    CheckInputData(sum(), "Result", "NumInPool"),
+    class = "DataCheck_input_class"
+  )
+  # tibble
+  expect_error(
+    CheckInputData(as_tibble(SimpleExampleData), "Result", "NumInPool"),
+    class = "DataCheck_input_class"
+  )
+  # matrix
+  expect_error(
+    CheckInputData(as.matrix(SimpleExampleData), "Result", "NumInPool"),
+    class = "DataCheck_input_class"
+  )
+})
+
 
 test_that("CheckInputData - missing results column returns error", {
   expect_error(
@@ -214,8 +242,50 @@ test_that("CheckClusterVars() with SimpleExampleData has no errors/warnings", {
 })
 
 
+test_that("CheckClusterVars() returns error when no hierarchy input", {
+  expect_error(
+    CheckClusterVars(SimpleExampleData, "Result", "NumInPool"),
+    class = "CheckClusterVars_no_hierarchy"
+  )
+})
+
+
+test_that("CheckClusterVars returns error for non-data.frame input", {
+  # numeric
+  expect_error(
+    CheckClusterVars(1, "Result", "NumInPool",
+                     hierarchy = c("Region", "Village", "Site")),
+    class = "CheckClusterVars_input_class"
+  )
+  # character
+  expect_error(
+    CheckClusterVars("a", "Result", "NumInPool",
+                     hierarchy = c("Region", "Village", "Site")),
+    class = "CheckClusterVars_input_class"
+  )
+  # function
+  expect_error(
+    CheckClusterVars(sum(), "Result", "NumInPool",
+                     hierarchy = c("Region", "Village", "Site")),
+    class = "CheckClusterVars_input_class"
+  )
+  # tibble
+  expect_error(
+    CheckClusterVars(as_tibble(SimpleExampleData), "Result", "NumInPool",
+                     hierarchy = c("Region", "Village", "Site")),
+    class = "CheckClusterVars_input_class"
+  )
+  # matrix
+  expect_error(
+    CheckClusterVars(as.matrix(SimpleExampleData), "Result", "NumInPool",
+                     hierarchy = c("Region", "Village", "Site")),
+    class = "CheckClusterVars_input_class"
+  )
+})
+
+
 test_that("CheckClusterVars - hierarchy columns with missing values raise error", {
-  ## Site col includes NA
+  ## Site column includes NA
   test_df <- SimpleExampleData
   test_df$Site[1] <- NA
   expect_error(
