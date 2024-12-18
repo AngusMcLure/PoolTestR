@@ -219,19 +219,21 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
     )
   }
   
-  ## Check nesting within hierarchy/sampling scheme
-  check_nests <- check_nesting_levels(data = data, hierarchy = hierarchy)
-  nesting_errors_df <- as.data.frame(check_nests[which(check_nests$num_outer_val > 1), ])
-  if (nrow(nesting_errors_df) > 0){
-    rlang::warn(
-      message = paste(
-        c("Hierarchy/clustered sampling scheme is not nested correctly.",
-          create_nesting_error_message(nesting_errors_df)), 
-        collapse = "\n"
-      ),
-      class = c("CheckClusterVars_nesting", "warning", "condition"),
-      missing_vals = nesting_errors_df
-    )
+  ## If hierarchy has >1 column, check nesting within hierarchy/sampling scheme 
+  if (length(hierarchy) > 1){
+    check_nests <- check_nesting_levels(data = data, hierarchy = hierarchy)
+    nesting_errors_df <- as.data.frame(check_nests[which(check_nests$num_outer_val > 1), ])
+    if (nrow(nesting_errors_df) > 0){
+      rlang::warn(
+        message = paste(
+          c("Hierarchy/clustered sampling scheme is not nested correctly.",
+            create_nesting_error_message(nesting_errors_df)), 
+          collapse = "\n"
+        ),
+        class = c("CheckClusterVars_nesting", "warning", "condition"),
+        missing_vals = nesting_errors_df
+      )
+    }
   }
   
   # Return data, invisibly, if checks succeeds
