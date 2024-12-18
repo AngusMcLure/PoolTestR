@@ -22,6 +22,56 @@
 #' @noRd
 
 CheckInputData <- function(data, result, poolSize){
+  ## Errors
+  # Check whether result and poolSize columns are present
+  if (! (result %in% names(data)) ){
+    rlang::abort(
+      message = "result column not included in dataframe",
+      class = c("DataCheck_missing_column", "error", "condition")
+    )
+  }
+  if (! (poolSize %in% names(data)) ){
+    rlang::abort(
+      message = "poolSize column not included in dataframe",
+      class = c("DataCheck_missing_column", "error", "condition")
+    )
+  }
+  
+  # Check whether results column values are numeric or integer
+  if (! (class(data[,result]) == "numeric" || 
+         class(data[,result]) == "integer") ){
+    rlang::abort(
+      message = paste0(
+        'Results of each test must be stored as class "numeric" or "integer" ',
+        'with only values 0 (negative test) or 1 (positive test)'
+      ),
+      class = c("DataCheck_col_not_numeric", "error", "condition")
+    )
+  }
+  
+  # Check whether poolSize column values are numeric or integer
+  if (! (class(data[,poolSize]) == "numeric" || 
+         class(data[,poolSize]) == "integer") ){
+    rlang::abort(
+      message = 'Pool size column should be positive values of class "numeric" or "integer"',
+      class = c("DataCheck_col_not_numeric", "error", "condition")
+    )
+  }
+  
+  # Check whether result column contains only 0 and 1
+  result_vals <- unique(data[, result])
+  allowed_result_vals <- c(0, 1)
+  check_result_vals <- setdiff(result_vals, allowed_result_vals) # output vector of values that aren't 0 and 1
+  if (! identical(check_result_vals, numeric(0)) ){
+    rlang::abort(
+      message = paste0(
+        'Results of each test must only be values 0 (negative test) ',
+        'or 1 (positive test)'
+      ),
+      class = c("DataCheck_invalid_results_values", "error", "condition")
+    )
+  }
+  
   ## Warnings
   # Check whether empty rows are present
   empty_rows <- which(apply(data == "", 1, all) == TRUE)
@@ -65,56 +115,6 @@ CheckInputData <- function(data, result, poolSize){
                        paste(missing_value_rows, collapse = ", ") 
       ),
       class = c("DataCheck_missing_values", "warning", "condition")
-    )
-  }
-  
-  ## Errors
-  # Check whether result and poolSize columns are present
-  if (! (result %in% names(data)) ){
-    rlang::abort(
-      message = "result column not included in dataframe",
-      class = c("DataCheck_missing_column", "error", "condition")
-    )
-  }
-  if (! (poolSize %in% names(data)) ){
-    rlang::abort(
-      message = "poolSize column not included in dataframe",
-      class = c("DataCheck_missing_column", "error", "condition")
-    )
-  }
-  
-  # Check whether results column values are numeric or integer
-  if (! (class(data[,result]) == "numeric" || 
-         class(data[,result]) == "integer") ){
-    rlang::abort(
-      message = paste0(
-        'Results of each test must be stored as class "numeric" with only ',
-        'values 0 (negative test) or 1 (positive test)'
-      ),
-      class = c("DataCheck_col_not_numeric", "error", "condition")
-    )
-  }
-  
-  # Check whether poolSize column values are numeric or integer
-  if (! (class(data[,poolSize]) == "numeric" || 
-         class(data[,poolSize]) == "integer") ){
-    rlang::abort(
-      message = 'Pool size column should be class "numeric"',
-      class = c("DataCheck_col_not_numeric", "error", "condition")
-    )
-  }
-  
-  # Check whether result column contains only 0 and 1
-  result_vals <- unique(data[, result])
-  allowed_result_vals <- c(0, 1)
-  check_result_vals <- setdiff(result_vals, allowed_result_vals) # output vector of values that aren't 0 and 1
-  if (! identical(check_result_vals, numeric(0)) ){
-    rlang::abort(
-      message = paste0(
-        'Results of each test must only be values 0 (negative test) ',
-        'or 1 (positive test)'
-      ),
-      class = c("DataCheck_invalid_results_values", "error", "condition")
     )
   }
   

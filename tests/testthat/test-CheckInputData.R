@@ -413,7 +413,7 @@ test_that("CheckClusterVars() works with 4 hierarchy columns", {
 )
 
 
-test_that("PrepareClusterData() works for SimpleExampleData", {
+test_that("PrepareClusterData() raises no errors for SimpleExampleData", {
   expect_no_message(
     expect_no_error(
       expect_no_warning(
@@ -424,6 +424,7 @@ test_that("PrepareClusterData() works for SimpleExampleData", {
     )
   )
 })
+
 
 test_that("PrepareClusterData() works when hierarchy values inadequately nested", {
   bad_sites_villages_df <- data.frame(
