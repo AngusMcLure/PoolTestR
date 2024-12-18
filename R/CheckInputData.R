@@ -278,8 +278,10 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
 #'   ordered from largest to smallest. 
 #'
 #' @return An object of class \code{data.frame}, containing the same columns as
-#' the input, with a single new column \code{PoolTestR_ID} containing a unique 
-#' identifier for each location in the survey.
+#' the input. If there were issues with nesting inside the hierarchy, the output
+#' with have a single additional column \code{PoolTestR_ID}, which contains a 
+#' unique identifier for each location in the survey created by concatenating
+#' the hierarchy column values within each row.
 #' 
 #' In a nested sampling design with multiple levels of grouping, the 
 #' lower-level groups must have names/numbers that differentiate them from all 
@@ -307,7 +309,6 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
 #'
 # TODO Need to add examples here!
 # #' @examples
-# TODO Complete documentation and remove example from doco, use example from @examples instead
 PrepareClusterData <- function(data, result, poolSize, hierarchy = NULL){
   
   if (is.null(hierarchy)){
