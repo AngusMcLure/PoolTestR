@@ -26,12 +26,20 @@ specimens/isolates/insects in each pool}
 ordered from largest to smallest.}
 }
 \value{
-An object of class \code{data.frame}, containing the same columns as
-the input. If there were issues with nesting inside the hierarchy, the output
-with have a single additional column \code{PoolTestR_ID}, which contains a 
-unique identifier for each location in the survey created by concatenating
-the hierarchy column values within each row.
+An object of class \code{data.frame}, identical to the input 
+\code{data}. If there were issues with nesting inside the hierarchy, the 
+output will have a single additional column \code{PoolTestR_ID}, containing 
+unique identifier for each location in the survey (created by concatenating
+the hierarchy column values within each row).
 
+Functions in PoolTools do not make assumptions about the number of levels 
+present or the names of hierarchical columns. They can be applied in any
+cases where a hierarchical sampling frame is involved.
+}
+\description{
+Helper function to prepare data for analysis with \code{HierPoolPrev()}.
+}
+\details{
 In a nested sampling design with multiple levels of grouping, the 
 lower-level groups must have names/numbers that differentiate them from all 
 other groups at the same level. E.g. If sampling was performed at 200 sites 
@@ -40,22 +48,63 @@ names for the sites. If, for instance, the sites are instead numbered 1 to
 20 within each village, the village identifier (e.g. A, B, C...) should be 
 combined with the site number to create unique identifiers for each site 
 (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in 
-village B etc.)
+village B etc.). 
 
-The functions in PoolTools apply for all cases where a hierarchical sampling 
-frame is involved, and do not make assumptions about the number of levels 
-present or the names of hierarchical columns. 
+This function checks that the nesting is adequate. If there are issues with 
+the nesting, a new column is added to the input \code{data} by concatenating 
+all columns within the input \code{hierarchy} to ensure each location has a 
+unique identifier. 
 
-For the \code{SimpleExampleData} data included in this package, the 
-hierarchical sampling scheme is \code{Region} > \code{Village} > \code{Site}.
-The function call would be:
-\code{prepareClusterData(SimpleExampleData, "Result", "NumInPool",
-c("Region", "Village", "Site"))}
+This function can also be used to check levels of the hierarchical/clustering 
+scheme that will not be included in prevalence estimates. For example,
+the SimpleExampleData has the scheme \code{Region} > \code{Village} > 
+\code{Site}. The full hierarchy/clustering scheme can be tested using
+\code{hierarchy = c("Region", "Village", "Site")}. The function can also be 
+used to check only the levels of the hierarchical/clustering scheme that will 
+be used for prevalence estimates, e.g., if planning to stratify by 
+\code{Region}, the hierarchy in the \code{HierPoolPrev()} call will be 
+\code{hierarchy = c("Village", "Site")}.
 }
-\description{
-Helper function to prepare data for analysis with \code{HierPoolPrev()} by
-ensuring that every location has a unique identifier.
+\examples{
+# Check whether the SimpleExampleData is formatted 
+# appropriately for estimating prevalence in 
+# HierPoolPrev()
+SimpleExample_output <- PrepareClusterData(
+  data = SimpleExampleData, 
+  result = "Result", poolSize = "NumInPool", 
+  hierarchy = c("Region", "Village", "Site") 
+)
+# No errors/warnings were raised
+identical(SimpleExample_output, SimpleExampleData)
+# The hierarchical scheme is formatted properly so
+# the output is identical to the input
+
+
+\dontrun{
+  # Checking another example data set for clustering issues
+  # Create a test data frame that has incorrectly nested 
+  # Village and Site variables
+  check_data <- data.frame(
+    Region = rep(c("A", "B"), each = 4),
+    Village = rep(rep(c("W", "X"), each = 2), 2),
+    Site = c(1:4, 4:1),
+    Year = rep(0, 8),
+    NumInPool = rep(10, 8),
+    Result = c(rep(0, 8))
+  )
+  # Test whether the data.frame is formatted appropriately
+  # for HierPoolPrev()
+  check_output <- PrepareClusterData(
+    data = check_data, 
+    result = "Result", poolSize = "NumInPool", 
+    hierarchy = c("Region", "Village", "Site")
+  )
+  # New column has been added with unique identifier for
+  # each location
+  check_output$PoolTestR_ID
+}
+
 }
 \seealso{
-\code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
+\code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}, \code{\link{SimpleExampleData}}
 }

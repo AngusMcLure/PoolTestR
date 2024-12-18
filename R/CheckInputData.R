@@ -259,8 +259,7 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
 
 #' Prepare hierarchical/clustered survey data for analysis
 #' 
-#' Helper function to prepare data for analysis with \code{HierPoolPrev()} by
-#' ensuring that every location has a unique identifier.
+#' Helper function to prepare data for analysis with \code{HierPoolPrev()}.
 #'
 #' @param data A \code{data.frame} with one row for each pooled sampled and
 #'   columns for the size of the pool (i.e. the number of specimens / isolates /
@@ -277,12 +276,17 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
 #' @param hierarchy The name of column(s) indicating the group membership, 
 #'   ordered from largest to smallest. 
 #'
-#' @return An object of class \code{data.frame}, containing the same columns as
-#' the input. If there were issues with nesting inside the hierarchy, the output
-#' with have a single additional column \code{PoolTestR_ID}, which contains a 
-#' unique identifier for each location in the survey created by concatenating
-#' the hierarchy column values within each row.
+#' @return An object of class \code{data.frame}, identical to the input 
+#' \code{data}. If there were issues with nesting inside the hierarchy, the 
+#' output will have a single additional column \code{PoolTestR_ID}, containing 
+#' unique identifier for each location in the survey (created by concatenating
+#' the hierarchy column values within each row).
 #' 
+#' Functions in PoolTools do not make assumptions about the number of levels 
+#' present or the names of hierarchical columns. They can be applied in any
+#' cases where a hierarchical sampling frame is involved.
+#' 
+#' @details
 #' In a nested sampling design with multiple levels of grouping, the 
 #' lower-level groups must have names/numbers that differentiate them from all 
 #' other groups at the same level. E.g. If sampling was performed at 200 sites 
@@ -291,24 +295,29 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
 #' 20 within each village, the village identifier (e.g. A, B, C...) should be 
 #' combined with the site number to create unique identifiers for each site 
 #' (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in 
-#' village B etc.)
+#' village B etc.). 
 #' 
-#' The functions in PoolTools apply for all cases where a hierarchical sampling 
-#' frame is involved, and do not make assumptions about the number of levels 
-#' present or the names of hierarchical columns. 
+#' This function checks that the nesting is adequate. If there are issues with 
+#' the nesting, a new column is added to the input \code{data} by concatenating 
+#' all columns within the input \code{hierarchy} to ensure each location has a 
+#' unique identifier. 
 #' 
-#' For the \code{SimpleExampleData} data included in this package, the 
-#' hierarchical sampling scheme is \code{Region} > \code{Village} > \code{Site}.
-#' The function call would be:
-#' \code{prepareClusterData(SimpleExampleData, "Result", "NumInPool",
-#' c("Region", "Village", "Site"))}
-#
+#' This function can also be used to check levels of the hierarchical/clustering 
+#' scheme that will not be included in prevalence estimates. For example,
+#' the SimpleExampleData has the scheme \code{Region} > \code{Village} > 
+#' \code{Site}. The full hierarchy/clustering scheme can be tested using
+#' \code{hierarchy = c("Region", "Village", "Site")}. The function can also be 
+#' used to check only the levels of the hierarchical/clustering scheme that will 
+#' be used for prevalence estimates, e.g., if planning to stratify by 
+#' \code{Region}, the hierarchy in the \code{HierPoolPrev()} call will be 
+#' \code{hierarchy = c("Village", "Site")}.
+#' 
+#' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}, \code{\link{SimpleExampleData}}
+#' 
+#' @example examples/PrepareUserData.R
+#'
 #' @export
 #' 
-#' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
-#'
-# TODO Need to add examples here!
-# #' @examples
 PrepareClusterData <- function(data, result, poolSize, hierarchy = NULL){
   
   if (is.null(hierarchy)){
@@ -356,7 +365,7 @@ PrepareClusterData <- function(data, result, poolSize, hierarchy = NULL){
       return(op_data)
     }
   )
-
+  
   return(pooltestr_input)
 }
 

@@ -171,5 +171,5 @@ getPrevalence(Mod, newdata = DataFuture)
 getPrevalence(HierMod, newdata = DataFuture)
 }
 \seealso{
-\code{\link{PoolReg}}, \code{\link{PoolRegBayes}}
+\code{\link{PrepareClusterData}}, \code{\link{PoolReg}}, \code{\link{PoolRegBayes}}
 }
