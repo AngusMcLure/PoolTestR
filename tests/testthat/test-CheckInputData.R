@@ -515,4 +515,9 @@ test_that("PrepareClusterData() works when hierarchy values inadequately nested"
   )
 })
 
+# TODO PrepareClusterData() - no issues for SimpleExampleData (should return SimpleExampleData)
+# TODO PrepareClusterData() - non-dataframe input
+# TODO PrepareClusterData() - no hierarchy input
+# TODO PrepareClusterData() - nesting issues should result in extra column made of hierarchy cols 
+#                             concatenated together with name `PoolTestR_ID`
 
