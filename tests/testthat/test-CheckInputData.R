@@ -483,7 +483,25 @@ test_that("CheckClusterVars() works with 4 hierarchy columns", {
 )
 
 
+test_that("PrepareClusterData() raises error when no hierarchy input", {
+  expect_error(
+    PrepareClusterData(data = SimpleExampleData, 
+                       result = "Result", poolSize = "NumInPool"),
+    class = "PrepareClusterData_no_hierarchy"
+  )
+})
+
+
 test_that("PrepareClusterData() raises no errors for SimpleExampleData", {
+  expect_no_message(
+    expect_no_error(
+      expect_no_warning(
+        PrepareClusterData(data = SimpleExampleData, 
+                           result = "Result", poolSize = "NumInPool", 
+                           hierarchy = c("Site") )
+      )
+    )
+  )
   expect_no_message(
     expect_no_error(
       expect_no_warning(
@@ -492,6 +510,29 @@ test_that("PrepareClusterData() raises no errors for SimpleExampleData", {
                            hierarchy = c("Village", "Site") )
       )
     )
+  )
+  expect_no_message(
+    expect_no_error(
+      expect_no_warning(
+        PrepareClusterData(data = SimpleExampleData, 
+                           result = "Result", poolSize = "NumInPool", 
+                           hierarchy = c("Region", "Village", "Site") )
+      )
+    )
+  )
+})
+
+
+test_that("PrepareClusterData() returns SimpleExampleData unchanged", {
+  SimpleExample_output <- 
+    PrepareClusterData(
+      data = SimpleExampleData, 
+      result = "Result", 
+      poolSize = "NumInPool", 
+      hierarchy = c("Site") )
+  expect_identical(
+    SimpleExample_output,
+    SimpleExampleData
   )
 })
 
@@ -505,19 +546,50 @@ test_that("PrepareClusterData() works when hierarchy values inadequately nested"
     NumInPool = rep(10, 8),
     Result = c(rep(0, 8))
   )
-  expect_warning(
-    expect_no_error(
+  expect_message(
+    expect_warning(
       PrepareClusterData(data = bad_sites_villages_df, 
                          result = "Result", poolSize = "NumInPool", 
-                         hierarchy = c("Village", "Site") )
-    ), 
-    class = "CheckClusterVars_nesting"
+                         hierarchy = c("Village", "Site") ),
+      class = "PrepareClusterData_nesting"
+    ),
+    class = "PrepareClusterData_output"
   )
 })
 
-# TODO PrepareClusterData() - no issues for SimpleExampleData (should return SimpleExampleData)
-# TODO PrepareClusterData() - non-dataframe input
-# TODO PrepareClusterData() - no hierarchy input
-# TODO PrepareClusterData() - nesting issues should result in extra column made of hierarchy cols 
-#                             concatenated together with name `PoolTestR_ID`
+
+test_that("PrepareClusterData() adds new column when hierarchy is inadequately nested", {
+  bad_input_df <- data.frame(
+    Region = rep(c("A", "B"), each = 4),
+    Village = rep(rep(c("W", "X"), each = 2), 2),
+    Site = c(1:4, 4:1),
+    Year = rep(0, 8),
+    NumInPool = rep(10, 8),
+    Result = c(rep(0, 8))
+  )
+  expect_message(
+    expect_warning(
+      bad_output <- PrepareClusterData(
+        data = bad_input_df, 
+        result = "Result", 
+        poolSize = "NumInPool", 
+        hierarchy = c("Region", "Village", "Site") 
+      ),
+      class = "PrepareClusterData_nesting"
+    ),
+    class = "PrepareClusterData_output"
+  )
+  expect_equal(
+    bad_output$PoolTestR_ID,
+    paste0(bad_input_df$Region, "_", bad_input_df$Village, "_", bad_input_df$Site)
+  )
+  expect_equal(
+    nrow(bad_input_df),
+    nrow(bad_output)
+  )
+  expect_equal(
+    ncol(bad_input_df) + 1,
+    ncol(bad_output)
+  )
+})
 
