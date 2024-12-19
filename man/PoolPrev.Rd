@@ -121,13 +121,23 @@ The output includes the following columns:
   variables, the output has only one row with the prevalence estimates 
   for the whole dataset. When grouping variables are supplied in \code{...}, 
   then there is a separate row for each group.
-
+  
   The custom print method summarises the output data frame by representing
   the prevalence and credible intervals as a single column in the form
   \code{"Prev (CLow - CHigh)"} where \code{Prev} is the prevalence,
   \code{CLow} is the lower confidence/credible interval and \code{CHigh} is
   the upper confidence/credible interval. In the print method, prevalence is
   represented as a percentage (i.e., per 100 units)
+  
+  Before estimating prevalence, we check the input variables for formatting
+  problems including:
+  \itemize{
+    \item{Incorrect class of the input \code{data} }
+    \item{incorrect class of \code{result} and \code{poolSize} columns}
+    \item{Missing columns}
+    \item{Missing values in rows}
+    \item{Invalid values in rows}
+  }
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples

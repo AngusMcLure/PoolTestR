@@ -83,13 +83,23 @@
 #'   variables, the output has only one row with the prevalence estimates 
 #'   for the whole dataset. When grouping variables are supplied in \code{...}, 
 #'   then there is a separate row for each group.
-#'
+#'   
 #'   The custom print method summarises the output data frame by representing
 #'   the prevalence and credible intervals as a single column in the form
 #'   \code{"Prev (CLow - CHigh)"} where \code{Prev} is the prevalence,
 #'   \code{CLow} is the lower confidence/credible interval and \code{CHigh} is
 #'   the upper confidence/credible interval. In the print method, prevalence is
 #'   represented as a percentage (i.e., per 100 units)
+#'   
+#'   Before estimating prevalence, we check the input variables for formatting
+#'   problems including:
+#'   \itemize{
+#'     \item{Incorrect class of the input \code{data} }
+#'     \item{incorrect class of \code{result} and \code{poolSize} columns}
+#'     \item{Missing columns}
+#'     \item{Missing values in rows}
+#'     \item{Invalid values in rows}
+#'   }
 #'
 #' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
 #'
@@ -107,6 +117,9 @@ PoolPrev <- function(data,result,poolSize,...,
   result <- enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
   groupVar <- enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
+  
+  # Check for issues with the input variables
+  CheckInputData(data, result, poolSize)
   
   useJefferysPrior <- is.null(prior)
   if(bayesian){
@@ -255,8 +268,8 @@ PoolPrev <- function(data,result,poolSize,...,
       if(bayesian){
         if(useJefferysPrior){
           out$PrevBayes <- switch(all.negative.pools,
-                                 'consistent' = f_point(sfit),
-                                 'zero' = 0)
+                                  'consistent' = f_point(sfit),
+                                  'zero' = 0)
           out$CrILow <- 0
           out$CrIHigh <- stats::quantile(sfit,level)
           out$ProbAbsent <- NA
@@ -265,8 +278,8 @@ PoolPrev <- function(data,result,poolSize,...,
           #This is the quantile we need to extract from the posterior of the beta-binomial posterior dist to get the credible interval
           q <- (level - ProbAbsent)/(1 - ProbAbsent)
           out$PrevBayes <- switch(all.negative.pools,
-                                 'consistent' = prior$alpha/(prior$alpha + prior$beta + sum(sdata$PoolSize))*(1-ProbAbsent),
-                                 'zero' = 0)
+                                  'consistent' = prior$alpha/(prior$alpha + prior$beta + sum(sdata$PoolSize))*(1-ProbAbsent),
+                                  'zero' = 0)
           out$CrILow <- 0
           out$CrIHigh <- ifelse(q<0, #i.e. if the probability that the disease is absent exceeds the desired size of the credible interval
                                 0,

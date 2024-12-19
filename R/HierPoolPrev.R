@@ -62,9 +62,12 @@
 #'            \item{\code{NumberOfPools} -- number of pools}
 #'            \item{\code{NumberPositive} -- the number of positive pools}
 #'            \item{\code{ICC} -- the estimated intra-cluster correlation
-#'                  coefficient}
+#'                  coefficient. Matrix column containing one column for each 
+#'                  variable included in the \code{hierarchy}.}
 #'            \item{\code{ICC_CrILow} and \code{ICC_CrIHigh} -- lower and upper
-#'                  bounds for credible intervals of the estimated ICC} }
+#'                  bounds for credible intervals of the estimated ICC. Matrix
+#'                  columns containing one column for each variable included
+#'                  in the \code{hierarchy}.} }
 #'
 #'   The \code{hierarchy} input must have the name of column(s) indicating the 
 #'   group membership ordered from largest to smallest. For example, the 
@@ -72,13 +75,6 @@
 #'   is \code{hierarchy = c("Region", "Village", "Site")} or 
 #'   \code{hierarchy = c("Village", "Site")} (depending on the analysis 
 #'   structure).
-#'  
-#'   The three ICC columns (\code{ICC}, \code{ICC_CrILow} and
-#'   \code{ICC_CrIHigh}) are matrix columns. These contain one column for each
-#'   variable included in the \code{hierarchy}. E.g., if the input hierarchy is
-#'   \code{c("Village", "Site")}, each of the three ICC matrix columns will
-#'   contain one column with results for \code{Village} and one column with
-#'   results for \code{Site}.
 #'
 #'   If grouping variables are provided in \code{...} there will be an
 #'   additional column for each grouping variable. When there are no grouping
@@ -93,6 +89,18 @@
 #'   interval and \code{CrIHigh} is the upper credible interval. In the print
 #'   method,  prevalence \code{PrevBayes} is represented as a percentage (i.e.,
 #'   per 100 units).
+#'   
+#'   Before estimating prevalence, we check the input variables for formatting
+#'   problems including:
+#'   \itemize{
+#'     \item{Incorrect class of the input \code{data} }
+#'     \item{incorrect class of \code{result} and \code{poolSize} columns}
+#'     \item{Missing columns}
+#'     \item{Missing values in rows}
+#'     \item{Invalid values in rows}
+#'   }
+#'   To test the nesting of the hierarchy/clustering scheme prior to applying
+#'   \code{HierPoolPrev()}, use the \code{PrepareClusterData()} function.
 #'
 #' @seealso \code{\link{PrepareClusterData}}, \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
 #'
@@ -130,6 +138,9 @@ HierPoolPrev <- function(data,result,poolSize,hierarchy,...,
   result <- enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
   groupVar <- enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
+  
+  # Check for issues with the input variables
+  CheckInputData(data, result, poolSize)
   
   # Ideally I would like to:
   # Set number of cores to use (use all the cores! BUT when checking R
