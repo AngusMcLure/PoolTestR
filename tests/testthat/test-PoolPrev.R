@@ -1,3 +1,31 @@
+test_that("PoolPrev returns no errors/warnings/messages for SimpleExampleData", {
+  expect_no_message(
+    expect_no_warning(
+      expect_no_error(
+        PoolPrev(
+          data = SimpleExampleData, 
+          result = "Result", 
+          poolSize = "NumInPool", 
+          bayesian = FALSE
+        )
+      )
+    )
+  )
+  expect_no_message(
+    expect_no_warning(
+      expect_no_error(
+        PoolPrev(
+          data = SimpleExampleData, 
+          result = "Result", 
+          poolSize = "NumInPool", 
+          "Region",
+          bayesian = FALSE)
+      )
+    )
+  )
+})
+
+
 test_that("PoolPrev returns correct ML point estimate", {
   # Mean prevalence for 100 runs was 0.05722 (4 SF)
   # Range in prevalence for 100 runs was 0.05722 - 0.05723 (4 SF)

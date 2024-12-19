@@ -84,24 +84,18 @@
 #'   for the whole dataset. When grouping variables are supplied in \code{...}, 
 #'   then there is a separate row for each group.
 #'   
+#'   We provide a function to check input data prior to prevalence estimation. 
+#'   To test the data for formatting errors, use the function 
+#'   \code{CheckInputData()}.
+#'   
 #'   The custom print method summarises the output data frame by representing
 #'   the prevalence and credible intervals as a single column in the form
 #'   \code{"Prev (CLow - CHigh)"} where \code{Prev} is the prevalence,
 #'   \code{CLow} is the lower confidence/credible interval and \code{CHigh} is
 #'   the upper confidence/credible interval. In the print method, prevalence is
 #'   represented as a percentage (i.e., per 100 units)
-#'   
-#'   Before estimating prevalence, we check the input variables for formatting
-#'   problems including:
-#'   \itemize{
-#'     \item{Incorrect class of the input \code{data} }
-#'     \item{incorrect class of \code{result} and \code{poolSize} columns}
-#'     \item{Missing columns}
-#'     \item{Missing values in rows}
-#'     \item{Invalid values in rows}
-#'   }
 #'
-#' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
+#' @seealso \code{\link{CheckInputData}} \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
 #'
 #' @example examples/Prevalence.R
 
@@ -117,9 +111,6 @@ PoolPrev <- function(data,result,poolSize,...,
   result <- enquo(result) #The name of column with the result of each test on each pooled sample
   poolSize <- enquo(poolSize) #The name of the column with number of bugs in each pool
   groupVar <- enquos(...) #optional name(s) of columns with other variable to group by. If omitted uses the complete dataset of pooled sample results to calculate a single prevalence
-  
-  # Check for issues with the input variables
-  CheckInputData(data, result, poolSize)
   
   useJefferysPrior <- is.null(prior)
   if(bayesian){
@@ -310,6 +301,7 @@ PoolPrev <- function(data,result,poolSize,...,
     
     out
   }else{ #if there are stratifying variables the function calls itself iteratively on each stratum
+    run_input_check <- FALSE # change flag to prevent re-running input checks
     data <- data %>%
       group_by(!!! groupVar)
     nGroups <- n_groups(data)
