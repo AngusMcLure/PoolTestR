@@ -46,24 +46,24 @@ CheckInputData <- function(data, result, poolSize, ...){
   ## Errors
   # Check class of result and poolSize
   if (
-    (class(result) == "character") == FALSE  & 
-    (class(poolSize) == "character") == FALSE
+    is(result, "character") == FALSE  & 
+    is(poolSize, "character") == FALSE
   ) {
     rlang::abort(
       message = 'Input variables result and poolSize should be of class "character"',
       class = c("DataCheck_input_class", "error", "condition")
     )
   } else if (
-    (class(result) == "character") == FALSE  & 
-    (class(poolSize) == "character") == TRUE
+    is(result, "character") == FALSE  & 
+    is(poolSize, "character") == TRUE
   ) {
     rlang::abort(
       message = 'Input variable result should be of class "character"',
       class = c("DataCheck_input_class", "error", "condition")
     )
   }else if (
-    (class(result) == "character") == TRUE  & 
-    (class(poolSize) == "character") == FALSE
+    is(result, "character") == TRUE  & 
+    is(poolSize, "character") == FALSE
   ) {
     rlang::abort(
       message = 'Input variable poolSize should be of class "character"',
