@@ -14,7 +14,6 @@ nesting of clustered variables, and tests whether each location has a unique
 identifier.
 
 # PoolTestR v0.2.0 (Release date: 2024-12-05)
-
 Caitlin Cherryh has joined the development team and has been working on 
 improving readability of outputs, documentation, and testing.
 
