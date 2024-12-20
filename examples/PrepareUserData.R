@@ -1,11 +1,12 @@
-# Check whether the SimpleExampleData is formatted 
+# Check whether the SimpleExampleData is nested 
 # appropriately for estimating prevalence in 
 # HierPoolPrev()
-SimpleExample_output <- PrepareClusterData(
-  data = SimpleExampleData, 
-  result = "Result", poolSize = "NumInPool", 
-  hierarchy = c("Region", "Village", "Site") 
-)
+SimpleExample_output <- 
+  PrepareClusterData(
+    data = SimpleExampleData, 
+    result = "Result", poolSize = "NumInPool", 
+    hierarchy = c("Region", "Village", "Site") 
+  )
 # No errors/warnings were raised
 identical(SimpleExample_output, SimpleExampleData)
 # The hierarchical scheme is formatted properly so
