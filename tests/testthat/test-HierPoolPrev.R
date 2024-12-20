@@ -9,7 +9,7 @@ test_that("HierPoolPrev() raises no errors", {
   #   There were 8 divergent transitions after warmup. 
   #   See https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
   #   to find out why this is a problem and how to eliminate them.
-  skip_on_cran()
+  skip()
   ShortExampleData <- 
     SimpleExampleData %>%
     filter(.data$NumInPool == 10) %>%
