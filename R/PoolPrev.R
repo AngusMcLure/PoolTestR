@@ -95,7 +95,8 @@
 #'   the upper confidence/credible interval. In the print method, prevalence is
 #'   represented as a percentage (i.e., per 100 units)
 #'
-#' @seealso \code{\link{CheckInputData}} \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
+#' @seealso \code{\link{CheckInputData}} \code{\link{HierPoolPrev}}, 
+#' \code{\link{getPrevalence}}
 #'
 #' @example examples/Prevalence.R
 
