@@ -117,7 +117,12 @@ The output includes the following columns:
   variables (supplied in \code{...}) then the output has only one row with
   the prevalence estimates for the whole dataset. When grouping variables are
   supplied, then there is a separate row for each group.
-
+  
+  We provide two functions to check input data prior to prevalence estimation. 
+  To test the data for formatting errors, use the function 
+  \code{CheckInputData()}. To test the nesting of the hierarchy/clustering 
+  scheme, use the function \code{PrepareClusterData()}.
+  
   The custom print method summarises the output data frame by representing
   output variables with credible intervals (i.e., \code{PrevBayes},
   \code{ICC}) as a single column in the form \code{"X (CrILow - CrIHigh)"}
@@ -125,18 +130,6 @@ The output includes the following columns:
   interval and \code{CrIHigh} is the upper credible interval. In the print
   method,  prevalence \code{PrevBayes} is represented as a percentage (i.e.,
   per 100 units).
-  
-  Before estimating prevalence, we check the input variables for formatting
-  problems including:
-  \itemize{
-    \item{Incorrect class of the input \code{data} }
-    \item{incorrect class of \code{result} and \code{poolSize} columns}
-    \item{Missing columns}
-    \item{Missing values in rows}
-    \item{Invalid values in rows}
-  }
-  To test the nesting of the hierarchy/clustering scheme prior to applying
-  \code{HierPoolPrev()}, use the \code{PrepareClusterData()} function.
 }
 \description{
 Estimation of prevalence based on presence/absence tests on pooled samples in
@@ -181,5 +174,6 @@ doesn't change the priors used.
 
 }
 \seealso{
-\code{\link{PrepareClusterData}}, \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
+\code{\link{CheckInputData}}, \code{\link{PrepareClusterData}}, 
+\code{\link{PoolPrev}}, \code{\link{getPrevalence}}
 }

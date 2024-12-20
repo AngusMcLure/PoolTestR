@@ -4,7 +4,7 @@
 \alias{PrepareClusterData}
 \title{Prepare hierarchical/clustered survey data for analysis}
 \usage{
-PrepareClusterData(data, result, poolSize, hierarchy = NULL)
+PrepareClusterData(data, result, poolSize, hierarchy = NULL, ...)
 }
 \arguments{
 \item{data}{A \code{data.frame} with one row for each pooled sampled and
@@ -24,6 +24,9 @@ specimens/isolates/insects in each pool}
 
 \item{hierarchy}{The name of column(s) indicating the group membership, 
 ordered from largest to smallest.}
+
+\item{...}{Optional name(s) of columns with variables to stratify the data
+by.}
 }
 \value{
 An object of class \code{data.frame}, identical to the input 
@@ -31,6 +34,16 @@ An object of class \code{data.frame}, identical to the input
 output will have a single additional column \code{PoolTestR_ID}, containing 
 unique identifier for each location in the survey (created by concatenating
 the hierarchy column values within each row).
+
+This function can be used to check levels of the hierarchical/clustering 
+scheme. For example, the \code{SimpleExampleData} has the scheme 
+\code{Region} > \code{Village} > \code{Site}. The full geographical 
+hierarchy/clustering scheme can be tested using 
+\code{hierarchy = c("Region", "Village", "Site")}. This function can also be 
+used to check only the levels of the hierarchical/clustering scheme that 
+will be included in prevalence estimates, e.g., if planning to stratify 
+\code{SimpleExampleData} by \code{Region}, the hierarchy will be 
+\code{hierarchy = c("Village", "Site")}.
 
 Functions in PoolTools do not make assumptions about the number of levels 
 present or the names of hierarchical columns. They can be applied in any
@@ -40,40 +53,32 @@ cases where a hierarchical sampling frame is involved.
 Helper function to prepare data for analysis with \code{HierPoolPrev()}.
 }
 \details{
-In a nested sampling design with multiple levels of grouping, the 
-lower-level groups must have names/numbers that differentiate them from all 
-other groups at the same level. E.g. If sampling was performed at 200 sites 
-across 10 villages (20 site per village), then there should be 200 unique 
-names for the sites. If, for instance, the sites are instead numbered 1 to 
-20 within each village, the village identifier (e.g. A, B, C...) should be 
-combined with the site number to create unique identifiers for each site 
-(e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in 
-village B etc.). 
+When including information about hierarchical sampling frame 
+(e.g. where units were sampled from sites and sites were selected from a 
+broader region), it is critical that each cluster can be uniquely identified. 
+It's not enough for the combination of columns specifying the hierarchy to 
+be unique. Each different location needs to have a unique label. 
+It's not enough for the combination of columns specifying the hierarchy to 
+be unique. Each different location needs to have a unique label.
 
-This function checks that the nesting is adequate. If there are issues with 
-the nesting, a new column is added to the input \code{data} by concatenating 
-all columns within the input \code{hierarchy} to ensure each location has a 
-unique identifier. 
-
-This function can also be used to check levels of the hierarchical/clustering 
-scheme that will not be included in prevalence estimates. For example,
-the SimpleExampleData has the scheme \code{Region} > \code{Village} > 
-\code{Site}. The full hierarchy/clustering scheme can be tested using
-\code{hierarchy = c("Region", "Village", "Site")}. The function can also be 
-used to check only the levels of the hierarchical/clustering scheme that will 
-be used for prevalence estimates, e.g., if planning to stratify by 
-\code{Region}, the hierarchy in the \code{HierPoolPrev()} call will be 
-\code{hierarchy = c("Village", "Site")}.
+This function is provided to assist users by detecting certain types of 
+nesting and clustering issues within data. As we do not make assumptions 
+about the hierarchical/clustering scheme, we cannot guarantee that 
+this function will detect all errors in hierarchical/clustering schemes.
+This function checks for the most common type of error, which is multiple 
+different locations (e.g., collection sites) having the same value within a 
+hierarchical/clustering column.
 }
 \examples{
-# Check whether the SimpleExampleData is formatted 
+# Check whether the SimpleExampleData is nested 
 # appropriately for estimating prevalence in 
 # HierPoolPrev()
-SimpleExample_output <- PrepareClusterData(
-  data = SimpleExampleData, 
-  result = "Result", poolSize = "NumInPool", 
-  hierarchy = c("Region", "Village", "Site") 
-)
+SimpleExample_output <- 
+  PrepareClusterData(
+    data = SimpleExampleData, 
+    result = "Result", poolSize = "NumInPool", 
+    hierarchy = c("Region", "Village", "Site") 
+  )
 # No errors/warnings were raised
 identical(SimpleExample_output, SimpleExampleData)
 # The hierarchical scheme is formatted properly so
@@ -106,5 +111,6 @@ identical(SimpleExample_output, SimpleExampleData)
 
 }
 \seealso{
-\code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}, \code{\link{SimpleExampleData}}
+\code{\link{CheckInputData}}, \code{\link{HierPoolPrev}}, 
+\code{\link{getPrevalence}}, \code{\link{SimpleExampleData}}
 }
