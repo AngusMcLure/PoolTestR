@@ -293,7 +293,7 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
   names(missing_list) <- hierarchy
   for (x in hierarchy){
     x_vals <- data[, x]
-    if (class(x_vals) == "character"){
+    if ( is(x_vals, "character") ){
       # Missing char vals = "", NA, NULL
       missing_x_vals <- which(x_vals == "" | is.na(x_vals) | is.null(x_vals))
     } else {
