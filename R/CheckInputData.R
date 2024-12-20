@@ -1,8 +1,9 @@
 #' Checking input data for errors and inconsistencies
 #' 
 #'
-#' Internal function to test the input data and return relevant errors.
-#'
+#' Test the input data is adequately formatted for use with \code{PoolPrev()} and 
+#' \code{HierPoolPrev()}. 
+#' 
 #' @param data A \code{data.frame} with one row for each pooled sampled and
 #'   columns for the size of the pool (i.e., the number of specimens / isolates /
 #'   insects pooled to make that particular pool), the result of the test of the
@@ -15,14 +16,61 @@
 #'   and 0 indicating a negative test result.
 #' @param poolSize The name of the column with number of
 #'   specimens/isolates/insects in each pool.
+#' @param ... Optional name(s) of columns with variables to stratify the data
+#'   by.
 #'
 #' @return Returns \code{data} invisibly, using \code{invisible(x)}
+#' 
+#' This function is used to check the input \code{data} for formatting
+#' problems including:
+#'   \itemize{
+#'     \item{Incorrect class of the input \code{data} }
+#'     \item{incorrect class of \code{result} and \code{poolSize} columns}
+#'     \item{Missing columns}
+#'     \item{Missing values in rows}
+#'     \item{Invalid values in rows}
+#'   }
+#' If any problems are detected, an error or warning will be raised describing
+#' the issue.
 #'
-#' @keywords internal
-#' @noRd
+#' @seealso \code{\link{PrepareClusterData}}, \code{\link{SimpleExampleData}},
+#' \code{\link{PoolPrev}}, \code{\link{HierPoolPrev}}
+#' 
+#' @example examples/CheckInputData.R
+#'
+#' @export
 
-CheckInputData <- function(data, result, poolSize){
+CheckInputData <- function(data, result, poolSize, ...){
+  groupVar <- unlist(list(...)) # optional name(s) of columns with other variable to group by
+  
   ## Errors
+  # Check class of result and poolSize
+  if (
+    (class(result) == "character") == FALSE  & 
+    (class(poolSize) == "character") == FALSE
+    ) {
+    rlang::abort(
+      message = 'Input variables result and poolSize should be of class "character"',
+      class = c("DataCheck_input_class", "error", "condition")
+    )
+  } else if (
+    (class(result) == "character") == FALSE  & 
+    (class(poolSize) == "character") == TRUE
+  ) {
+    rlang::abort(
+      message = 'Input variable result should be of class "character"',
+      class = c("DataCheck_input_class", "error", "condition")
+    )
+  }else if (
+    (class(result) == "character") == TRUE  & 
+    (class(poolSize) == "character") == FALSE
+  ) {
+    rlang::abort(
+      message = 'Input variable poolSize should be of class "character"',
+      class = c("DataCheck_input_class", "error", "condition")
+    )
+  }
+  
   # Check class of input data
   if (! class(data)[[1]] == "data.frame"){
     rlang::abort(
@@ -32,17 +80,44 @@ CheckInputData <- function(data, result, poolSize){
   }
   
   # Check whether result and poolSize columns are present
-  if (! (result %in% names(data)) ){
+  if ( 
+    (result %in% names(data) == FALSE) &
+    (poolSize %in% names(data) == FALSE )
+  ) {
     rlang::abort(
-      message = "result column not included in dataframe",
+      message = "result and poolSize columns not included in dataframe. Check column names.",
+      class = c("DataCheck_missing_column", "error", "condition")
+    )
+  } else if ( 
+    (result %in% names(data) == FALSE) &
+    (poolSize %in% names(data) == TRUE )
+  ) {
+    rlang::abort(
+      message = "result column not included in dataframe. Check column name.",
+      class = c("DataCheck_missing_column", "error", "condition")
+    )
+  } else if ( 
+    (result %in% names(data) == TRUE) &
+    (poolSize %in% names(data) == FALSE )
+  ) {
+    rlang::abort(
+      message = "poolSize column not included in dataframe. Check column name.",
       class = c("DataCheck_missing_column", "error", "condition")
     )
   }
-  if (! (poolSize %in% names(data)) ){
-    rlang::abort(
-      message = "poolSize column not included in dataframe",
-      class = c("DataCheck_missing_column", "error", "condition")
-    )
+  
+  # Check whether grouping columns are present
+  if (! is.null(groupVar)){
+    missing_groupVar <- groupVar[! groupVar %in% names(data)]
+    if (! identical(character(0), missing_groupVar)){
+      rlang::abort(
+        message = paste0(
+          'Stratification column not present within data\n',
+          'Missing column(s): ', paste(missing_groupVar, collapse = ", ")
+        ),
+        class = c("DataCheck_missing_groupVar", "error", "condition")
+      )
+    }
   }
   
   # Check whether results column values are numeric or integer
@@ -63,6 +138,15 @@ CheckInputData <- function(data, result, poolSize){
     rlang::abort(
       message = 'Pool size column should be positive values of class "numeric" or "integer"',
       class = c("DataCheck_col_not_numeric", "error", "condition")
+    )
+  }
+  
+  # Check whether poolSize column values are positive
+  negative_pool_size <- which(data[,poolSize] < 0)
+  if (! identical(integer(0), negative_pool_size) ){
+    rlang::abort(
+      message = 'Pool size column should contain only positive values',
+      class = c("DataCheck_col_not_positive", "error", "condition")
     )
   }
   
@@ -260,7 +344,7 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
 #' Prepare hierarchical/clustered survey data for analysis
 #' 
 #' Helper function to prepare data for analysis with \code{HierPoolPrev()}.
-#'
+#' 
 #' @param data A \code{data.frame} with one row for each pooled sampled and
 #'   columns for the size of the pool (i.e. the number of specimens / isolates /
 #'   insects pooled to make that particular pool), the result of the test of the
@@ -275,6 +359,8 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
 #'   specimens/isolates/insects in each pool
 #' @param hierarchy The name of column(s) indicating the group membership, 
 #'   ordered from largest to smallest. 
+#' @param ... Optional name(s) of columns with variables to stratify the data
+#'   by.
 #'
 #' @return An object of class \code{data.frame}, identical to the input 
 #' \code{data}. If there were issues with nesting inside the hierarchy, the 
@@ -282,43 +368,48 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
 #' unique identifier for each location in the survey (created by concatenating
 #' the hierarchy column values within each row).
 #' 
-#' Functions in PoolTools do not make assumptions about the number of levels 
-#' present or the names of hierarchical columns. They can be applied in any
-#' cases where a hierarchical sampling frame is involved.
-#' 
-#' @details
-#' In a nested sampling design with multiple levels of grouping, the 
-#' lower-level groups must have names/numbers that differentiate them from all 
-#' other groups at the same level. E.g. If sampling was performed at 200 sites 
-#' across 10 villages (20 site per village), then there should be 200 unique 
-#' names for the sites. If, for instance, the sites are instead numbered 1 to 
-#' 20 within each village, the village identifier (e.g. A, B, C...) should be 
-#' combined with the site number to create unique identifiers for each site 
-#' (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in 
-#' village B etc.). 
-#' 
-#' This function checks that the nesting is adequate. If there are issues with 
-#' the nesting, a new column is added to the input \code{data} by concatenating 
-#' all columns within the input \code{hierarchy} to ensure each location has a 
-#' unique identifier. 
-#' 
-#' This function can also be used to check levels of the hierarchical/clustering 
-#' scheme that will not be included in prevalence estimates. For example,
-#' the SimpleExampleData has the scheme \code{Region} > \code{Village} > 
-#' \code{Site}. The full hierarchy/clustering scheme can be tested using
-#' \code{hierarchy = c("Region", "Village", "Site")}. The function can also be 
-#' used to check only the levels of the hierarchical/clustering scheme that will 
-#' be used for prevalence estimates, e.g., if planning to stratify by 
-#' \code{Region}, the hierarchy in the \code{HierPoolPrev()} call will be 
+#' This function can be used to check levels of the hierarchical/clustering 
+#' scheme. For example, the \code{SimpleExampleData} has the scheme 
+#' \code{Region} > \code{Village} > \code{Site}. The full geographical 
+#' hierarchy/clustering scheme can be tested using 
+#' \code{hierarchy = c("Region", "Village", "Site")}. This function can also be 
+#' used to check only the levels of the hierarchical/clustering scheme that 
+#' will be included in prevalence estimates, e.g., if planning to stratify 
+#' \code{SimpleExampleData} by \code{Region}, the hierarchy will be 
 #' \code{hierarchy = c("Village", "Site")}.
 #' 
-#' @seealso \code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}, \code{\link{SimpleExampleData}}
+#' Functions in PoolTools do not make assumptions about the number of levels 
+#' present or the names of hierarchical columns. They can be applied in any
+#' cases where a hierarchical sampling frame is involved. 
+#' 
+#' @details When including information about hierarchical sampling frame 
+#' (e.g. where units were sampled from sites and sites were selected from a 
+#' broader region), it is critical that each cluster can be uniquely identified. 
+#' It's not enough for the combination of columns specifying the hierarchy to 
+#' be unique. Each different location needs to have a unique label. 
+#' It's not enough for the combination of columns specifying the hierarchy to 
+#' be unique. Each different location needs to have a unique label.
+#' 
+#' This function is provided to assist users by detecting certain types of 
+#' nesting and clustering issues within data. As we do not make assumptions 
+#' about the hierarchical/clustering scheme, we cannot guarantee that 
+#' this function will detect all errors in hierarchical/clustering schemes.
+#' This function checks for the most common type of error, which is multiple 
+#' different locations (e.g., collection sites) having the same value within a 
+#' hierarchical/clustering column. 
+#' 
+#' @seealso \code{\link{CheckInputData}}, \code{\link{HierPoolPrev}}, 
+#' \code{\link{getPrevalence}}, \code{\link{SimpleExampleData}}
 #' 
 #' @example examples/PrepareUserData.R
 #'
 #' @export
 #' 
-PrepareClusterData <- function(data, result, poolSize, hierarchy = NULL){
+PrepareClusterData <- function(data, result, poolSize, 
+                               hierarchy = NULL, ...){
+  # groupVar not used in this function - doesn't impact clustering
+  # Allow it as input to keep all functions consistent
+  groupVar <- unlist(list(...)) # optional name(s) of columns with other variable to group by
   
   if (is.null(hierarchy)){
     rlang::abort(
@@ -329,8 +420,22 @@ PrepareClusterData <- function(data, result, poolSize, hierarchy = NULL){
     hierarchy <- as.character(hierarchy)  
   }
   
+  ## Check all hierarchy columns exist
+  missing_hier_cols <- hierarchy[! (hierarchy %in% names(data))]
+  if (! identical(character(0), missing_hier_cols) ) {
+    rlang::abort(
+      message = paste0(
+        'The hierarchy includes column names that are not present within the input data\n',
+        'Column name(s): ',
+        paste(missing_hier_cols, collapse = ", ")
+      ),
+      class = c("PrepareClusterData_missing_hier_cols", "error", "condition"),
+      missing_cols = missing_hier_cols
+    )
+  }
+  
   # Check for warnings and errors in the input data
-  CheckInputData(data, result, poolSize)
+  CheckInputData(data, result, poolSize, groupVar)
   
   # Check for warnings and errors in the hierarchical/clustering scheme
   # If nesting warning is present, add new column of unique location identifiers
@@ -345,7 +450,7 @@ PrepareClusterData <- function(data, result, poolSize, hierarchy = NULL){
       op_data <- NA
       return(op_data)
     },
-    warning=function(w) {
+    warning = function(w) {
       w_message <- capture.output(w)
       if ("CheckClusterVars_nesting" %in% class(w)){
         w_message <- gsub("<|>|CheckClusterVars_nesting: ", "", w_message)
