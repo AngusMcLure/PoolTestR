@@ -72,7 +72,7 @@ CheckInputData <- function(data, result, poolSize, ...){
   }
   
   # Check class of input data
-  if (! inherits(SimpleExampleData, "data.frame")){
+  if (! inherits(data, "data.frame")){
     rlang::abort(
       message = 'Input data should be class "data.frame"',
       class = c("DataCheck_input_class", "error", "condition")
@@ -123,8 +123,8 @@ CheckInputData <- function(data, result, poolSize, ...){
   # Check whether results column values are numeric or integer
   if (! 
       (
-        inherits(data[,result], "integer") || 
-        inherits(data[,result], "numeric")
+        inherits(data[[result]], "integer") || 
+        inherits(data[[result]], "numeric")
       )  
   ){
     rlang::abort(
@@ -139,8 +139,8 @@ CheckInputData <- function(data, result, poolSize, ...){
   # Check whether poolSize column values are numeric or integer
   if (! 
       (
-        inherits(data[,poolSize], "integer") || 
-        inherits(data[,poolSize], "numeric")
+        inherits(data[[poolSize]], "integer") || 
+        inherits(data[[poolSize]], "numeric")
       )
   ){
     rlang::abort(
@@ -150,7 +150,7 @@ CheckInputData <- function(data, result, poolSize, ...){
   }
   
   # Check whether poolSize column values are positive
-  negative_pool_size <- which(data[,poolSize] < 0)
+  negative_pool_size <- which(data[[poolSize]] < 0)
   if (! identical(integer(0), negative_pool_size) ){
     rlang::abort(
       message = 'Pool size column should contain only positive values',
@@ -159,7 +159,7 @@ CheckInputData <- function(data, result, poolSize, ...){
   }
   
   # Check whether result column contains only 0 and 1
-  result_vals <- unique(data[, result])
+  result_vals <- unique(data[[result]])
   allowed_result_vals <- c(0, 1)
   check_result_vals <- setdiff(result_vals, allowed_result_vals) # output vector of values that aren't 0 and 1
   if (! identical(check_result_vals, numeric(0)) ){
@@ -292,7 +292,7 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
   missing_list <- vector(mode="list", length=length(hierarchy))
   names(missing_list) <- hierarchy
   for (x in hierarchy){
-    x_vals <- data[, x]
+    x_vals <- data[[x]]
     if ( is(x_vals, "character") ){
       # Missing char vals = "", NA, NULL
       missing_x_vals <- which(x_vals == "" | is.na(x_vals) | is.null(x_vals))
