@@ -452,14 +452,14 @@ PrepareClusterData <- function(data, result, poolSize,
       op_data <- CheckClusterVars(data, result, poolSize, hierarchy)
     },
     error = function(e){
-      e_message <- capture.output(e)
+      e_message <- utils::capture.output(e)
       rlang::abort(message = e_message,
                    class = c("PrepareClusterData_error", "warning", "condition"))
       op_data <- NA
       return(op_data)
     },
     warning = function(w) {
-      w_message <- capture.output(w)
+      w_message <- utils::capture.output(w)
       if ("CheckClusterVars_nesting" %in% class(w)){
         w_message <- gsub("<|>|CheckClusterVars_nesting: ", "", w_message)
         rlang::warn(message = w_message,
