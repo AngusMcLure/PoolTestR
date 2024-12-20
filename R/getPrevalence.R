@@ -66,7 +66,7 @@
 #' lower-level random effect; in particular, population level estimates will
 #' marginalise over all random effects.
 #'
-#' @seealso \code{\link{PoolReg}}, \code{\link{PoolRegBayes}}
+#' @seealso \code{\link{PrepareClusterData}}, \code{\link{PoolReg}}, \code{\link{PoolRegBayes}}
 #'
 #' @example examples/LogisticRegression.R
 

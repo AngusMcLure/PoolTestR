@@ -118,10 +118,14 @@ The output includes the following columns:
 
   If grouping variables are provided in \code{...} there will be an
   additional column for each grouping variable. When there are no grouping
-  variables (supplied in \code{...}) then the output has only one row with
-  the prevalence estimates for the whole dataset. When grouping variables are
-  supplied, then there is a separate row for each group.
-
+  variables, the output has only one row with the prevalence estimates 
+  for the whole dataset. When grouping variables are supplied in \code{...}, 
+  then there is a separate row for each group.
+  
+  We provide a function to check input data prior to prevalence estimation. 
+  To test the data for formatting errors, use the function 
+  \code{CheckInputData()}.
+  
   The custom print method summarises the output data frame by representing
   the prevalence and credible intervals as a single column in the form
   \code{"Prev (CLow - CHigh)"} where \code{Prev} is the prevalence,
@@ -156,5 +160,6 @@ PoolPrev(SimpleExampleData, Result, NumInPool, Region, Year, bayesian = FALSE)
 
 }
 \seealso{
-\code{\link{HierPoolPrev}}, \code{\link{getPrevalence}}
+\code{\link{CheckInputData}} \code{\link{HierPoolPrev}}, 
+\code{\link{getPrevalence}}
 }

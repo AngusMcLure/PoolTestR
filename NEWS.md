@@ -1,7 +1,19 @@
-# PoolTestR (development version)
+# PoolTestR (development version v0.2.0.9000)
+- Implemented a test suite for PoolTestR. Currently mostly covers the input 
+checking functions with just a couple of tests for `PoolPrev()` and 
+`HierPoolPrev()`.
+- New function `CheckInputData()` allows users to test the formatting of their
+input data prior to estimating prevalence, checking things including class of 
+input variables, whether input columns exist, whether columns/rows have 
+incorrect or missing values, among other checks.
+- New function `PrepareClusterData()` allows users to test the hierarchy/clustered
+sampling scheme prior to estimating prevalence, to ensure data is formatted 
+correctly according to the assumptions underlying PoolTestR. This function tests
+whether any values in the hierarchy/sampling columns are missing, tests the 
+nesting of clustered variables, and tests whether each location has a unique 
+identifier.
 
-# PoolTestR v0.2.0 (Release date: 2024-11-XX)
-
+# PoolTestR v0.2.0 (Release date: 2024-12-05)
 Caitlin Cherryh has joined the development team and has been working on 
 improving readability of outputs, documentation, and testing.
 

@@ -16,16 +16,16 @@
 #'   and 0 indicating a negative test result.
 #' @param poolSize The name of the column with number of
 #'   specimens/isolates/insects in each pool
-#' @param hierarchy The name of column(s) indicating the group membership. In a
-#'   nested sampling design with multiple levels of grouping the lower-level
-#'   groups must have names/numbers that differentiate them from all other
-#'   groups at the same level. E.g. If sampling was performed at 200 sites
-#'   across 10 villages (20 site per village), then there should be 200 unique
-#'   names for the sites. If, for instance, the sites are instead numbered 1 to
-#'   20 within each village, the village identifier (e.g. A, B, C...) should be
-#'   combined with the site number to create unique identifiers for each site
-#'   (e.g. A-1, A-2... for sites in village A and B-1, B-2... for the sites in
-#'   village B etc.)
+#' @param hierarchy The name of column(s) indicating the group membership, 
+#'   ordered from largest to smallest. In a nested sampling design with 
+#'   multiple levels of grouping, the lower-level groups must have names/numbers 
+#'   that differentiate them from all other groups at the same level. E.g. If 
+#'   sampling was performed at 200 sites across 10 villages (20 site per 
+#'   village), then there should be 200 unique names for the sites. If, for 
+#'   instance, the sites are instead numbered 1 to 20 within each village, the 
+#'   village identifier (e.g. A, B, C...) should be combined with the site 
+#'   number to create unique identifiers for each site (e.g. A-1, A-2... for 
+#'   sites in village A and B-1, B-2... for the sites in village B etc.)
 #' @param ... Optional name(s) of columns with variables to stratify the data
 #'   by. If omitted the complete dataset is used to estimate a single
 #'   prevalence. If included prevalence is estimated separately for each group
@@ -62,23 +62,31 @@
 #'            \item{\code{NumberOfPools} -- number of pools}
 #'            \item{\code{NumberPositive} -- the number of positive pools}
 #'            \item{\code{ICC} -- the estimated intra-cluster correlation
-#'                  coefficient}
+#'                  coefficient. Matrix column containing one column for each 
+#'                  variable included in the \code{hierarchy}.}
 #'            \item{\code{ICC_CrILow} and \code{ICC_CrIHigh} -- lower and upper
-#'                  bounds for credible intervals of the estimated ICC} }
+#'                  bounds for credible intervals of the estimated ICC. Matrix
+#'                  columns containing one column for each variable included
+#'                  in the \code{hierarchy}.} }
 #'
-#'   The three ICC columns (\code{ICC}, \code{ICC_CrILow} and
-#'   \code{ICC_CrIHigh}) are matrix columns. These contain one column for each
-#'   variable included in the \code{hierarchy}. E.g., if the input hierarchy is
-#'   \code{c("Village", "Site")}, each of the three ICC matrix columns will
-#'   contain one column with results for \code{Village} and one column with
-#'   results for \code{Site}.
+#'   The \code{hierarchy} input must have the name of column(s) indicating the 
+#'   group membership ordered from largest to smallest. For example, the 
+#'   hierarchy for the \code{SimpleExampleData} dataset included in PoolTestR 
+#'   is \code{hierarchy = c("Region", "Village", "Site")} or 
+#'   \code{hierarchy = c("Village", "Site")} (depending on the analysis 
+#'   structure).
 #'
 #'   If grouping variables are provided in \code{...} there will be an
 #'   additional column for each grouping variable. When there are no grouping
 #'   variables (supplied in \code{...}) then the output has only one row with
 #'   the prevalence estimates for the whole dataset. When grouping variables are
 #'   supplied, then there is a separate row for each group.
-#'
+#'   
+#'   We provide two functions to check input data prior to prevalence estimation. 
+#'   To test the data for formatting errors, use the function 
+#'   \code{CheckInputData()}. To test the nesting of the hierarchy/clustering 
+#'   scheme, use the function \code{PrepareClusterData()}.
+#'   
 #'   The custom print method summarises the output data frame by representing
 #'   output variables with credible intervals (i.e., \code{PrevBayes},
 #'   \code{ICC}) as a single column in the form \code{"X (CrILow - CrIHigh)"}
@@ -87,8 +95,8 @@
 #'   method,  prevalence \code{PrevBayes} is represented as a percentage (i.e.,
 #'   per 100 units).
 #'
-#'
-#' @seealso \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
+#' @seealso \code{\link{CheckInputData}}, \code{\link{PrepareClusterData}}, 
+#' \code{\link{PoolPrev}}, \code{\link{getPrevalence}}
 #'
 #' @example examples/HierPrevalence.R
 #'
