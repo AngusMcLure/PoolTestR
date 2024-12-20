@@ -48,7 +48,7 @@ CheckInputData <- function(data, result, poolSize, ...){
   if (
     (class(result) == "character") == FALSE  & 
     (class(poolSize) == "character") == FALSE
-    ) {
+  ) {
     rlang::abort(
       message = 'Input variables result and poolSize should be of class "character"',
       class = c("DataCheck_input_class", "error", "condition")
@@ -72,7 +72,7 @@ CheckInputData <- function(data, result, poolSize, ...){
   }
   
   # Check class of input data
-  if (! class(data)[[1]] == "data.frame"){
+  if (! inherits(SimpleExampleData, "data.frame")){
     rlang::abort(
       message = 'Input data should be class "data.frame"',
       class = c("DataCheck_input_class", "error", "condition")
@@ -121,8 +121,12 @@ CheckInputData <- function(data, result, poolSize, ...){
   }
   
   # Check whether results column values are numeric or integer
-  if (! (class(data[,result]) == "numeric" || 
-         class(data[,result]) == "integer") ){
+  if (! 
+      (
+        inherits(data[,result], "integer") || 
+        inherits(data[,result], "numeric")
+      )  
+  ){
     rlang::abort(
       message = paste0(
         'Results of each test must be stored as class "numeric" or "integer" ',
@@ -133,8 +137,12 @@ CheckInputData <- function(data, result, poolSize, ...){
   }
   
   # Check whether poolSize column values are numeric or integer
-  if (! (class(data[,poolSize]) == "numeric" || 
-         class(data[,poolSize]) == "integer") ){
+  if (! 
+      (
+        inherits(data[,poolSize], "integer") || 
+        inherits(data[,poolSize], "numeric")
+      )
+  ){
     rlang::abort(
       message = 'Pool size column should be positive values of class "numeric" or "integer"',
       class = c("DataCheck_col_not_numeric", "error", "condition")
@@ -260,7 +268,7 @@ CheckClusterVars <- function(data, result, poolSize, hierarchy = NULL){
   }
   
   ## Check class of input data
-  if (! class(data)[[1]] == "data.frame"){
+  if (! inherits(data, "data.frame")){
     rlang::abort(
       message = 'Input data should be class "data.frame"',
       class = c("CheckClusterVars_input_class", "error", "condition")
