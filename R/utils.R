@@ -154,7 +154,7 @@ check_nesting_levels <- function(data, hierarchy) {
     )
   check_df <- check_df %>%
     rowwise() %>%
-    mutate(num_outer_val = length(outer_val), .keep = "all") %>%
+    mutate(num_outer_val = length(.data$outer_val), .keep = "all") %>%
     ungroup()
   return(check_df)
 }  
