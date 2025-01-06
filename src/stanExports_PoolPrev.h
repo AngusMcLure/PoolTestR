@@ -27,28 +27,25 @@ namespace model_PoolPrev_namespace {
 using stan::model::model_base_crtp;
 using namespace stan::math;
 stan::math::profile_map profiles__;
-static constexpr std::array<const char*, 30> locations_array__ =
+static constexpr std::array<const char*, 32> locations_array__ =
   {" (found before start of program)",
-  " (in 'string', line 10, column 2 to column 27)",
-  " (in 'string', line 13, column 2 to column 37)",
-  " (in 'string', line 14, column 2 to column 9)",
-  " (in 'string', line 15, column 2 to column 10)",
-  " (in 'string', line 17, column 4 to column 26)",
-  " (in 'string', line 18, column 4 to column 19)",
-  " (in 'string', line 16, column 15 to line 19, column 3)",
-  " (in 'string', line 16, column 2 to line 19, column 3)",
-  " (in 'string', line 31, column 4 to column 35)",
-  " (in 'string', line 30, column 7 to line 32, column 3)",
-  " (in 'string', line 23, column 4 to column 11)",
-  " (in 'string', line 24, column 4 to column 10)",
-  " (in 'string', line 26, column 8 to column 30)",
-  " (in 'string', line 27, column 8 to column 52)",
-  " (in 'string', line 25, column 17 to line 28, column 5)",
-  " (in 'string', line 25, column 4 to line 28, column 5)",
-  " (in 'string', line 29, column 4 to column 23)",
-  " (in 'string', line 22, column 19 to line 30, column 3)",
-  " (in 'string', line 22, column 2 to line 32, column 3)",
-  " (in 'string', line 33, column 2 to column 25)",
+  " (in 'string', line 17, column 2 to column 27)",
+  " (in 'string', line 20, column 2 to column 36)",
+  " (in 'string', line 21, column 2 to column 9)",
+  " (in 'string', line 22, column 2 to column 10)",
+  " (in 'string', line 24, column 2 to column 36)",
+  " (in 'string', line 36, column 4 to column 35)",
+  " (in 'string', line 35, column 7 to line 37, column 3)",
+  " (in 'string', line 28, column 4 to column 11)",
+  " (in 'string', line 29, column 4 to column 10)",
+  " (in 'string', line 31, column 8 to column 30)",
+  " (in 'string', line 32, column 8 to column 52)",
+  " (in 'string', line 30, column 17 to line 33, column 5)",
+  " (in 'string', line 30, column 4 to line 33, column 5)",
+  " (in 'string', line 34, column 4 to column 23)",
+  " (in 'string', line 27, column 19 to line 35, column 3)",
+  " (in 'string', line 27, column 2 to line 37, column 3)",
+  " (in 'string', line 38, column 2 to column 35)",
   " (in 'string', line 2, column 2 to column 17)",
   " (in 'string', line 3, column 8 to column 9)",
   " (in 'string', line 3, column 2 to column 40)",
@@ -57,7 +54,12 @@ static constexpr std::array<const char*, 30> locations_array__ =
   " (in 'string', line 5, column 2 to column 27)",
   " (in 'string', line 6, column 2 to column 26)",
   " (in 'string', line 7, column 2 to column 38)",
-  " (in 'string', line 13, column 8 to column 9)"};
+  " (in 'string', line 10, column 8 to column 9)",
+  " (in 'string', line 10, column 2 to column 47)",
+  " (in 'string', line 13, column 4 to column 37)",
+  " (in 'string', line 11, column 15 to line 14, column 3)",
+  " (in 'string', line 11, column 2 to line 14, column 3)",
+  " (in 'string', line 20, column 27 to column 28)"};
 #include <stan_meta_header.hpp>
 class model_PoolPrev final : public model_base_crtp<model_PoolPrev> {
 private:
@@ -67,6 +69,7 @@ private:
   double PriorAlpha;
   double PriorBeta;
   int JeffreysPrior;
+  std::vector<int> FlippedResult;
   Eigen::Map<Eigen::Matrix<double,-1,1>> PoolSize{nullptr, 0};
 public:
   ~model_PoolPrev() {}
@@ -89,29 +92,29 @@ public:
     try {
       int pos__ = std::numeric_limits<int>::min();
       pos__ = 1;
-      current_statement__ = 21;
+      current_statement__ = 18;
       context__.validate_dims("data initialization", "N", "int",
         std::vector<size_t>{});
       N = std::numeric_limits<int>::min();
-      current_statement__ = 21;
+      current_statement__ = 18;
       N = context__.vals_i("N")[(1 - 1)];
-      current_statement__ = 21;
+      current_statement__ = 18;
       stan::math::check_greater_or_equal(function__, "N", N, 1);
-      current_statement__ = 22;
+      current_statement__ = 19;
       stan::math::validate_non_negative_index("Result", "N", N);
-      current_statement__ = 23;
+      current_statement__ = 20;
       context__.validate_dims("data initialization", "Result", "int",
         std::vector<size_t>{static_cast<size_t>(N)});
       Result = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 23;
+      current_statement__ = 20;
       Result = context__.vals_i("Result");
-      current_statement__ = 23;
+      current_statement__ = 20;
       stan::math::check_greater_or_equal(function__, "Result", Result, 0);
-      current_statement__ = 23;
+      current_statement__ = 20;
       stan::math::check_less_or_equal(function__, "Result", Result, 1);
-      current_statement__ = 24;
+      current_statement__ = 21;
       stan::math::validate_non_negative_index("PoolSize", "N", N);
-      current_statement__ = 25;
+      current_statement__ = 22;
       context__.validate_dims("data initialization", "PoolSize", "double",
         std::vector<size_t>{static_cast<size_t>(N)});
       PoolSize_data__ = Eigen::Matrix<double,-1,1>::Constant(N,
@@ -120,53 +123,70 @@ public:
         Eigen::Map<Eigen::Matrix<double,-1,1>>(PoolSize_data__.data(), N);
       {
         std::vector<local_scalar_t__> PoolSize_flat__;
-        current_statement__ = 25;
+        current_statement__ = 22;
         PoolSize_flat__ = context__.vals_r("PoolSize");
-        current_statement__ = 25;
+        current_statement__ = 22;
         pos__ = 1;
-        current_statement__ = 25;
+        current_statement__ = 22;
         for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
-          current_statement__ = 25;
+          current_statement__ = 22;
           stan::model::assign(PoolSize, PoolSize_flat__[(pos__ - 1)],
             "assigning variable PoolSize", stan::model::index_uni(sym1__));
-          current_statement__ = 25;
+          current_statement__ = 22;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 25;
+      current_statement__ = 22;
       stan::math::check_greater_or_equal(function__, "PoolSize", PoolSize, 0);
-      current_statement__ = 26;
+      current_statement__ = 23;
       context__.validate_dims("data initialization", "PriorAlpha", "double",
         std::vector<size_t>{});
       PriorAlpha = std::numeric_limits<double>::quiet_NaN();
-      current_statement__ = 26;
+      current_statement__ = 23;
       PriorAlpha = context__.vals_r("PriorAlpha")[(1 - 1)];
-      current_statement__ = 26;
+      current_statement__ = 23;
       stan::math::check_greater_or_equal(function__, "PriorAlpha",
         PriorAlpha, 0);
-      current_statement__ = 27;
+      current_statement__ = 24;
       context__.validate_dims("data initialization", "PriorBeta", "double",
         std::vector<size_t>{});
       PriorBeta = std::numeric_limits<double>::quiet_NaN();
-      current_statement__ = 27;
+      current_statement__ = 24;
       PriorBeta = context__.vals_r("PriorBeta")[(1 - 1)];
-      current_statement__ = 27;
+      current_statement__ = 24;
       stan::math::check_greater_or_equal(function__, "PriorBeta", PriorBeta,
         0);
-      current_statement__ = 28;
+      current_statement__ = 25;
       context__.validate_dims("data initialization", "JeffreysPrior", "int",
         std::vector<size_t>{});
       JeffreysPrior = std::numeric_limits<int>::min();
-      current_statement__ = 28;
+      current_statement__ = 25;
       JeffreysPrior = context__.vals_i("JeffreysPrior")[(1 - 1)];
-      current_statement__ = 28;
+      current_statement__ = 25;
       stan::math::check_greater_or_equal(function__, "JeffreysPrior",
         JeffreysPrior, 0);
-      current_statement__ = 28;
+      current_statement__ = 25;
       stan::math::check_less_or_equal(function__, "JeffreysPrior",
         JeffreysPrior, 1);
-      current_statement__ = 29;
-      stan::math::validate_non_negative_index("ps", "N", N);
+      current_statement__ = 26;
+      stan::math::validate_non_negative_index("FlippedResult", "N", N);
+      current_statement__ = 27;
+      FlippedResult = std::vector<int>(N, std::numeric_limits<int>::min());
+      current_statement__ = 30;
+      for (int n = 1; n <= N; ++n) {
+        current_statement__ = 28;
+        stan::model::assign(FlippedResult, (1 -
+          stan::model::rvalue(Result, "Result", stan::model::index_uni(n))),
+          "assigning variable FlippedResult", stan::model::index_uni(n));
+      }
+      current_statement__ = 27;
+      stan::math::check_greater_or_equal(function__, "FlippedResult",
+        FlippedResult, 0);
+      current_statement__ = 27;
+      stan::math::check_less_or_equal(function__, "FlippedResult",
+        FlippedResult, 1);
+      current_statement__ = 31;
+      stan::math::validate_non_negative_index("qpool", "N", N);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
     }
@@ -203,50 +223,46 @@ public:
       current_statement__ = 1;
       p = in__.template read_constrain_lub<local_scalar_t__, jacobian__>(0,
             1, lp__);
-      std::vector<local_scalar_t__> ps =
-        std::vector<local_scalar_t__>(N, DUMMY_VAR__);
+      Eigen::Matrix<local_scalar_t__,-1,1> qpool =
+        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(N, DUMMY_VAR__);
       local_scalar_t__ q = DUMMY_VAR__;
       current_statement__ = 4;
       q = (1 - p);
-      current_statement__ = 8;
-      for (int n = 1; n <= N; ++n) {
-        local_scalar_t__ PS = DUMMY_VAR__;
-        current_statement__ = 5;
-        PS = stan::model::rvalue(PoolSize, "PoolSize",
-               stan::model::index_uni(n));
-        current_statement__ = 6;
-        stan::model::assign(ps, (1 - stan::math::pow(q, PS)),
-          "assigning variable ps", stan::model::index_uni(n));
-      }
+      current_statement__ = 5;
+      stan::model::assign(qpool,
+        stan::math::exp(
+          stan::math::elt_multiply(stan::math::log1m(p), PoolSize)),
+        "assigning variable qpool");
       current_statement__ = 2;
-      stan::math::check_greater_or_equal(function__, "ps", ps, 0);
+      stan::math::check_greater_or_equal(function__, "qpool", qpool, 0);
       current_statement__ = 2;
-      stan::math::check_less_or_equal(function__, "ps", ps, 1);
+      stan::math::check_less_or_equal(function__, "qpool", qpool, 1);
       {
-        current_statement__ = 19;
+        current_statement__ = 16;
         if (JeffreysPrior) {
           local_scalar_t__ s = DUMMY_VAR__;
-          current_statement__ = 12;
+          current_statement__ = 9;
           s = 0;
-          current_statement__ = 16;
+          current_statement__ = 13;
           for (int n = 1; n <= N; ++n) {
             local_scalar_t__ PS = DUMMY_VAR__;
-            current_statement__ = 13;
+            current_statement__ = 10;
             PS = stan::model::rvalue(PoolSize, "PoolSize",
                    stan::model::index_uni(n));
-            current_statement__ = 14;
+            current_statement__ = 11;
             s = (s + ((stan::math::pow(PS, 2.0) *
               stan::math::pow(q, (PS - 2))) / (1 - stan::math::pow(q, PS))));
           }
-          current_statement__ = 17;
+          current_statement__ = 14;
           lp_accum__.add((stan::math::log(s) / 2));
         } else {
-          current_statement__ = 9;
+          current_statement__ = 6;
           lp_accum__.add(stan::math::beta_lpdf<propto__>(p, PriorAlpha,
                            PriorBeta));
         }
-        current_statement__ = 20;
-        lp_accum__.add(stan::math::bernoulli_lpmf<propto__>(Result, ps));
+        current_statement__ = 17;
+        lp_accum__.add(stan::math::bernoulli_lpmf<propto__>(FlippedResult,
+                         qpool));
       }
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -289,8 +305,9 @@ public:
       current_statement__ = 1;
       p = in__.template read_constrain_lub<local_scalar_t__, jacobian__>(0,
             1, lp__);
-      std::vector<double> ps =
-        std::vector<double>(N, std::numeric_limits<double>::quiet_NaN());
+      Eigen::Matrix<double,-1,1> qpool =
+        Eigen::Matrix<double,-1,1>::Constant(N,
+          std::numeric_limits<double>::quiet_NaN());
       double q = std::numeric_limits<double>::quiet_NaN();
       out__.write(p);
       if (stan::math::logical_negation(
@@ -300,22 +317,17 @@ public:
       }
       current_statement__ = 4;
       q = (1 - p);
-      current_statement__ = 8;
-      for (int n = 1; n <= N; ++n) {
-        double PS = std::numeric_limits<double>::quiet_NaN();
-        current_statement__ = 5;
-        PS = stan::model::rvalue(PoolSize, "PoolSize",
-               stan::model::index_uni(n));
-        current_statement__ = 6;
-        stan::model::assign(ps, (1 - stan::math::pow(q, PS)),
-          "assigning variable ps", stan::model::index_uni(n));
-      }
+      current_statement__ = 5;
+      stan::model::assign(qpool,
+        stan::math::exp(
+          stan::math::elt_multiply(stan::math::log1m(p), PoolSize)),
+        "assigning variable qpool");
       current_statement__ = 2;
-      stan::math::check_greater_or_equal(function__, "ps", ps, 0);
+      stan::math::check_greater_or_equal(function__, "qpool", qpool, 0);
       current_statement__ = 2;
-      stan::math::check_less_or_equal(function__, "ps", ps, 1);
+      stan::math::check_less_or_equal(function__, "qpool", qpool, 1);
       if (emit_transformed_parameters__) {
-        out__.write(ps);
+        out__.write(qpool);
         out__.write(q);
       }
       if (stan::math::logical_negation(emit_generated_quantities__)) {
@@ -379,7 +391,7 @@ public:
                   emit_generated_quantities__ = true) const {
     names__ = std::vector<std::string>{"p"};
     if (emit_transformed_parameters__) {
-      std::vector<std::string> temp{"ps", "q"};
+      std::vector<std::string> temp{"qpool", "q"};
       names__.reserve(names__.size() + temp.size());
       names__.insert(names__.end(), temp.begin(), temp.end());
     }
@@ -406,7 +418,7 @@ public:
     param_names__.emplace_back(std::string() + "p");
     if (emit_transformed_parameters__) {
       for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
-        param_names__.emplace_back(std::string() + "ps" + '.' +
+        param_names__.emplace_back(std::string() + "qpool" + '.' +
           std::to_string(sym1__));
       }
       param_names__.emplace_back(std::string() + "q");
@@ -420,7 +432,7 @@ public:
     param_names__.emplace_back(std::string() + "p");
     if (emit_transformed_parameters__) {
       for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
-        param_names__.emplace_back(std::string() + "ps" + '.' +
+        param_names__.emplace_back(std::string() + "qpool" + '.' +
           std::to_string(sym1__));
       }
       param_names__.emplace_back(std::string() + "q");
@@ -428,10 +440,10 @@ public:
     if (emit_generated_quantities__) {}
   }
   inline std::string get_constrained_sizedtypes() const {
-    return std::string("[{\"name\":\"p\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"ps\",\"type\":{\"name\":\"array\",\"length\":" + std::to_string(N) + ",\"element_type\":{\"name\":\"real\"}},\"block\":\"transformed_parameters\"},{\"name\":\"q\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"}]");
+    return std::string("[{\"name\":\"p\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"qpool\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"transformed_parameters\"},{\"name\":\"q\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"}]");
   }
   inline std::string get_unconstrained_sizedtypes() const {
-    return std::string("[{\"name\":\"p\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"ps\",\"type\":{\"name\":\"array\",\"length\":" + std::to_string(N) + ",\"element_type\":{\"name\":\"real\"}},\"block\":\"transformed_parameters\"},{\"name\":\"q\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"}]");
+    return std::string("[{\"name\":\"p\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"qpool\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"transformed_parameters\"},{\"name\":\"q\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"}]");
   }
   // Begin method overload boilerplate
   template <typename RNG> inline void

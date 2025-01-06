@@ -6,17 +6,22 @@ data {
   real<lower=0> PriorBeta;
   int<lower=0, upper=1> JeffreysPrior;
 }
+transformed data{
+  array[N] int<lower=0, upper=1> FlippedResult;
+  for(n in 1:N){
+    // We can avoid '1 - ' operation later if we predict negative pools rather than positive ones
+    FlippedResult[n] = 1 - Result[n];
+  }
+}
 parameters {
   real<lower=0, upper=1> p;
 }
 transformed parameters{
-  array[N] real<lower=0, upper=1> ps;
+  vector<lower=0, upper=1>[N] qpool;
   real q;
-  q = 1-p;
-  for(n in 1:N){
-    real PS = PoolSize[n];
-    ps[n] = 1-q^PS;
-  }
+  q = 1-p; //probability of negative individual
+  //qpool = q ^ PoolSize; \\below is equivalent to this line
+  qpool = exp(log1m(p) .* PoolSize); // probability of a negative pool
 }
 model{
   if(JeffreysPrior){
@@ -30,6 +35,6 @@ model{
   }else{
     p ~ beta(PriorAlpha,PriorBeta);
   }
-  Result ~ bernoulli(ps);
+  FlippedResult ~ bernoulli(qpool);
 }
 
