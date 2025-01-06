@@ -1,3 +1,22 @@
+test_that("PoolPrev does not return an error for large pool sizes", {
+  # Previously, for pools larger than ~300, with a mix of positive and negative
+  # pools, there would be an error 'Error: Initialization failed from the
+  # optimize routine to determine the MLE
+  
+  min_error_data <- data.frame(Result = c(0,1), NumInPool = c(300,300))
+  
+  
+  prev <- PoolPrev(min_error_data, "Result", "NumInPool", bayesian = FALSE)
+  expect_named(prev,
+               expected = c("PrevMLE", "CILow", "CIHigh",
+                            "NumberOfPools", "NumberPositive"),
+               ignore.order = TRUE)
+  
+  expect_equal(round(prev$PrevMLE[[1]], digits = 4), 1-0.5^(1/300))
+  
+})
+
+
 test_that("PoolPrev returns no errors/warnings/messages for SimpleExampleData", {
   expect_no_message(
     expect_no_warning(
@@ -60,3 +79,5 @@ test_that("PoolPrev returns correct ML and Bayesian estimates", {
   expect_lte(round(prev$PrevBayes[[1]], digits = 4), 0.0576)
   expect_gte(round(prev$PrevBayes[[1]], digits = 4), 0.0572)
 })
+
+
