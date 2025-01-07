@@ -115,7 +115,9 @@ PoolPrev <- function(data,result,poolSize,...,
   
   useJefferysPrior <- is.null(prior)
   if(bayesian){
-    if(!useJefferysPrior && (is.null(prior$alpha) || is.null(prior$beta) || is.null(prior$beta))){
+    if(!useJefferysPrior && (is.null(prior$alpha) ||
+                             is.null(prior$beta) ||
+                             is.null(prior$absent))){
       stop("If not using the default prior (NULL), prior$alpha, prior$beta, and prior$absent must all be specified.")
     }
     if(!useJefferysPrior && (length(prior$alpha) != 1 ||

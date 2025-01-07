@@ -16,5 +16,8 @@ I have not figured out which commands are the issue, but this inlcudes:
 * the default build configuration in load_all(recompile = TRUE)
 * roxygenise()
 
-To avoid the large .dll problem, make sure all building of packages happens with
-the 'Install' or 'Clean and Install' button in RStudio
+Note that the above work fine if not recompiling Cpp/stan code.
+
+To avoid the large .dll problem, make sure all building of packages that
+involves recompiling stan/Cpp code happens with the 'Install' or
+'Clean and Install' button in RStudio
