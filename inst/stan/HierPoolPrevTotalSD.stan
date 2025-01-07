@@ -43,7 +43,7 @@ transformed parameters{
 }
 model{
   int k;
-  vector[N] ps; //1 - prevalence at the pool level (adjusted for pool size)
+  vector[N] qpool; //1 - prevalence at the pool level (adjusted for pool size)
   vector[TotalGroups] au; //actual group effects
   k = 1;
   for(l in 1:L){
@@ -51,18 +51,18 @@ model{
     k = k + NumGroups[l];
   }
 
-  //This code is equvailent way of calculating ps (though less efficient)
+  //This code is equvailent way of calculating qpool (though less efficient)
 
   //vector[N] los; //log odds at the individual level at that site
   //los = Intercept + Z * au;
-  //ps = exp(-log1p_exp(los) .* PoolSize);
+  //qpool = exp(-log1p_exp(los) .* PoolSize);
 
   //Also equivalent to
-  //ps = exp(log1m_inv_logit(logit(p) + Z * au) .* PoolSize);
-  ps = exp(log1m_inv_logit(Intercept + csr_matrix_times_vector(N,TotalGroups,Zw,Zv,Zu,au)) .* PoolSize);
+  //qpool = exp(log1m_inv_logit(logit(p) + Z * au) .* PoolSize);
+  qpool = exp(log1m_inv_logit(Intercept + csr_matrix_times_vector(N,TotalGroups,Zw,Zv,Zu,au)) .* PoolSize);
 
   Intercept        ~ student_t(InterceptNu, InterceptMu, InterceptSigma);
   total_group_sd   ~ student_t(GroupSDNu, GroupSDMu, GroupSDSigma);
   u                ~ std_normal();
-  FlippedResult    ~ bernoulli(ps);
+  FlippedResult    ~ bernoulli(qpool);
 }

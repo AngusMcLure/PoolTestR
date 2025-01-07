@@ -37,7 +37,7 @@ static constexpr std::array<const char*, 57> locations_array__ =
   " (in 'string', line 41, column 2 to column 45)",
   " (in 'string', line 44, column 2 to column 8)",
   " (in 'string', line 45, column 9 to column 10)",
-  " (in 'string', line 45, column 2 to column 15)",
+  " (in 'string', line 45, column 2 to column 18)",
   " (in 'string', line 46, column 9 to column 20)",
   " (in 'string', line 46, column 2 to column 25)",
   " (in 'string', line 47, column 2 to column 8)",
@@ -45,11 +45,11 @@ static constexpr std::array<const char*, 57> locations_array__ =
   " (in 'string', line 50, column 4 to column 25)",
   " (in 'string', line 48, column 15 to line 51, column 3)",
   " (in 'string', line 48, column 2 to line 51, column 3)",
-  " (in 'string', line 58, column 2 to column 104)",
+  " (in 'string', line 58, column 2 to column 107)",
   " (in 'string', line 59, column 2 to column 73)",
   " (in 'string', line 60, column 2 to column 67)",
   " (in 'string', line 61, column 2 to column 34)",
-  " (in 'string', line 62, column 2 to column 35)",
+  " (in 'string', line 62, column 2 to column 38)",
   " (in 'string', line 2, column 2 to column 17)",
   " (in 'string', line 3, column 2 to column 17)",
   " (in 'string', line 4, column 8 to column 9)",
@@ -400,8 +400,8 @@ public:
       {
         int k = std::numeric_limits<int>::min();
         current_statement__ = 8;
-        stan::math::validate_non_negative_index("ps", "N", N);
-        Eigen::Matrix<local_scalar_t__,-1,1> ps =
+        stan::math::validate_non_negative_index("qpool", "N", N);
+        Eigen::Matrix<local_scalar_t__,-1,1> qpool =
           Eigen::Matrix<local_scalar_t__,-1,1>::Constant(N, DUMMY_VAR__);
         current_statement__ = 10;
         stan::math::validate_non_negative_index("au", "TotalGroups",
@@ -431,13 +431,13 @@ public:
               stan::model::index_uni(l)));
         }
         current_statement__ = 17;
-        stan::model::assign(ps,
+        stan::model::assign(qpool,
           stan::math::exp(
             stan::math::elt_multiply(
               stan::math::log1m_inv_logit(
                 stan::math::add(Intercept,
                   stan::math::csr_matrix_times_vector(N, TotalGroups, Zw, Zv,
-                    Zu, au))), PoolSize)), "assigning variable ps");
+                    Zu, au))), PoolSize)), "assigning variable qpool");
         current_statement__ = 18;
         lp_accum__.add(stan::math::student_t_lpdf<propto__>(Intercept,
                          InterceptNu, InterceptMu, InterceptSigma));
@@ -447,7 +447,8 @@ public:
         current_statement__ = 20;
         lp_accum__.add(stan::math::std_normal_lpdf<propto__>(u));
         current_statement__ = 21;
-        lp_accum__.add(stan::math::bernoulli_lpmf<propto__>(FlippedResult, ps));
+        lp_accum__.add(stan::math::bernoulli_lpmf<propto__>(FlippedResult,
+                         qpool));
       }
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);

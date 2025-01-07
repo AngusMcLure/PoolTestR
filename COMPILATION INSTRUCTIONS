@@ -1,0 +1,23 @@
+NOTES FOR BUILDING PACKAGE ON ANGUS' WINDOWS MACHINE
+
+Compilation will not work out of the box on Angus' machine. During compilation
+it runs into issues files being too big.
+
+Changes to make it work:
+
+Add the following to configure.win
+
+# Add configuration needed for big object files
+echo "PKG_CXXFLAGS += -Wa,-mbig-obj" >> ./src/Makevars.win
+
+This will allow for compilation, however the .dll produced will be enormous
+(preventing hosting on github) if compiled with some commands.
+I have not figured out which commands are the issue, but this inlcudes:
+* the default build configuration in load_all(recompile = TRUE)
+* roxygenise()
+
+Note that the above work fine if not recompiling Cpp/stan code.
+
+To avoid the large .dll problem, make sure all building of packages that
+involves recompiling stan/Cpp code happens with the 'Install' or
+'Clean and Install' button in RStudio
