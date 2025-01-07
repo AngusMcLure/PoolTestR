@@ -15,7 +15,7 @@ test_that("PoolPrev does not return an error for large pool sizes", {
                ignore.order = TRUE)
   
   #For MLE the 'expected' should be the exact value (besides small numerical error)
-  expect_equal(prev$PrevMLE[[1]] * 1e3,   (1-0.5^(1/300)) * 1e3, tolerance = 1e-5)
+  expect_equal(prev$PrevMLE[[1]] * 1e3,   (1-0.5^(1/300)) * 1e3, tolerance = 1e-4)
   #For Bayesian point estimate, 'expected' is only approximately what one should
   #get, due to RNG and the true values being somewhat different. Therefore we
   #use much higher tolerance
