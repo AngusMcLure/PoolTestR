@@ -1,6 +1,6 @@
 Package: PoolTestR
 Title: Prevalence and Regression for Pool-Tested (Group-Tested) Data
-Version: 0.2.0.9000
+Version: 0.2.1
 Authors@R: c(
     person("Angus", "McLure", , "angus.mclure@anu.edu.au", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2551-3059")),
