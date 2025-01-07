@@ -20,7 +20,7 @@ transformed data{
   
   // LogPoolSize2 = log(PoolSize) * 2;
   PoolSizeLess2 = PoolSize - 2;
-  PoolSizeSq = PoolSizeSq ^ 2.0;
+  PoolSizeSq = PoolSize ^ 2.0;
 
   
 }

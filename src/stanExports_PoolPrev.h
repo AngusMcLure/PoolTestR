@@ -27,20 +27,20 @@ namespace model_PoolPrev_namespace {
 using stan::model::model_base_crtp;
 using namespace stan::math;
 stan::math::profile_map profiles__;
-static constexpr std::array<const char*, 31> locations_array__ =
+static constexpr std::array<const char*, 33> locations_array__ =
   {" (found before start of program)",
-  " (in 'string', line 21, column 2 to column 27)",
-  " (in 'string', line 24, column 2 to column 36)",
+  " (in 'string', line 23, column 2 to column 27)",
   " (in 'string', line 26, column 2 to column 36)",
-  " (in 'string', line 39, column 4 to column 35)",
-  " (in 'string', line 38, column 7 to line 40, column 3)",
-  " (in 'string', line 31, column 11 to column 12)",
-  " (in 'string', line 31, column 4 to column 16)",
-  " (in 'string', line 32, column 4 to column 79)",
-  " (in 'string', line 33, column 4 to column 28)",
-  " (in 'string', line 29, column 19 to line 38, column 3)",
-  " (in 'string', line 29, column 2 to line 40, column 3)",
-  " (in 'string', line 41, column 2 to column 35)",
+  " (in 'string', line 28, column 2 to column 36)",
+  " (in 'string', line 43, column 4 to column 35)",
+  " (in 'string', line 42, column 7 to line 44, column 3)",
+  " (in 'string', line 33, column 11 to column 12)",
+  " (in 'string', line 33, column 4 to column 16)",
+  " (in 'string', line 34, column 4 to column 74)",
+  " (in 'string', line 35, column 4 to column 28)",
+  " (in 'string', line 31, column 19 to line 42, column 3)",
+  " (in 'string', line 31, column 2 to line 44, column 3)",
+  " (in 'string', line 45, column 2 to column 35)",
   " (in 'string', line 2, column 2 to column 17)",
   " (in 'string', line 3, column 8 to column 9)",
   " (in 'string', line 3, column 2 to column 40)",
@@ -51,14 +51,16 @@ static constexpr std::array<const char*, 31> locations_array__ =
   " (in 'string', line 7, column 2 to column 38)",
   " (in 'string', line 10, column 8 to column 9)",
   " (in 'string', line 10, column 2 to column 47)",
-  " (in 'string', line 11, column 9 to column 10)",
-  " (in 'string', line 11, column 2 to column 25)",
   " (in 'string', line 12, column 9 to column 10)",
   " (in 'string', line 12, column 2 to column 26)",
-  " (in 'string', line 15, column 4 to column 37)",
-  " (in 'string', line 13, column 15 to line 16, column 3)",
-  " (in 'string', line 13, column 2 to line 16, column 3)",
-  " (in 'string', line 24, column 27 to column 28)"};
+  " (in 'string', line 13, column 9 to column 10)",
+  " (in 'string', line 13, column 2 to column 23)",
+  " (in 'string', line 16, column 4 to column 37)",
+  " (in 'string', line 14, column 15 to line 17, column 3)",
+  " (in 'string', line 14, column 2 to line 17, column 3)",
+  " (in 'string', line 19, column 2 to column 31)",
+  " (in 'string', line 20, column 2 to column 30)",
+  " (in 'string', line 26, column 27 to column 28)"};
 #include <stan_meta_header.hpp>
 class model_PoolPrev final : public model_base_crtp<model_PoolPrev> {
 private:
@@ -69,11 +71,11 @@ private:
   double PriorBeta;
   int JeffreysPrior;
   std::vector<int> FlippedResult;
-  Eigen::Matrix<double,-1,1> LogPoolSize2_data__;
   Eigen::Matrix<double,-1,1> PoolSizeLess2_data__;
+  Eigen::Matrix<double,-1,1> PoolSizeSq_data__;
   Eigen::Map<Eigen::Matrix<double,-1,1>> PoolSize{nullptr, 0};
-  Eigen::Map<Eigen::Matrix<double,-1,1>> LogPoolSize2{nullptr, 0};
   Eigen::Map<Eigen::Matrix<double,-1,1>> PoolSizeLess2{nullptr, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,1>> PoolSizeSq{nullptr, 0};
 public:
   ~model_PoolPrev() {}
   model_PoolPrev(stan::io::var_context& context__, unsigned int
@@ -176,20 +178,20 @@ public:
       current_statement__ = 22;
       FlippedResult = std::vector<int>(N, std::numeric_limits<int>::min());
       current_statement__ = 23;
-      stan::math::validate_non_negative_index("LogPoolSize2", "N", N);
-      current_statement__ = 24;
-      LogPoolSize2_data__ = Eigen::Matrix<double,-1,1>::Constant(N,
-                              std::numeric_limits<double>::quiet_NaN());
-      new (&LogPoolSize2)
-        Eigen::Map<Eigen::Matrix<double,-1,1>>(LogPoolSize2_data__.data(), N);
-      current_statement__ = 25;
       stan::math::validate_non_negative_index("PoolSizeLess2", "N", N);
-      current_statement__ = 26;
+      current_statement__ = 24;
       PoolSizeLess2_data__ = Eigen::Matrix<double,-1,1>::Constant(N,
                                std::numeric_limits<double>::quiet_NaN());
       new (&PoolSizeLess2)
         Eigen::Map<Eigen::Matrix<double,-1,1>>(PoolSizeLess2_data__.data(),
         N);
+      current_statement__ = 25;
+      stan::math::validate_non_negative_index("PoolSizeSq", "N", N);
+      current_statement__ = 26;
+      PoolSizeSq_data__ = Eigen::Matrix<double,-1,1>::Constant(N,
+                            std::numeric_limits<double>::quiet_NaN());
+      new (&PoolSizeSq)
+        Eigen::Map<Eigen::Matrix<double,-1,1>>(PoolSizeSq_data__.data(), N);
       current_statement__ = 29;
       for (int n = 1; n <= N; ++n) {
         current_statement__ = 27;
@@ -197,13 +199,19 @@ public:
           stan::model::rvalue(Result, "Result", stan::model::index_uni(n))),
           "assigning variable FlippedResult", stan::model::index_uni(n));
       }
+      current_statement__ = 30;
+      stan::model::assign(PoolSizeLess2, stan::math::subtract(PoolSize, 2),
+        "assigning variable PoolSizeLess2");
+      current_statement__ = 31;
+      stan::model::assign(PoolSizeSq, stan::math::pow(PoolSize, 2.0),
+        "assigning variable PoolSizeSq");
       current_statement__ = 22;
       stan::math::check_greater_or_equal(function__, "FlippedResult",
         FlippedResult, 0);
       current_statement__ = 22;
       stan::math::check_less_or_equal(function__, "FlippedResult",
         FlippedResult, 1);
-      current_statement__ = 30;
+      current_statement__ = 32;
       stan::math::validate_non_negative_index("qpool", "N", N);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -262,8 +270,8 @@ public:
           current_statement__ = 8;
           stan::model::assign(s,
             stan::math::elt_divide(
-              stan::math::elt_multiply(stan::math::pow(PoolSize, 2.0),
-                stan::math::pow((1 - p), stan::math::subtract(PoolSize, 2))),
+              stan::math::elt_multiply(PoolSizeSq,
+                stan::math::pow((1 - p), PoolSizeLess2)),
               stan::math::subtract(1, stan::math::pow((1 - p), PoolSize))),
             "assigning variable s");
           current_statement__ = 9;
