@@ -6,14 +6,20 @@ test_that("PoolPrev does not return an error for large pool sizes", {
   min_error_data <- data.frame(Result = c(0,1), NumInPool = c(300,300))
   
   
-  prev <- PoolPrev(min_error_data, "Result", "NumInPool", bayesian = FALSE)
-  expect_named(prev,
+
+  prev <- PoolPrev(min_error_data, "Result", "NumInPool", bayesian = TRUE)
+  expect_named(prev, 
                expected = c("PrevMLE", "CILow", "CIHigh",
-                            "NumberOfPools", "NumberPositive"),
+                            "PrevBayes", "CrILow", "CrIHigh",
+                            "ProbAbsent", "NumberOfPools", "NumberPositive"),
                ignore.order = TRUE)
   
-  expect_equal(round(prev$PrevMLE[[1]], digits = 4), 1-0.5^(1/300))
-  
+  #For MLE the 'expected' should be the exact value (besides small numerical error)
+  expect_equal(prev$PrevMLE[[1]] * 1e3,   (1-0.5^(1/300)) * 1e3, tolerance = 1e-5)
+  #For Bayesian point estimate, 'expected' is only approximately what one should
+  #get, due to RNG and the true values being somewhat different. Therefore we
+  #use much higher tolerance
+  expect_equal(prev$PrevBayes[[1]] * 1e3, (1-0.5^(1/300)) * 1e3, tolerance = 1e-1)
 })
 
 
