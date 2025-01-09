@@ -3,6 +3,7 @@
 #Read in Brian Johnson's data
 library(devtools)
 library(tidyverse)
+library(PoolTestR)
 load_all()
 
 d <- read_csv("C:/Users/u4859599/Downloads/PlasmoBook.csv")
