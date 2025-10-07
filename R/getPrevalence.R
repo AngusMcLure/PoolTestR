@@ -21,17 +21,20 @@
 #' @param re.form A description of which random effects to include in the
 #'   prediction. If omitted, an attempt is made to infer from model and data
 #'   structure.
-#' @param robust Logical. Option when model class is \code{brmsfit}. If 
-#'   \code{TRUE} (default) the point estimate of prevalence is the posterior 
+#' @param robust Logical. Option when model class is \code{brmsfit}. If
+#'   \code{TRUE} (default) the point estimate of prevalence is the posterior
 #'   median. If \code{FALSE}, the the posterior mean is used instead.
 #' @param level Defines the confidence level to be used for the confidence and
 #'   credible intervals. Defaults to 0.95 (i.e. 95\% intervals).
 #' @param all.negative.pools The kind of point estimate and interval to use when
-#'   all pools are negative. Typically ignored unless newdata is NULL. If 
-#'   \code{'zero'} (default), uses 0 as the point estimate and lower bound for 
-#'   the interval and \code{level} posterior quantile the upper bound of the 
-#'   interval. If \code{'consistent'}, result is the same as for the case where 
-#'   at least one pool is positive. 
+#'   all pools are negative. Typically ignored unless newdata is NULL. If
+#'   \code{'zero'} (default), uses 0 as the point estimate and lower bound for
+#'   the interval and \code{level} posterior quantile the upper bound of the
+#'   interval. If \code{'consistent'}, result is the same as for the case where
+#'   at least one pool is positive.
+#' @param summary If \code{TRUE} (default), output is point estimate and
+#'   interval for prevalence. If \code{FALSE}, outputs returns prevalence for
+#'   each draw from the posterior of the supplied model
 #' @return A \code{list} with at least one field \code{PopulationEffects} and an
 #'   additional field for every random/group effect variable. The field
 #'   \code{PopulationEffects} contains a \code{data.frame} with the prevalence
@@ -66,7 +69,8 @@
 #' lower-level random effect; in particular, population level estimates will
 #' marginalise over all random effects.
 #'
-#' @seealso \code{\link{PrepareClusterData}}, \code{\link{PoolReg}}, \code{\link{PoolRegBayes}}
+#' @seealso \code{\link{PrepareClusterData}}, \code{\link{PoolReg}},
+#'   \code{\link{PoolRegBayes}}
 #'
 #' @example examples/LogisticRegression.R
 
@@ -197,7 +201,8 @@ getPrevalence.glmerMod <- function(model, newdata = NULL, re.form = NULL, all.ne
 #' @export
 getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
                                   robust = TRUE, level = 0.95,
-                                  all.negative.pools = 'zero',...){
+                                  all.negative.pools = 'zero',
+                                  summary = TRUE, ...){
   if (is.null(newdata)) {
     newdata <- model$data
   } else {
@@ -277,20 +282,26 @@ getPrevalence.brmsfit <- function(model, newdata = NULL, re.form = NULL,
     
     pred$prev <- t(prev)
     
-    pred <- pred %>%
-      mutate(Estimate = ifelse(.data$..zeroest,
+    if(summary){
+      pred <- pred %>%
+        mutate(Estimate = ifelse(.data$..zeroest,
+                                 0,
+                                 ifelse(robust,
+                                        stats::median(.data$prev, na.rm = TRUE),
+                                        mean(.data$prev, na.rm = TRUE))),
+               CrILow = ifelse(.data$..zeroest,
                                0,
-                               ifelse(robust,
-                                      stats::median(.data$prev, na.rm = TRUE),
-                                      mean(.data$prev, na.rm = TRUE))),
-             CrILow = ifelse(.data$..zeroest,
-                             0,
-                             stats::quantile(.data$prev, 0.5 - level/2)),
-             CrIHigh = ifelse(.data$..zeroest,
-                              stats::quantile(.data$prev, level),
-                              stats::quantile(.data$prev, 0.5 + level/2))) %>%
-      select(-c("..allnegative","prev","..zeroest")) %>%
-      ungroup()
+                               stats::quantile(.data$prev, 0.5 - level/2)),
+               CrIHigh = ifelse(.data$..zeroest,
+                                stats::quantile(.data$prev, level),
+                                stats::quantile(.data$prev, 0.5 + level/2))) %>%
+        select(-c("..allnegative","prev","..zeroest")) %>%
+        ungroup()
+    }else{
+      pred <- pred %>%
+        select(-c("..allnegative","..zeroest")) %>%
+        ungroup()
+    }
     
     predlist <- c(predlist,list(pred))
   }
