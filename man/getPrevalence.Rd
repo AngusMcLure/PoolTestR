@@ -27,6 +27,7 @@ getPrevalence(model, ...)
   robust = TRUE,
   level = 0.95,
   all.negative.pools = "zero",
+  summary = TRUE,
   ...
 )
 }
@@ -47,15 +48,19 @@ prediction. If omitted, an attempt is made to infer from model and data
 structure.}
 
 \item{all.negative.pools}{The kind of point estimate and interval to use when
-all pools are negative. Typically ignored unless newdata is NULL. If 
-\code{'zero'} (default), uses 0 as the point estimate and lower bound for 
-the interval and \code{level} posterior quantile the upper bound of the 
-interval. If \code{'consistent'}, result is the same as for the case where 
+all pools are negative. Typically ignored unless newdata is NULL. If
+\code{'zero'} (default), uses 0 as the point estimate and lower bound for
+the interval and \code{level} posterior quantile the upper bound of the
+interval. If \code{'consistent'}, result is the same as for the case where
 at least one pool is positive.}
 
-\item{robust}{Logical. Option when model class is \code{brmsfit}. If 
-\code{TRUE} (default) the point estimate of prevalence is the posterior 
+\item{robust}{Logical. Option when model class is \code{brmsfit}. If
+\code{TRUE} (default) the point estimate of prevalence is the posterior
 median. If \code{FALSE}, the the posterior mean is used instead.}
+
+\item{summary}{If \code{TRUE} (default), output is point estimate and
+interval for prevalence. If \code{FALSE}, outputs returns prevalence for
+each draw from the posterior of the supplied model}
 }
 \value{
 A \code{list} with at least one field \code{PopulationEffects} and an
@@ -171,5 +176,6 @@ getPrevalence(Mod, newdata = DataFuture)
 getPrevalence(HierMod, newdata = DataFuture)
 }
 \seealso{
-\code{\link{PrepareClusterData}}, \code{\link{PoolReg}}, \code{\link{PoolRegBayes}}
+\code{\link{PrepareClusterData}}, \code{\link{PoolReg}},
+  \code{\link{PoolRegBayes}}
 }
