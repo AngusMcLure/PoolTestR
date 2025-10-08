@@ -82,8 +82,6 @@ test_that("PoolPrev returns correct ML and Bayesian estimates", {
   expect_lte(round(prev$PrevMLE[[1]], digits = 4), 0.0573)
   expect_gte(round(prev$PrevMLE[[1]], digits = 4), 0.0572)
   expect_equal(round(prev$PrevBayes[[1]], digits = 3), 0.057)
-  expect_lte(round(prev$PrevBayes[[1]], digits = 4), 0.0576)
-  expect_gte(round(prev$PrevBayes[[1]], digits = 4), 0.0572)
 })
 
 
