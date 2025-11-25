@@ -116,8 +116,8 @@ PoolRegBayes <- function (formula, data, poolSize,
 
   if(is.null(prior) | !("b" %in% prior$class)){ #if there is no supplied prior on the population-level ('fixed') effects
     if("b" %in% brms::get_prior(formula, data, family)$class){ #if there are population-level ('fixed') effects in the model
-      prior <- brms::set_prior("student_t(6, 0, 1.5)", class = "b",
-                               nlpar = "")
+      prior <- c(brms::set_prior("student_t(6, 0, 1.5)", class = "b", nlpar = ""),
+                 prior)
     }
   }
 
